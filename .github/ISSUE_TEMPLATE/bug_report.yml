@@ -1,0 +1,30 @@
+name: Bug report
+description: Report a reproducible problem in an existing supported workflow.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the operation and a minimal, public or synthetic example. Remove credentials and private file paths.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS/architecture, Python/package version, installation method, MCP client, CPU/GPU.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence
+      description: Error code, job status, report validation and unsupported keywords. Never attach confidential reservoir data without permission.

@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "source_archive": "dist/kanysh-basic-0.2.0-dev1.mcpb",
+  "archive_sha256": "4a25815c2cb9bf1cc786d860d9ad7ffbb2165635635b17e32996814d0c91dfca",
+  "sdk_stdio": "PASS",
+  "shared_local_viewer_controller": "PASS",
+  "isolated_eclipse_import": "PASS",
+  "cells": 1,
+  "scientific_scope": "Synthetic geometry import only, no field estimates",
+  "claude_desktop_install": "NOT RUN",
+  "windows_wsl_gpu": "NOT RUN"
+}

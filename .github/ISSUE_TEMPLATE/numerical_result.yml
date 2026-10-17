@@ -1,0 +1,26 @@
+name: Numerical discrepancy
+description: Report a model-QC or calculation discrepancy with a reproducible reference.
+title: "[Numerics] "
+labels: [bug]
+body:
+  - type: textarea
+    id: case
+    attributes:
+      label: Minimal case and operation
+      description: Prefer a small synthetic model or public dataset with source/version/hash.
+    validations:
+      required: true
+  - type: textarea
+    id: assumptions
+    attributes:
+      label: Units, geometry convention and assumptions
+      description: CRS/datum/Z sign, ACTNUM, region definition, contacts, Bo/Bg, Sw/NTG cutoffs, tolerance and reference software/version.
+    validations:
+      required: true
+  - type: textarea
+    id: comparison
+    attributes:
+      label: Expected/reference numbers and actual results
+      description: Include metric definitions and the independent validation report. Do not change tolerances to obtain PASS.
+    validations:
+      required: true

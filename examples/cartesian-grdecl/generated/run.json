@@ -1,0 +1,65 @@
+{
+  "project_id": "project-d9e529e1415b4626",
+  "run_id": "job-2efd90e47c444203",
+  "status": "succeeded",
+  "stage": "Завершено",
+  "plan": {
+    "id": "calculation_plan-9062a2ebb4e644d3",
+    "revision": 1
+  },
+  "checkpoint": {
+    "id": "workflow_run-4f36102ce2414aaa",
+    "revision": 1
+  },
+  "error": null,
+  "artifacts": {
+    "check_contact_0": {
+      "id": "validation-9ea7d35528f048ef",
+      "revision": 1
+    },
+    "check_contact_1": {
+      "id": "validation-b1706b04b70c42d5",
+      "revision": 1
+    },
+    "check_contact_2": {
+      "id": "validation-3f2ddc17015649ea",
+      "revision": 1
+    },
+    "check_properties": {
+      "id": "validation-7c3c2e472952409b",
+      "revision": 1
+    },
+    "check_uncertainty": {
+      "id": "validation-2f34dd4a003b4b34",
+      "revision": 1
+    },
+    "contact_0": {
+      "id": "volumetrics-d1143f39019747df",
+      "revision": 1
+    },
+    "contact_1": {
+      "id": "volumetrics-ff4c221e86aa4971",
+      "revision": 1
+    },
+    "contact_2": {
+      "id": "volumetrics-b3e4d2cc64c14b43",
+      "revision": 1
+    },
+    "properties": {
+      "id": "properties-1e67c43f7512421b",
+      "revision": 1
+    },
+    "report": {
+      "id": "calculation_report-aa7d156b06554d90",
+      "revision": 1
+    },
+    "uncertainty": {
+      "id": "scenarios-6fff770c92844cea",
+      "revision": 1
+    }
+  },
+  "report": {
+    "id": "calculation_report-aa7d156b06554d90",
+    "revision": 1
+  }
+}

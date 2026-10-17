@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-10-15T17:22:29.287779+00:00",
+  "hardware": {
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "machine": "arm64",
+    "processor": "arm",
+    "logical_cpus": 10,
+    "ram_bytes": 17179869184
+  },
+  "numpy": "2.5.4",
+  "rows": [
+    {
+      "shape": [
+        50,
+        50,
+        30
+      ],
+      "cells": 75000,
+      "preparation_seconds": 0.0002737909962888807,
+      "compute_seconds": 0.005052292006439529,
+      "full_wall_seconds": 0.00532608300272841,
+      "relative_error": 1.164153218269348e-16,
+      "process_rss_bytes": 176390144,
+      "precision": "float64",
+      "backend": "numpy-cpu",
+      "scope": "Static-volume kernel only, not GemPy/OPM or application cold start"
+    },
+    {
+      "shape": [
+        100,
+        100,
+        100
+      ],
+      "cells": 1000000,
+      "preparation_seconds": 0.004164665995631367,
+      "compute_seconds": 0.040215792003436945,
+      "full_wall_seconds": 0.04438045799906831,
+      "relative_error": 2.328306436538696e-16,
+      "process_rss_bytes": 294813696,
+      "precision": "float64",
+      "backend": "numpy-cpu",
+      "scope": "Static-volume kernel only, not GemPy/OPM or application cold start"
+    }
+  ],
+  "cuda": "NOT RUN",
+  "opm": "NOT RUN"
+}

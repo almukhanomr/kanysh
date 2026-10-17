@@ -1,0 +1,55 @@
+{
+  "project_id": "project-0a127ee0f34d4a91",
+  "sha256": "474a4b0706f50b549e2221934854b426479ad94b1a19f4adfdbf5fe5382b868f",
+  "scope": "Saved public Norne static sensitivity benchmark with three distinct in-reservoir OWCs; explicit Sw/Bo, not field reserves or equilibrium initialization",
+  "license": "ODbL-1.0 / DbCL-1.0, Statoil 2015; see bundled notices",
+  "source_commit": "eaa2261683a97027e057c2bc49612ad1c86390b3",
+  "contact_selection": {
+    "depths_m": [
+      2585.5,
+      2618.0,
+      2693.3
+    ],
+    "active_depth_range_m": [
+      2439.10888671875,
+      3090.133056640625
+    ],
+    "source": "EQUIL OWC records; applied uniformly only as static sensitivity alternatives, not regional equilibrium initialization",
+    "evidence": [
+      {
+        "region_id": 2,
+        "owc_depth_m": 2585.5,
+        "goc_depth_m": 2500.0,
+        "file": "full/norne/INCLUDE/PETRO/E3.prop",
+        "line": 19
+      },
+      {
+        "region_id": 3,
+        "owc_depth_m": 2618.0,
+        "goc_depth_m": 2582.0,
+        "file": "full/norne/INCLUDE/PETRO/E3.prop",
+        "line": 20
+      },
+      {
+        "region_id": 5,
+        "owc_depth_m": 2693.3,
+        "goc_depth_m": 2585.0,
+        "file": "full/norne/INCLUDE/PETRO/E3.prop",
+        "line": 22
+      }
+    ]
+  },
+  "contact_distinction": {
+    "status": "PASS",
+    "contacts_depth_m": [
+      2585.5,
+      2618.0,
+      2693.3
+    ],
+    "stoiip_standard_m3": [
+      43445409.37812338,
+      90908326.8459777,
+      234909634.21512446
+    ]
+  }
+}

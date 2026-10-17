@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "installed_wheel": "test-environment/opensubsurface-mcp-core-check/lib/python3.12/site-packages/opensubsurface/__init__.py",
+  "absent_dependencies": {
+    "gradio": true,
+    "plotly": true,
+    "openai": true,
+    "anthropic": true,
+    "faster_whisper": true,
+    "experimental": true
+  },
+  "headless_app": true,
+  "full_mcp_tools": 59,
+  "no_cloud_tools": true,
+  "analytic_stoiip": 2000000.000000001,
+  "offline_norne": true
+}

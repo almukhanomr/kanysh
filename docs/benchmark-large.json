@@ -1,0 +1,120 @@
+{
+  "format": "opensubsurface.cartesian.npy.v1",
+  "synthetic": true,
+  "sparse": false,
+  "shape": [
+    1024,
+    1024,
+    384
+  ],
+  "cells": 402653184,
+  "runtime": {
+    "versions": {
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "gempy": "2026.0.3",
+      "gempy-engine": "2026.0.3.post1",
+      "gstools": "1.7.0",
+      "torch": "2.14.1",
+      "segyio": "1.9.14",
+      "resdata": "6.3.5",
+      "matplotlib": "3.11.2"
+    },
+    "flow": null,
+    "source_hash": "909788d273673c6197fb415207933d58c75877c2fda82f16b9b3c24cd37b2c6e"
+  },
+  "rss_method": "20ms polling: parent + all child process RSS; shared pages counted repeatedly",
+  "physical_io_counters": "Not available portably; sizes below are logical file I/O, not physical device traffic",
+  "data_retained": false,
+  "started_at": "2026-10-16T11:32:49.283384+00:00",
+  "host": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "ram_bytes": 17179869184,
+    "logical_cpus": 10
+  },
+  "scope": "Raw model is the sum of seven real NPY files, not a single >15GiB file; synthetic Cartesian CPU control",
+  "phases": {
+    "generate_inputs": {
+      "elapsed_seconds": 20.958424584008753,
+      "peak_process_tree_rss_bytes": 173441024,
+      "rss_sample_count": 408,
+      "sampled_workspace_allocated_peak_bytes": 18140393472
+    },
+    "import_and_full_property_qc": {
+      "elapsed_seconds": 43.76497333397856,
+      "peak_process_tree_rss_bytes": 370622464,
+      "rss_sample_count": 817,
+      "sampled_workspace_allocated_peak_bytes": 23494352896
+    },
+    "volumetrics": {
+      "elapsed_seconds": 22.434340332983993,
+      "peak_process_tree_rss_bytes": 335511552,
+      "rss_sample_count": 419,
+      "sampled_workspace_allocated_peak_bytes": 23494447104
+    },
+    "independent_volume_and_property_validation": {
+      "elapsed_seconds": 33.53124566600309,
+      "peak_process_tree_rss_bytes": 329859072,
+      "rss_sample_count": 607,
+      "sampled_workspace_allocated_peak_bytes": 23494569984
+    }
+  },
+  "input_npy_bytes": 18119394176,
+  "input_allocated_bytes": 18140393472,
+  "snapshot_zip_bytes": 2668518262,
+  "input_sha256": {
+    "active": "4fb5378129b162fd661b03cb0c32d664561e42e28a2a6aeececc960b420d5ddc",
+    "kz_ratio": "14617c5e33483eb15e2e0c1657a061d80b385504a34b74c0385b1e30af4e7bd8",
+    "ntg": "5cb992c97662622586e8951a8a49144530f38dc95e50ac091678654e8a47615a",
+    "permeability_md": "a9a0ae9055788243f8da1918fd039650c1ed2b85281f33bbe7f83ac48f9f5c10",
+    "phi": "de7269dfb59db7f92b58603c1b1ae76b9e53244a9b8c3e26fe3bc7efd019a70b",
+    "sw": "e7e8570238c7016a4865e82e464645293769d22ff4bdd55199b2c723577c29d0",
+    "zones": "7888c5074cdc5e37f115b26688d8617653e678af9dd50795e037d3d730e7f889"
+  },
+  "contact_z_m": -192.5,
+  "expected": {
+    "GRV": 402653184,
+    "GRV_oil_interval": 201850880.0,
+    "NetRockVolume": 161480704.0,
+    "PV": 32296140.8,
+    "HCPV": 24222105.6,
+    "STOIIP": 20185088.000000004
+  },
+  "actual": {
+    "GRV": 402653184.0,
+    "GRV_oil_interval": 201850880.0,
+    "HCPV": 24222105.60000001,
+    "NetRockVolume": 161480704.0,
+    "PV": 32296140.80000001,
+    "STOIIP": 20185088.000000007
+  },
+  "numerical_validation": "PASS",
+  "property_validation": "PASS",
+  "working_block_bytes_estimate": 50331648,
+  "grid": {
+    "shape": [
+      1024,
+      1024,
+      384
+    ],
+    "extent": [
+      0,
+      1024.0,
+      0,
+      1024.0,
+      -384.0,
+      0
+    ]
+  },
+  "max_process_tree_rss_bytes": 370622464,
+  "analytical_control": "PASS",
+  "memory_control": "PASS",
+  "size_control": "PASS",
+  "non_sparse_input_control": "PASS",
+  "sampled_workspace_allocated_peak_bytes": 23494569984,
+  "disk_budget_control": "PASS",
+  "overall": "PASS",
+  "temporary_data_removed": true,
+  "completed_at": "2026-10-16T11:34:53.726055+00:00"
+}

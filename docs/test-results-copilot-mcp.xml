@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="40.199" timestamp="2026-10-17T12:40:25.021404+05:00"><testcase classname="tests.integration.test_copilot_mcp" name="test_mcp_import_qc_region_diff_reconcile_uncertainty_and_exports" time="39.694" /></testsuite></testsuites>

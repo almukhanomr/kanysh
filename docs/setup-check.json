@@ -1,0 +1,29 @@
+{
+  "home": "test-environment/opensubsurface-setup-proof/home",
+  "python": "3.12.14",
+  "environment": {
+    "numpy": "AVAILABLE",
+    "xtgeo": "AVAILABLE",
+    "gradio": "AVAILABLE",
+    "pyvista": "AVAILABLE",
+    "openpyxl": "AVAILABLE",
+    "reportlab": "AVAILABLE"
+  },
+  "claude_desktop": {
+    "path": "test-environment/opensubsurface-setup-proof/claude_desktop_config.json",
+    "status": "CONFIGURED",
+    "backup": null
+  },
+  "claude_code": {
+    "path": "test-environment/opensubsurface-setup-proof/claude-code.json",
+    "status": "CONFIGURED",
+    "backup": null
+  },
+  "client_connection_validation": "NOT RUN",
+  "windows_gpu_acceptance": "NOT RUN",
+  "instruction": "Restart Claude clients. Invoke begin/start, then add a folder in the viewer and call folder_assess. Configuration is not proof of a successful client connection.",
+  "viewer": {
+    "status": "NOT RUN",
+    "reason": "disabled by owner option"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "format": "opensubsurface.cartesian.npy.v1",
+  "synthetic": true,
+  "sparse": false,
+  "shape": [
+    256,
+    256,
+    128
+  ],
+  "cells": 8388608,
+  "runtime": {
+    "versions": {
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "gempy": "2026.0.3",
+      "gempy-engine": "2026.0.3.post1",
+      "gstools": "1.7.0",
+      "torch": "2.14.1",
+      "segyio": "1.9.14",
+      "resdata": "6.3.5",
+      "matplotlib": "3.11.2"
+    },
+    "flow": null,
+    "source_hash": "909788d273673c6197fb415207933d58c75877c2fda82f16b9b3c24cd37b2c6e"
+  },
+  "rss_method": "20ms polling: parent + all child process RSS; shared pages counted repeatedly",
+  "physical_io_counters": "Not available portably; sizes below are logical file I/O, not physical device traffic",
+  "data_retained": false,
+  "phases": {
+    "generate_inputs": {
+      "elapsed_seconds": 0.5010362089960836,
+      "peak_process_tree_rss_bytes": 186171392,
+      "rss_sample_count": 9
+    },
+    "import_and_full_property_qc": {
+      "elapsed_seconds": 2.7209773340146057,
+      "peak_process_tree_rss_bytes": 431177728,
+      "rss_sample_count": 47
+    },
+    "volumetrics": {
+      "elapsed_seconds": 1.9132014580245595,
+      "peak_process_tree_rss_bytes": 453394432,
+      "rss_sample_count": 34
+    },
+    "independent_volume_and_property_validation": {
+      "elapsed_seconds": 3.266092750011012,
+      "peak_process_tree_rss_bytes": 457670656,
+      "rss_sample_count": 57
+    }
+  },
+  "input_npy_bytes": 377488256,
+  "input_allocated_bytes": 377516032,
+  "snapshot_zip_bytes": 55596424,
+  "input_sha256": {
+    "active": "76f98f2cdc3edcec29dde0db3771abb20ea7c7a941ee4ad254ee06c9828b4ad6",
+    "kz_ratio": "686b129a35724b3979930177382a04a4930330c1f5252c8a189efac57c8a39e6",
+    "ntg": "4b1e4459eb6511c3842b9e43074178f9211b18514af94f9f106c69e077e1bde2",
+    "permeability_md": "9d25fd8f16655608c427d73793148eb99fc00bfe442ef6b574ed1aa8455a2011",
+    "phi": "f586fadc56f54a5d48f72f75e1b43cc246e06955c15fa69eac772271d2110ce5",
+    "sw": "c0a3df2f3d7063906322275a73845a7da6c767651d2cb91d91cb4e81dcb24ea5",
+    "zones": "2b0b4f5a9f3da899acd8b40ba1e0533c0c1ec406c17d4902cc41185aca2d1f5c"
+  },
+  "contact_z_m": -64.5,
+  "expected": {
+    "GRV": 8388608,
+    "GRV_oil_interval": 4227072.0,
+    "NetRockVolume": 3381657.6,
+    "PV": 676331.52,
+    "HCPV": 507248.64,
+    "STOIIP": 422707.2
+  },
+  "actual": {
+    "GRV": 8388608.0,
+    "GRV_oil_interval": 4227072.0,
+    "HCPV": 507248.64,
+    "NetRockVolume": 3381657.5999999996,
+    "PV": 676331.5200000001,
+    "STOIIP": 422707.2
+  },
+  "numerical_validation": "PASS",
+  "property_validation": "PASS",
+  "working_block_bytes_estimate": 50331648,
+  "grid": {
+    "shape": [
+      256,
+      256,
+      128
+    ],
+    "extent": [
+      0,
+      256.0,
+      0,
+      256.0,
+      -128.0,
+      0
+    ]
+  },
+  "max_process_tree_rss_bytes": 457670656,
+  "analytical_control": "PASS",
+  "memory_control": "PASS",
+  "size_control": "SMALL_CONTROL_ONLY",
+  "overall": "PASS"
+}

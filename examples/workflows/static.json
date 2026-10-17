@@ -1,0 +1,10 @@
+{
+  "name": "Контрольная модель → свойства → два контакта → сравнение",
+  "nodes": [
+    {"id":"model","operation":"model_build","arguments":{"project_id":{"$parameter":"project_id"},"horizontal_assumption":true}},
+    {"id":"properties","operation":"properties_assign","arguments":{"project_id":{"$parameter":"project_id"},"model":{"$node":"model"},"zones":{"1":{"phi":0.2,"ntg":0.8,"sw":0.25,"permeability_md":100}}}},
+    {"id":"full","operation":"volumetrics_calculate","arguments":{"project_id":{"$parameter":"project_id"},"properties":{"$node":"properties"},"contact_z_m":-1020,"bo":1.2}},
+    {"id":"half","operation":"volumetrics_calculate","arguments":{"project_id":{"$parameter":"project_id"},"properties":{"$node":"properties"},"contact_z_m":-1010,"bo":1.2}},
+    {"id":"compare","operation":"scenarios_compare","arguments":{"project_id":{"$parameter":"project_id"},"results":[{"$node":"full"},{"$node":"half"}]}}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "project_id": "project-5d3a862f0ff44ade",
+  "scene": {
+    "id": "scene-890dcf8458cd431d",
+    "revision": 1
+  },
+  "viewer_url": "http://127.0.0.1:8765/api/v1/projects/project-5d3a862f0ff44ade/scenes/scene-890dcf8458cd431d/1",
+  "http_status": 200,
+  "html_bytes": 8101152,
+  "backend": "pyvista-trame-offline",
+  "browser_check": "HTML loaded and rotated; no JavaScript errors; one upstream VTK.js labels warning",
+  "full_regression": "113 passed, 2 CUDA skipped"
+}

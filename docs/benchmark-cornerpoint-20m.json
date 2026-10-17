@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "cells": 20000000,
+  "shape": [
+    500,
+    400,
+    100
+  ],
+  "input_bytes": 5080692,
+  "source_encoding": "Real DATA text with standard RLE; 160M ZCORN values expanded to disk",
+  "materialized_corner_bytes": 3840000000,
+  "active_cells": 20000000,
+  "independent_full_geometry_and_properties": "PASS",
+  "analytic_grv_m3": 20000000000.0,
+  "import_seconds": 133.88398558299923,
+  "total_seconds": 144.7235469999996,
+  "worker_peak_rss_bytes": 1458208768,
+  "rss_limit_bytes": 2147483648,
+  "ram_check": "PASS",
+  "scope": "20M-cell regular COORD/ZCORN import; no claims for simulator initialization or every fault geometry",
+  "sampled_process_tree_rss_bytes": 1458208768
+}

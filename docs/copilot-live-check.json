@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "url": "http://127.0.0.1:8765/mcp/",
+  "agent_tools": 37,
+  "prompts": [
+    "begin",
+    "check_model",
+    "compare_versions",
+    "reconcile_petrel",
+    "regional_volumes",
+    "static_calculation",
+    "tornado_analysis"
+  ],
+  "new_capabilities": "PASS",
+  "cloud_tools_absent": true,
+  "scientific_algorithms": "covered by full 147-pass regression before metadata-only correction",
+  "real_chat_client": "NOT RUN"
+}

@@ -1,0 +1,89 @@
+{
+  "project_id": "project-8806e9288b3c4bf8",
+  "run_id": "job-9ad61541bb9c410c",
+  "status": "succeeded",
+  "stage": "Завершено",
+  "plan": {
+    "id": "calculation_plan-ce685e6ff072408c",
+    "revision": 1
+  },
+  "checkpoint": {
+    "id": "workflow_run-e87dcba2275545e5",
+    "revision": 1
+  },
+  "error": null,
+  "artifacts": {
+    "check_contact_0": {
+      "id": "validation-a28c1f28097a4fca",
+      "revision": 1
+    },
+    "check_contact_1": {
+      "id": "validation-f844f4038462452c",
+      "revision": 1
+    },
+    "check_contact_2": {
+      "id": "validation-7a646ce80fbd43c9",
+      "revision": 1
+    },
+    "check_input_0": {
+      "id": "validation-8c849b2171fd4d4e",
+      "revision": 1
+    },
+    "check_input_1": {
+      "id": "validation-01e2f8adba82427b",
+      "revision": 1
+    },
+    "check_model": {
+      "id": "validation-433b1a705f1c4c53",
+      "revision": 1
+    },
+    "check_properties": {
+      "id": "validation-fb72d72f693a44ab",
+      "revision": 1
+    },
+    "check_uncertainty": {
+      "id": "validation-2281759e0f894fa6",
+      "revision": 1
+    },
+    "contact_0": {
+      "id": "volumetrics-3a61232d40f74e09",
+      "revision": 1
+    },
+    "contact_1": {
+      "id": "volumetrics-b4e5807423db47c7",
+      "revision": 1
+    },
+    "contact_2": {
+      "id": "volumetrics-83f177935cb245ec",
+      "revision": 1
+    },
+    "input_0": {
+      "id": "dataset-75245c5e41fd4153",
+      "revision": 1
+    },
+    "input_1": {
+      "id": "dataset-1646b142562a469b",
+      "revision": 1
+    },
+    "model": {
+      "id": "model-1893496ee7ef446f",
+      "revision": 1
+    },
+    "properties": {
+      "id": "properties-859b4c69de324c18",
+      "revision": 1
+    },
+    "report": {
+      "id": "calculation_report-32a6f57f1c724fc7",
+      "revision": 1
+    },
+    "uncertainty": {
+      "id": "scenarios-5948f0a5d85a4d87",
+      "revision": 1
+    }
+  },
+  "report": {
+    "id": "calculation_report-32a6f57f1c724fc7",
+    "revision": 1
+  }
+}

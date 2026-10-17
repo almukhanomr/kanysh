@@ -1,0 +1,202 @@
+{
+  "operation": "regional_volumes",
+  "status": "PASS",
+  "validation_status": "PASS",
+  "scope": "Static initial oil and free gas, not recoverable reserves or production forecast",
+  "input": {
+    "id": "properties-1e7605ecf9904191",
+    "revision": 1,
+    "content_hash": "0788fcb929aa8a56200675a76d498c51e68cacf8e3cd6f673cacb3d5aa217da3",
+    "grid": {
+      "extent": [
+        455499.54429629206,
+        462761.01599210186,
+        7319175.3842250155,
+        7327069.0,
+        -3090.133,
+        -2439.109
+      ],
+      "shape": [
+        46,
+        112,
+        22
+      ]
+    },
+    "crs": "LOCAL_METRIC",
+    "vertical_datum": "NORNE_SOURCE_DEPTH_DATUM_UNVERIFIED"
+  },
+  "region_field": "EQLNUM",
+  "parameters": {
+    "assumptions": [
+      "PUBLIC DEMO ONLY: static sensitivity benchmark, not Norne reserves or simulator initialization",
+      "Source coordinates are metres and positive depth; canonical Z is negative source depth; CRS/datum are unverified",
+      "Explicit demo fluid assumptions: Sw=0.25, Bo=1.2 rm3/sm3, Bg=0.005 rm3/sm3, oil-zone Sg=0, gas-zone So=0.05",
+      "Only EQLNUM 1 and 3 are selected for the regional calculation; the original ACTNUM is preserved",
+      "QC findings in other regions remain visible; no cells are silently repaired or removed"
+    ],
+    "execution": {
+      "allow_cpu_fallback": false,
+      "allow_remote": false,
+      "device_policy": "cpu",
+      "max_retries": 0,
+      "placement": "local",
+      "precision": "float64",
+      "target_id": null,
+      "timeout_seconds": 3600
+    },
+    "idempotency_key": null,
+    "parameters_confirmed": true,
+    "polygon": null,
+    "polygon_boundary": null,
+    "polygon_hole_ids": [],
+    "polygon_ids": [],
+    "polygon_selection": null,
+    "project_id": "project-31aab3f619c94423",
+    "properties": {
+      "id": "properties-1e7605ecf9904191",
+      "revision": 1
+    },
+    "region_field": "EQLNUM",
+    "scenarios": [
+      {
+        "name": "EQUIL-regions-1-and-3",
+        "regions": [
+          {
+            "bg": 0.005,
+            "bo": 1.2,
+            "gas_oil_saturation": 0.05,
+            "goc_z_m": -2582.0,
+            "ntg_multiplier": null,
+            "ntg_override": null,
+            "oil_gas_saturation": 0.0,
+            "owc_z_m": -2692.0,
+            "phi_multiplier": null,
+            "phi_override": null,
+            "region_id": 1,
+            "sw_height": null,
+            "sw_multiplier": null,
+            "sw_override": null
+          },
+          {
+            "bg": 0.005,
+            "bo": 1.2,
+            "gas_oil_saturation": 0.05,
+            "goc_z_m": -2582.0,
+            "ntg_multiplier": null,
+            "ntg_override": null,
+            "oil_gas_saturation": 0.0,
+            "owc_z_m": -2618.0,
+            "phi_multiplier": null,
+            "phi_override": null,
+            "region_id": 3,
+            "sw_height": null,
+            "sw_multiplier": null,
+            "sw_override": null
+          }
+        ]
+      }
+    ]
+  },
+  "assumptions": [
+    "PUBLIC DEMO ONLY: static sensitivity benchmark, not Norne reserves or simulator initialization",
+    "Source coordinates are metres and positive depth; canonical Z is negative source depth; CRS/datum are unverified",
+    "Explicit demo fluid assumptions: Sw=0.25, Bo=1.2 rm3/sm3, Bg=0.005 rm3/sm3, oil-zone Sg=0, gas-zone So=0.05",
+    "Only EQLNUM 1 and 3 are selected for the regional calculation; the original ACTNUM is preserved",
+    "QC findings in other regions remain visible; no cells are silently repaired or removed"
+  ],
+  "tables": {
+    "regions": [
+      {
+        "scenario": "EQUIL-regions-1-and-3",
+        "region_id": 1,
+        "selected_cells": 4224,
+        "owc_z_m": -2692.0,
+        "goc_z_m": -2582.0,
+        "bo": 1.2,
+        "bg": 0.005,
+        "GRV": 317358329.53616685,
+        "GRV_oil_interval": 90356476.14376631,
+        "NetRockVolume": 60317764.92650142,
+        "PV": 14956437.66150937,
+        "HCPV": 11217328.246132027,
+        "TotalPV": 59484050.34906951,
+        "GasGRV": 192841095.08877352,
+        "GasPV": 38395134.2700135,
+        "GasHCPV": 26876593.989009447,
+        "STOIIP": 9347773.538443357,
+        "GIIP": 5375318797.801889
+      },
+      {
+        "scenario": "EQUIL-regions-1-and-3",
+        "region_id": 3,
+        "selected_cells": 1296,
+        "owc_z_m": -2618.0,
+        "goc_z_m": -2582.0,
+        "bo": 1.2,
+        "bg": 0.005,
+        "GRV": 126940440.34922123,
+        "GRV_oil_interval": 23763418.98388316,
+        "NetRockVolume": 18244977.615666162,
+        "PV": 4577369.5391396005,
+        "HCPV": 3433027.1543547,
+        "TotalPV": 22489076.825437784,
+        "GasGRV": 28226291.898512136,
+        "GasPV": 5868858.953727829,
+        "GasHCPV": 4108201.267609481,
+        "STOIIP": 2860855.96196225,
+        "GIIP": 821640253.5218961
+      }
+    ],
+    "scenarios": [
+      {
+        "scenario": "EQUIL-regions-1-and-3",
+        "GRV": 444298769.8853881,
+        "GRV_oil_interval": 114119895.12764947,
+        "NetRockVolume": 78562742.54216759,
+        "PV": 19533807.20064897,
+        "HCPV": 14650355.400486726,
+        "STOIIP": 12208629.500405606,
+        "TotalPV": 81973127.17450729,
+        "GasGRV": 221067386.98728564,
+        "GasPV": 44263993.22374132,
+        "GasHCPV": 30984795.25661893,
+        "GIIP": 6196959051.323786
+      }
+    ]
+  },
+  "metric_definitions": {
+    "GRV": "Full active selected region bulk volume m3",
+    "GRV_oil_interval": "Bulk above OWC and below GOC when provided, m3",
+    "NetRockVolume": "Oil interval bulk times NTG, m3",
+    "PV": "Oil interval net pore volume, m3",
+    "HCPV": "Oil interval pore volume times (1-Sw-Sg_oil), m3",
+    "STOIIP": "Initial oil HCPV/Bo, standard m3; not recoverable reserves",
+    "TotalPV": "Whole selected region net pore volume, m3",
+    "GasGRV": "Bulk above GOC, m3",
+    "GasPV": "Gas interval net pore volume, m3",
+    "GasHCPV": "Gas interval pore volume times (1-Sw-So_gas), m3",
+    "GIIP": "Free-gas GasHCPV/Bg, standard m3; excludes dissolved gas"
+  },
+  "independent_checks": [
+    {
+      "scenario": "EQUIL-regions-1-and-3",
+      "region_id": 1,
+      "name": "independent_determinant_hull_integral",
+      "status": "PASS",
+      "max_absolute_difference": 7.990002632141113e-05
+    },
+    {
+      "scenario": "EQUIL-regions-1-and-3",
+      "region_id": 3,
+      "name": "independent_determinant_hull_integral",
+      "status": "PASS",
+      "max_absolute_difference": 1.7657876014709473e-05
+    }
+  ],
+  "limitations": [
+    "Six-tetrahedron cell geometry convention; Z is positive upward",
+    "Saturation-height functions are evaluated at the mean corner height of each selected cell",
+    "Polygon selection, when requested, keeps whole cells by mean corner XY; no polygon fractional clipping",
+    "Free-gas GIIP excludes dissolved gas; all residual phase saturations and Bo/Bg are explicit user inputs"
+  ]
+}

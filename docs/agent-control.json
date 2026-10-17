@@ -1,0 +1,72 @@
+{
+  "profile": "static_volumetrics_v1",
+  "transport": "actual loopback HTTP MCP, official Python SDK",
+  "run_id": "job-9ad61541bb9c410c",
+  "plan": {
+    "id": "calculation_plan-ce685e6ff072408c",
+    "revision": 1
+  },
+  "report": {
+    "id": "calculation_report-32a6f57f1c724fc7",
+    "revision": 1
+  },
+  "runtime": {
+    "flow": null,
+    "source_hash": "d0055e6ae3dfbaa212318dc670bfe0dd77210fdbb52edfb8e4ebf63a44915974",
+    "versions": {
+      "gempy": "2026.0.3",
+      "gempy-engine": "2026.0.3.post1",
+      "gstools": "1.7.0",
+      "matplotlib": "3.11.2",
+      "numpy": "2.5.4",
+      "resdata": "6.3.5",
+      "scipy": "1.18.1",
+      "segyio": "1.9.14",
+      "torch": "2.14.1"
+    }
+  },
+  "numerical_validation": "PASS",
+  "stoiip_standard_m3": [
+    2000000.0,
+    1000000.0,
+    0.0
+  ],
+  "analytical_expected_standard_m3": [
+    2000000,
+    1000000,
+    0
+  ],
+  "uncertainty_samples": 30,
+  "seed": 42,
+  "regression": {
+    "passed": 89,
+    "skipped_cuda": 2,
+    "failures": 0,
+    "raw": "docs/test-results.xml"
+  },
+  "html_review": {
+    "browser": "Chrome headless",
+    "viewport": [
+      1440,
+      1050
+    ],
+    "horizontal_overflow": false,
+    "image_loaded": true,
+    "page_errors": [],
+    "script_count": 0
+  },
+  "not_run": [
+    "Windows/WSL2",
+    "NVIDIA CUDA",
+    "real ChatGPT/Claude client",
+    "OPM Flow",
+    ">15GB geological model"
+  ],
+  "files": {
+    "report.html": "ee9d1127c87894bf4264563466bc4c738f1ea0fd5c9924f72b0f63916b599f60",
+    "report.json": "a2805c0435751e2c40ea613faf7415d5d476614f551c4c180bfb8b26c9655b01",
+    "volumes.csv": "944036807ed1f2ea6a73d1e33c8916df858f913a751423dc9b1d26cf7b47a8f4",
+    "volumes.png": "67e1e64dda1c60df7e89d490843e08b2a1f92db7684d938023e4520fa18b8c29",
+    "report.zip": "27e0d4bf13bf30194803f184270da0e6ccb5929c55201bb25e1680b2e22714ad"
+  }
+}

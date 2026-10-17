@@ -1,0 +1,137 @@
+{
+  "dataset": "OPM SPE10 model2",
+  "commit": "eaa2261683a97027e057c2bc49612ad1c86390b3",
+  "cells": 1122000,
+  "source_statistics": {
+    "phi_min": 0.0,
+    "phi_max": 0.5,
+    "kx_min_md": 0.000665,
+    "kx_max_md": 20000.0,
+    "kz_min_md": 6.65e-08,
+    "kz_max_md": 6000.0,
+    "kz_over_kx_max": 0.30000149963259004,
+    "kx_equals_ky": true
+  },
+  "scope": "Upstream benchmark, not real field; static property/volume checks, not OPM forecast",
+  "assumptions": [
+    "Source geometry converted FIELD feet to metres; local X/Y origin0, unspecified source depth datum",
+    "All cells active; one zone; explicit NTG=1, Sw=.2, Bo=1 solely for numerical control",
+    "Preserve published PORO exactly, including remaining zeros, and original permeability; PERMY checked equal to PERMX"
+  ],
+  "source_files": [
+    {
+      "path": "raw/SPE10_MODEL2.DATA",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/spe10model2/SPE10_MODEL2.DATA",
+      "bytes": 4725,
+      "sha256": "74723a59446bdcae34e2b4f86c98216c03b1cf67286d1a6e45dc3134b2a96c63"
+    },
+    {
+      "path": "raw/SPE10MODEL2_TOPS.INC",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/spe10model2/SPE10MODEL2_TOPS.INC",
+      "bytes": 1028,
+      "sha256": "55b15a1c6793d02cbc3ff7f5f2d3cd386f0c0363d777d961a8c241a2bca75cc3"
+    },
+    {
+      "path": "raw/SPE10MODEL2_PHI.INC",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/spe10model2/SPE10MODEL2_PHI.INC",
+      "bytes": 19287206,
+      "sha256": "1426c8b40c8a1ffd3cce6653aad264685f100f82018d212ca74c8ae6d0bd1295"
+    },
+    {
+      "path": "raw/SPE10MODEL2_PERM.INC",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/spe10model2/SPE10MODEL2_PERM.INC",
+      "bytes": 57946924,
+      "sha256": "1829e331b64d2efb416fc40f4d68388087a11e4f7ff5ac6866eb8f1a88f8993d"
+    },
+    {
+      "path": "raw/odbl-10.txt",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/odbl-10.txt",
+      "bytes": 25279,
+      "sha256": "1d553feead201a7619788171b43cca12675e82d70b197aa45795986bb8603e72"
+    },
+    {
+      "path": "raw/dbcl-10.txt",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/dbcl-10.txt",
+      "bytes": 2374,
+      "sha256": "3cbfa990f26df856c6a7d3fff3d1f236e3b0165b1e8257ca0d00f15758754f81"
+    }
+  ],
+  "contacts": [
+    {
+      "name": "full_control",
+      "depth_ft": 12170,
+      "expected": {
+        "GRV": 12708600.750489602,
+        "GRV_oil_interval": 12708600.7504896,
+        "NetRockVolume": 12708600.7504896,
+        "PV": 2168046.332070062,
+        "HCPV": 1734437.0656560496,
+        "STOIIP": 1734437.0656560496
+      },
+      "actual": {
+        "GRV": 12708600.750489552,
+        "GRV_oil_interval": 12708600.750489498,
+        "NetRockVolume": 12708600.750489498,
+        "PV": 2168046.3320700424,
+        "HCPV": 1734437.0656560338,
+        "STOIIP": 1734437.0656560338
+      },
+      "independent_source_sum": "PASS"
+    },
+    {
+      "name": "fractional_control",
+      "depth_ft": 12085.5,
+      "expected": {
+        "GRV": 12708600.750489602,
+        "GRV_oil_interval": 6391678.612746241,
+        "NetRockVolume": 6391678.612746241,
+        "PV": 1145763.9688387362,
+        "HCPV": 916611.175070989,
+        "STOIIP": 916611.175070989
+      },
+      "actual": {
+        "GRV": 12708600.750489552,
+        "GRV_oil_interval": 6391678.612746174,
+        "NetRockVolume": 6391678.612746174,
+        "PV": 1145763.968838726,
+        "HCPV": 916611.1750709807,
+        "STOIIP": 916611.1750709807
+      },
+      "independent_source_sum": "PASS"
+    },
+    {
+      "name": "dry_control",
+      "depth_ft": 12000,
+      "expected": {
+        "GRV": 12708600.750489602,
+        "GRV_oil_interval": 0.0,
+        "NetRockVolume": 0.0,
+        "PV": 0.0,
+        "HCPV": 0.0,
+        "STOIIP": 0.0
+      },
+      "actual": {
+        "GRV": 12708600.750489552,
+        "GRV_oil_interval": 0.0,
+        "NetRockVolume": 0.0,
+        "PV": 0.0,
+        "HCPV": 0.0,
+        "STOIIP": 0.0
+      },
+      "independent_source_sum": "PASS"
+    }
+  ],
+  "status": "PASS",
+  "published_properties_preserved": true,
+  "project_id": "project-65620bf4a7c344d8",
+  "run_id": "job-f25ad48a0e1f4979",
+  "plan": {
+    "id": "calculation_plan-2afa2fc04df044d9",
+    "revision": 1
+  },
+  "report": {
+    "id": "calculation_report-498cd23e327141ce",
+    "revision": 1
+  },
+  "validation": "PASS"
+}

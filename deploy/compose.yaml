@@ -1,0 +1,15 @@
+# Local CPU development image. Build is NOT RUN on the current machine (Docker daemon unavailable).
+services:
+  kanysh-basic:
+    build:
+      context: ..
+      dockerfile: deploy/images/control-plane.Dockerfile
+    volumes:
+      - opensubsurface-data:/data
+    environment:
+      OPENSUBSURFACE_HOME: /data
+    # CLI intentionally binds loopback: this image is for host-network Linux development only.
+    # For bridged containers a reviewed HTTPS/auth server profile is still required.
+    network_mode: host
+volumes:
+  opensubsurface-data:

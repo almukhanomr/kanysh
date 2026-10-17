@@ -1,0 +1,80 @@
+{
+  "backend": "pyvista-trame-offline",
+  "displayed_cells": 44927,
+  "displayed_points": 0,
+  "actors": [
+    {
+      "ref": {
+        "id": "properties-1e7605ecf9904191",
+        "revision": 1
+      },
+      "kind": "properties",
+      "content_hash": "0788fcb929aa8a56200675a76d498c51e68cacf8e3cd6f673cacb3d5aa217da3",
+      "options": {
+        "cell_range": null,
+        "execution": {
+          "allow_cpu_fallback": false,
+          "allow_remote": false,
+          "device_policy": "cpu",
+          "max_retries": 0,
+          "placement": "local",
+          "precision": "float64",
+          "target_id": null,
+          "timeout_seconds": 3600
+        },
+        "field": "phi",
+        "idempotency_key": null,
+        "opacity": 1.0,
+        "origin_z_m": null,
+        "project_id": "project-31aab3f619c94423",
+        "ref": {
+          "id": "properties-1e7605ecf9904191",
+          "revision": 1
+        },
+        "seismic_axis": "inline",
+        "selected": false,
+        "slice_index": 0,
+        "stride": 1,
+        "velocity_m_s": null,
+        "vertical_exaggeration": 1.0,
+        "visible": true
+      },
+      "displayed_cells": 44927,
+      "total_cells": 113344
+    }
+  ],
+  "coordinate_unit": "m",
+  "z_direction": "up",
+  "scene": {
+    "properties-1e7605ecf9904191": {
+      "cell_range": null,
+      "execution": {
+        "allow_cpu_fallback": false,
+        "allow_remote": false,
+        "device_policy": "cpu",
+        "max_retries": 0,
+        "placement": "local",
+        "precision": "float64",
+        "target_id": null,
+        "timeout_seconds": 3600
+      },
+      "field": "phi",
+      "idempotency_key": null,
+      "opacity": 1.0,
+      "origin_z_m": null,
+      "project_id": "project-31aab3f619c94423",
+      "ref": {
+        "id": "properties-1e7605ecf9904191",
+        "revision": 1
+      },
+      "seismic_axis": "inline",
+      "selected": false,
+      "slice_index": 0,
+      "stride": 1,
+      "velocity_m_s": null,
+      "vertical_exaggeration": 1.0,
+      "visible": true
+    }
+  },
+  "scope": "Interactive bounded preview; calculations always use complete immutable inputs"
+}

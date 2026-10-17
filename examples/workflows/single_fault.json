@@ -1,0 +1,9 @@
+{
+ "name":"Один плоский разлом: CPU fixture; динамический bridge запрещён",
+ "nodes":[
+   {"id":"fault","operation":"fault_create","arguments":{"project_id":{"$parameter":"project_id"},"name":"F","points":[[100,0,-100],[100,100,-100],[100,100,0],[100,0,0]],"normal":[1,0,0]}},
+   {"id":"model","operation":"model_build","arguments":{"project_id":{"$parameter":"project_id"},"method":"gempy","grid":{"shape":[20,4,20],"extent":[0,200,0,100,-100,0]},"surfaces":{"$parameter":"surfaces"},"orientations":{"$parameter":"orientations"},"fault":{"$node":"fault"}}},
+   {"id":"properties","operation":"properties_assign","arguments":{"project_id":{"$parameter":"project_id"},"model":{"$node":"model"},"zones":{"2":{"phi":0.2,"ntg":0.8,"sw":0.25,"permeability_md":100},"3":{"phi":0.15,"ntg":0.7,"sw":0.3,"permeability_md":50}}}},
+   {"id":"volumes","operation":"volumetrics_calculate","arguments":{"project_id":{"$parameter":"project_id"},"properties":{"$node":"properties"},"zone_ids":[2,3],"contact_z_m":-100,"bo":1.2}}
+ ]
+}

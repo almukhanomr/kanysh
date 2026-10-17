@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "installation_method": "Current wheel installed without dependencies into existing previously verified UI-free environment; not a fresh dependency solve",
+  "fresh_offline_resolve": "NOT RUN: incomplete registry cache",
+  "absent_dependencies": {
+    "gradio": true,
+    "plotly": true,
+    "openai": true,
+    "anthropic": true,
+    "faster_whisper": true
+  },
+  "headless_app": true,
+  "agent_tools": 37,
+  "bundled_norne_offline": "PASS",
+  "xlsx_pdf_export": "PASS",
+  "source_scientific_status": "NOT RUN",
+  "runtime_source_hash": "516c2ad6e5c382e9a413f4a99c1198e88a09b11e5dcdecdb7f0e8820a92ae42f",
+  "dependency_metadata_check": {
+    "status": "PASS",
+    "packages": 114,
+    "method": "uv pip check; all installed requirements satisfied"
+  },
+  "package": "kanysh-basic",
+  "public_cli": "kanysh-basic"
+}

@@ -1,0 +1,68 @@
+{
+  "repository": "https://github.com/OPM/opm-data",
+  "commit": "eaa2261683a97027e057c2bc49612ad1c86390b3",
+  "license": "ODbL-1.0 database / DbCL-1.0 contents; Statoil 2015 notices retained",
+  "description": "Public Norne field corner-point benchmark, not original Petrel project or production forecast",
+  "files": [
+    {
+      "path": "raw/IRAP_1005.GRDECL",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/norne/INCLUDE/GRID/IRAP_1005.GRDECL",
+      "bytes": 11318913,
+      "sha256": "21d156ac65ff5e473601384cc4b5462a295acfc7e837a93e74ecae9f63c2f34f"
+    },
+    {
+      "path": "raw/ACTNUM_0704.prop",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/norne/INCLUDE/GRID/ACTNUM_0704.prop",
+      "bytes": 229483,
+      "sha256": "32e590467b04ca31e487a94d62ff6e91ffb87844ad2af5c40d713cef633f664f"
+    },
+    {
+      "path": "raw/NORNE_ATW2013.DATA",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/norne/NORNE_ATW2013.DATA",
+      "bytes": 12129,
+      "sha256": "f346c910f68a80b41ee54606bd434dc9e2993fffa7a2469235f396c2c0a9e080"
+    },
+    {
+      "path": "raw/README",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/norne/README",
+      "bytes": 687,
+      "sha256": "73be5dd043960904321c8ccc62de52a03036669364c588b3e5de1decce049842"
+    },
+    {
+      "path": "raw/PORO_0704.prop",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/norne/INCLUDE/PETRO/PORO_0704.prop",
+      "bytes": 1838473,
+      "sha256": "e5147647a2fbee651b9df27e1db4a7a70e8b3ee8231b92f93f7fb6a69a03e8cd"
+    },
+    {
+      "path": "raw/PERM_0704.prop",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/norne/INCLUDE/PETRO/PERM_0704.prop",
+      "bytes": 1838474,
+      "sha256": "bce56f7ff702dffe6ae2837bdda4ab4f6fa1d54c0be178cccd24005ded787eac"
+    },
+    {
+      "path": "raw/NTG_0704.prop",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/norne/INCLUDE/PETRO/NTG_0704.prop",
+      "bytes": 1838472,
+      "sha256": "b5b6a556f0edf6d9767a418adcba3a2821359fdf8ce374bc79cefc50bbe87496"
+    },
+    {
+      "path": "raw/FIPNUM_0704.prop",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/norne/INCLUDE/PETRO/FIPNUM_0704.prop",
+      "bytes": 1045067,
+      "sha256": "cc39524ab6abd8f017624209b9b30c49842c665b15158cd95d9274df6d371de7"
+    },
+    {
+      "path": "raw/odbl-10.txt",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/odbl-10.txt",
+      "bytes": 25279,
+      "sha256": "1d553feead201a7619788171b43cca12675e82d70b197aa45795986bb8603e72"
+    },
+    {
+      "path": "raw/dbcl-10.txt",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/dbcl-10.txt",
+      "bytes": 2374,
+      "sha256": "3cbfa990f26df856c6a7d3fff3d1f236e3b0165b1e8257ca0d00f15758754f81"
+    }
+  ]
+}

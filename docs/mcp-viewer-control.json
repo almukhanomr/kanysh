@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "client": "MCP Python SDK; not a ChatGPT/Claude model",
+  "run_id": "job-486fb2809fbd4c18",
+  "project_id": "project-e4e3886eef044991",
+  "numerical_validation": "PASS",
+  "report_url": "http://127.0.0.1:8765/viewer/projects/project-e4e3886eef044991/artifacts/calculation_report-c73c772dba6f49ce/1",
+  "scene_url": "http://127.0.0.1:8765/viewer/projects/project-e4e3886eef044991/artifacts/scene-58b7a7edece34635/1",
+  "scene_and_report_pages_http": 200,
+  "refs_unchanged": true
+}

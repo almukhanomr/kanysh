@@ -1,0 +1,24 @@
+{
+  "versions": {
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "gempy": "2026.0.3",
+    "gempy-engine": "2026.0.3.post1",
+    "gstools": "1.7.0",
+    "torch": "2.14.1",
+    "segyio": "1.9.14",
+    "resdata": "6.3.5",
+    "matplotlib": "3.11.2",
+    "xtgeo": "4.27.0",
+    "pyvista": "0.49.1",
+    "trame": "3.13.2",
+    "trame-pyvista": "0.2.1",
+    "zarr": "2.18.7",
+    "shapely": "2.2.0",
+    "openpyxl": "3.1.5",
+    "reportlab": "4.5.1",
+    "pypdf": "6.21.0"
+  },
+  "flow": null,
+  "source_hash": "516c2ad6e5c382e9a413f4a99c1198e88a09b11e5dcdecdb7f0e8820a92ae42f"
+}

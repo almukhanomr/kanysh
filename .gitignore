@@ -1,0 +1,66 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+.envrc
+.data/
+test-results/
+playwright-report/
+*.egg-info/
+
+# Machine-specific source file revisions; generate on the import host.
+examples/cartesian-grdecl/model*.json
+
+# Downloaded upstream data/cache and generated host-specific import manifests.
+examples/reference/spe10model2/raw/
+examples/reference/spe10model2/prepared/
+examples/reference/spe10model2/state/
+.mcp-data/
+.mcp-desktop/
+examples/reference/norne/raw/
+examples/reference/norne/prepared/
+examples/reference/norne/state/
+examples/reference/norne/full/
+
+# Local distribution builds.
+dist/
+
+# Local owner state, credentials and editor/OS artifacts.
+/state/
+/.opensubsurface/
+/.kanysh-basic/
+/.mcp.json
+/.claude.json
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+.coverage
+htmlcov/
+coverage.xml
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+credentials.json
+secrets.json
+*.log
+*.tmp
+*.bak
+
+# Local Advanced experiments are not part of the Basic GitHub publication.
+/experimental/

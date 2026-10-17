@@ -1,0 +1,1552 @@
+{
+  "schema_version": 1,
+  "title": "Synthetic GemPy → volumes → validation",
+  "run_id": "job-9ad61541bb9c410c",
+  "generated_at": "2026-10-16T05:25:06.002790+00:00",
+  "validation_status": "PASS",
+  "geological_fitness": "REQUIRES_REVIEW",
+  "scope": "Initial oil in place; not recoverable reserves or a production forecast",
+  "parent_status_at_export": "running",
+  "run_error": null,
+  "missing_nodes": [],
+  "failures": [],
+  "unavailable_nodes": {},
+  "contacts": [
+    {
+      "name": "full",
+      "contact_z_m": -1040.0,
+      "GRV": 20000000.0,
+      "GRV_oil_interval": 20000000.0,
+      "HCPV": 2400000.0,
+      "NetRockVolume": 15999999.999999998,
+      "PV": 3200000.0000000005,
+      "STOIIP": 2000000.0
+    },
+    {
+      "name": "half",
+      "contact_z_m": -1030.0,
+      "GRV": 20000000.0,
+      "GRV_oil_interval": 10000000.0,
+      "HCPV": 1200000.0,
+      "NetRockVolume": 7999999.999999999,
+      "PV": 1600000.0000000002,
+      "STOIIP": 1000000.0
+    },
+    {
+      "name": "dry",
+      "contact_z_m": -1020.0,
+      "GRV": 20000000.0,
+      "GRV_oil_interval": 0.0,
+      "HCPV": 0.0,
+      "NetRockVolume": 0.0,
+      "PV": 0.0,
+      "STOIIP": 0.0
+    }
+  ],
+  "checks": [
+    {
+      "node": "input_0",
+      "id": "integrity:dataset-75245c5e41fd4153",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_0",
+      "id": "dataset.rows",
+      "status": "PASS",
+      "required": true,
+      "observed": 4,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_0",
+      "id": "dataset.finite:x",
+      "status": "PASS",
+      "required": true,
+      "observed": {
+        "missing": 0
+      },
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_0",
+      "id": "dataset.units:x",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_0",
+      "id": "dataset.finite:y",
+      "status": "PASS",
+      "required": true,
+      "observed": {
+        "missing": 0
+      },
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_0",
+      "id": "dataset.units:y",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_0",
+      "id": "dataset.finite:z",
+      "status": "PASS",
+      "required": true,
+      "observed": {
+        "missing": 0
+      },
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_0",
+      "id": "dataset.units:z",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_0",
+      "id": "dataset.coordinates_declared",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_0",
+      "id": "geological_fitness",
+      "status": "NOT RUN",
+      "required": false,
+      "note": "Requires specialist assessment of assumptions and observations"
+    },
+    {
+      "node": "input_1",
+      "id": "integrity:dataset-1646b142562a469b",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.rows",
+      "status": "PASS",
+      "required": true,
+      "observed": 1,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.finite:x",
+      "status": "PASS",
+      "required": true,
+      "observed": {
+        "missing": 0
+      },
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.units:x",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.finite:y",
+      "status": "PASS",
+      "required": true,
+      "observed": {
+        "missing": 0
+      },
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.units:y",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.finite:z",
+      "status": "PASS",
+      "required": true,
+      "observed": {
+        "missing": 0
+      },
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.units:z",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.finite:nx",
+      "status": "PASS",
+      "required": true,
+      "observed": {
+        "missing": 0
+      },
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.finite:ny",
+      "status": "PASS",
+      "required": true,
+      "observed": {
+        "missing": 0
+      },
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.finite:nz",
+      "status": "PASS",
+      "required": true,
+      "observed": {
+        "missing": 0
+      },
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "orientations.unit_normals",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "dataset.coordinates_declared",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "input_1",
+      "id": "geological_fitness",
+      "status": "NOT RUN",
+      "required": false,
+      "note": "Requires specialist assessment of assumptions and observations"
+    },
+    {
+      "node": "model",
+      "id": "integrity:model-1893496ee7ef446f",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "model",
+      "id": "grid.shape",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "model",
+      "id": "grid.active",
+      "status": "PASS",
+      "required": true,
+      "observed": 96,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "model",
+      "id": "grid.zone_ids",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "model",
+      "id": "grid.extent",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "model",
+      "id": "model.geological_boundary_accuracy",
+      "status": "NOT RUN",
+      "required": false,
+      "note": "Requires observed horizon fit/convergence assessment"
+    },
+    {
+      "node": "model",
+      "id": "geological_fitness",
+      "status": "NOT RUN",
+      "required": false,
+      "note": "Requires specialist assessment of assumptions and observations"
+    },
+    {
+      "node": "properties",
+      "id": "integrity:properties-859b4c69de324c18",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "integrity:model-1893496ee7ef446f",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "grid.shape",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "grid.active",
+      "status": "PASS",
+      "required": true,
+      "observed": 96,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "grid.zone_ids",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "grid.extent",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.bounds:phi",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.bounds:ntg",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.bounds:sw",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.bounds:permeability_md",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.bounds:kz_ratio",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.model_grid",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.model_mapping",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:1:kz_ratio",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:1:ntg",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:1:permeability_md",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:1:phi",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:1:sw",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:2:kz_ratio",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:2:ntg",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:2:permeability_md",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:2:phi",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "properties.declaration:2:sw",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "properties",
+      "id": "geological_fitness",
+      "status": "NOT RUN",
+      "required": false,
+      "note": "Requires specialist assessment of assumptions and observations"
+    },
+    {
+      "node": "contact_0",
+      "id": "integrity:volumetrics-3a61232d40f74e09",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_0",
+      "id": "integrity:model-1893496ee7ef446f",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_0",
+      "id": "integrity:properties-859b4c69de324c18",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_0",
+      "id": "volumes:GRV",
+      "status": "PASS",
+      "required": true,
+      "observed": 20000000.0,
+      "expected": 20000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "serialized:GRV",
+      "status": "PASS",
+      "required": true,
+      "observed": 20000000.0,
+      "expected": 20000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "units:GRV",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_0",
+      "id": "volumes:GRV_oil_interval",
+      "status": "PASS",
+      "required": true,
+      "observed": 20000000.0,
+      "expected": 20000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "serialized:GRV_oil_interval",
+      "status": "PASS",
+      "required": true,
+      "observed": 20000000.0,
+      "expected": 20000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "units:GRV_oil_interval",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_0",
+      "id": "volumes:NetRockVolume",
+      "status": "PASS",
+      "required": true,
+      "observed": 15999999.999999998,
+      "expected": 16000000.000000004,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "serialized:NetRockVolume",
+      "status": "PASS",
+      "required": true,
+      "observed": 15999999.999999998,
+      "expected": 16000000.000000004,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "units:NetRockVolume",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_0",
+      "id": "volumes:PV",
+      "status": "PASS",
+      "required": true,
+      "observed": 3200000.0000000005,
+      "expected": 3199999.9999999995,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "serialized:PV",
+      "status": "PASS",
+      "required": true,
+      "observed": 3200000.0000000005,
+      "expected": 3199999.9999999995,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "units:PV",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_0",
+      "id": "volumes:HCPV",
+      "status": "PASS",
+      "required": true,
+      "observed": 2400000.0,
+      "expected": 2400000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "serialized:HCPV",
+      "status": "PASS",
+      "required": true,
+      "observed": 2400000.0,
+      "expected": 2400000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "units:HCPV",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_0",
+      "id": "volumes:STOIIP",
+      "status": "PASS",
+      "required": true,
+      "observed": 2000000.0,
+      "expected": 2000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "serialized:STOIIP",
+      "status": "PASS",
+      "required": true,
+      "observed": 2000000.0,
+      "expected": 2000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_0",
+      "id": "units:STOIIP",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_0",
+      "id": "geological_fitness",
+      "status": "NOT RUN",
+      "required": false,
+      "note": "Requires specialist assessment of assumptions and observations"
+    },
+    {
+      "node": "contact_1",
+      "id": "integrity:volumetrics-b4e5807423db47c7",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_1",
+      "id": "integrity:model-1893496ee7ef446f",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_1",
+      "id": "integrity:properties-859b4c69de324c18",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_1",
+      "id": "volumes:GRV",
+      "status": "PASS",
+      "required": true,
+      "observed": 20000000.0,
+      "expected": 20000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "serialized:GRV",
+      "status": "PASS",
+      "required": true,
+      "observed": 20000000.0,
+      "expected": 20000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "units:GRV",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_1",
+      "id": "volumes:GRV_oil_interval",
+      "status": "PASS",
+      "required": true,
+      "observed": 10000000.0,
+      "expected": 10000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "serialized:GRV_oil_interval",
+      "status": "PASS",
+      "required": true,
+      "observed": 10000000.0,
+      "expected": 10000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "units:GRV_oil_interval",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_1",
+      "id": "volumes:NetRockVolume",
+      "status": "PASS",
+      "required": true,
+      "observed": 7999999.999999999,
+      "expected": 8000000.000000002,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "serialized:NetRockVolume",
+      "status": "PASS",
+      "required": true,
+      "observed": 7999999.999999999,
+      "expected": 8000000.000000002,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "units:NetRockVolume",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_1",
+      "id": "volumes:PV",
+      "status": "PASS",
+      "required": true,
+      "observed": 1600000.0000000002,
+      "expected": 1599999.9999999998,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "serialized:PV",
+      "status": "PASS",
+      "required": true,
+      "observed": 1600000.0000000002,
+      "expected": 1599999.9999999998,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "units:PV",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_1",
+      "id": "volumes:HCPV",
+      "status": "PASS",
+      "required": true,
+      "observed": 1200000.0,
+      "expected": 1200000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "serialized:HCPV",
+      "status": "PASS",
+      "required": true,
+      "observed": 1200000.0,
+      "expected": 1200000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "units:HCPV",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_1",
+      "id": "volumes:STOIIP",
+      "status": "PASS",
+      "required": true,
+      "observed": 1000000.0,
+      "expected": 1000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "serialized:STOIIP",
+      "status": "PASS",
+      "required": true,
+      "observed": 1000000.0,
+      "expected": 1000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_1",
+      "id": "units:STOIIP",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_1",
+      "id": "geological_fitness",
+      "status": "NOT RUN",
+      "required": false,
+      "note": "Requires specialist assessment of assumptions and observations"
+    },
+    {
+      "node": "contact_2",
+      "id": "integrity:volumetrics-83f177935cb245ec",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_2",
+      "id": "integrity:model-1893496ee7ef446f",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_2",
+      "id": "integrity:properties-859b4c69de324c18",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_2",
+      "id": "volumes:GRV",
+      "status": "PASS",
+      "required": true,
+      "observed": 20000000.0,
+      "expected": 20000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "serialized:GRV",
+      "status": "PASS",
+      "required": true,
+      "observed": 20000000.0,
+      "expected": 20000000.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "units:GRV",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_2",
+      "id": "volumes:GRV_oil_interval",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "serialized:GRV_oil_interval",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "units:GRV_oil_interval",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_2",
+      "id": "volumes:NetRockVolume",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "serialized:NetRockVolume",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "units:NetRockVolume",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_2",
+      "id": "volumes:PV",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "serialized:PV",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "units:PV",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_2",
+      "id": "volumes:HCPV",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "serialized:HCPV",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "units:HCPV",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_2",
+      "id": "volumes:STOIIP",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "serialized:STOIIP",
+      "status": "PASS",
+      "required": true,
+      "observed": 0.0,
+      "expected": 0.0,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "contact_2",
+      "id": "units:STOIIP",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "contact_2",
+      "id": "geological_fitness",
+      "status": "NOT RUN",
+      "required": false,
+      "note": "Requires specialist assessment of assumptions and observations"
+    },
+    {
+      "node": "uncertainty",
+      "id": "integrity:scenarios-5948f0a5d85a4d87",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "uncertainty",
+      "id": "integrity:model-1893496ee7ef446f",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "uncertainty",
+      "id": "integrity:properties-859b4c69de324c18",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "uncertainty",
+      "id": "samples.count",
+      "status": "PASS",
+      "required": true,
+      "observed": 30,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "uncertainty",
+      "id": "samples.seed_parameters_and_all_metrics",
+      "status": "PASS",
+      "required": true,
+      "observed": null,
+      "expected": null,
+      "note": null
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:min",
+      "status": "PASS",
+      "required": true,
+      "observed": 1543803.7657872287,
+      "expected": 1543803.7657872287,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:max",
+      "status": "PASS",
+      "required": true,
+      "observed": 2475622.351636756,
+      "expected": 2475622.351636756,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:mean",
+      "status": "PASS",
+      "required": true,
+      "observed": 2059138.742320112,
+      "expected": 2059138.7423201127,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:std",
+      "status": "PASS",
+      "required": true,
+      "observed": 290928.2224053475,
+      "expected": 290928.2224053476,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:Q10",
+      "status": "PASS",
+      "required": true,
+      "observed": 1624720.0041967558,
+      "expected": 1624720.0041967565,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:Q50",
+      "status": "PASS",
+      "required": true,
+      "observed": 2137764.759601365,
+      "expected": 2137764.759601365,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:Q90",
+      "status": "PASS",
+      "required": true,
+      "observed": 2396485.508074838,
+      "expected": 2396485.508074838,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:P90",
+      "status": "PASS",
+      "required": true,
+      "observed": 1624720.0041967558,
+      "expected": 1624720.0041967565,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:P50",
+      "status": "PASS",
+      "required": true,
+      "observed": 2137764.759601365,
+      "expected": 2137764.759601365,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "statistics:P10",
+      "status": "PASS",
+      "required": true,
+      "observed": 2396485.508074838,
+      "expected": 2396485.508074838,
+      "note": "rtol=1e-08, atol=1e-07"
+    },
+    {
+      "node": "uncertainty",
+      "id": "geological_fitness",
+      "status": "NOT RUN",
+      "required": false,
+      "note": "Requires specialist assessment of assumptions and observations"
+    }
+  ],
+  "plan": {
+    "id": "calculation_plan-ce685e6ff072408c",
+    "revision": 1,
+    "content_hash": "e633765c01d39f1790a93efa3f0c2b0d5e411cf22ccf74c4ba52736e3c4aa0e5"
+  },
+  "assumptions": [
+    "Synthetic analytical control, not field data or a production forecast",
+    "Horizontal horizon, homogeneous reservoir below it, constant Bo and horizontal OWC"
+  ],
+  "specification": {
+    "assumptions": [
+      "Synthetic analytical control, not field data or a production forecast",
+      "Horizontal horizon, homogeneous reservoir below it, constant Bo and horizontal OWC"
+    ],
+    "bo": 1.2,
+    "contacts": [
+      {
+        "name": "full",
+        "z_m": -1040.0
+      },
+      {
+        "name": "half",
+        "z_m": -1030.0
+      },
+      {
+        "name": "dry",
+        "z_m": -1020.0
+      }
+    ],
+    "execution": {
+      "allow_cpu_fallback": false,
+      "allow_remote": false,
+      "device_policy": "cpu",
+      "max_retries": 0,
+      "placement": "local",
+      "precision": "float64",
+      "target_id": null,
+      "timeout_seconds": 3600
+    },
+    "grid": {
+      "extent": [
+        0.0,
+        1000.0,
+        0.0,
+        1000.0,
+        -1040.0,
+        -1000.0
+      ],
+      "shape": [
+        3,
+        4,
+        8
+      ]
+    },
+    "horizons_z": [],
+    "horizontal_assumption": false,
+    "inputs": [
+      {
+        "file_revision": "adca78be5ef9df7d64cce59d644981c0e7a08c26ef14c6ccd312d4bad48c576c",
+        "kind": "surfaces",
+        "path": "surfaces.csv",
+        "source_id": "source-02a2bee62d50478f",
+        "units": {
+          "x": "m",
+          "y": "m",
+          "z": "m"
+        }
+      },
+      {
+        "file_revision": "ae973c49b3075f835a93d70f18435a8a858a56650afd4981bc99f971db91af78",
+        "kind": "orientations",
+        "path": "orientations.csv",
+        "source_id": "source-02a2bee62d50478f",
+        "units": {
+          "x": "m",
+          "y": "m",
+          "z": "m"
+        }
+      }
+    ],
+    "method": "gempy",
+    "name": "Synthetic GemPy → volumes → validation",
+    "profile": "static_volumetrics_v1",
+    "project_id": "project-8806e9288b3c4bf8",
+    "stratigraphic_order": [],
+    "uncertainty": {
+      "contact_name": "full",
+      "count": 30,
+      "distributions": {
+        "phi": {
+          "high": 0.25,
+          "kind": "uniform",
+          "low": 0.15,
+          "mode": null
+        }
+      },
+      "seed": 42
+    },
+    "zone_ids": [
+      2
+    ],
+    "zones": {
+      "1": {
+        "kz_ratio": 0.1,
+        "ntg": 0.0,
+        "permeability_md": 0.0,
+        "phi": 0.0,
+        "sw": 1.0
+      },
+      "2": {
+        "kz_ratio": 0.1,
+        "ntg": 0.8,
+        "permeability_md": 100.0,
+        "phi": 0.2,
+        "sw": 0.25
+      }
+    }
+  },
+  "runtime": {
+    "flow": null,
+    "source_hash": "d0055e6ae3dfbaa212318dc670bfe0dd77210fdbb52edfb8e4ebf63a44915974",
+    "versions": {
+      "gempy": "2026.0.3",
+      "gempy-engine": "2026.0.3.post1",
+      "gstools": "1.7.0",
+      "matplotlib": "3.11.2",
+      "numpy": "2.5.4",
+      "resdata": "6.3.5",
+      "scipy": "1.18.1",
+      "segyio": "1.9.14",
+      "torch": "2.14.1"
+    }
+  },
+  "inputs": [
+    {
+      "content_hash": "d8d4cde621afac4bc4827aca6971854725e8c6607923080d3c02da34dc94382e",
+      "file": "input-0.csv",
+      "file_revision": "adca78be5ef9df7d64cce59d644981c0e7a08c26ef14c6ccd312d4bad48c576c",
+      "kind": "surfaces",
+      "path": "surfaces.csv",
+      "size_bytes": 74,
+      "source_id": "source-02a2bee62d50478f",
+      "units": {
+        "x": "m",
+        "y": "m",
+        "z": "m"
+      }
+    },
+    {
+      "content_hash": "c16e1b199e5886f7a94d04773ad6294a8dea68f4938348d292ac0badedae92e0",
+      "file": "input-1.csv",
+      "file_revision": "ae973c49b3075f835a93d70f18435a8a858a56650afd4981bc99f971db91af78",
+      "kind": "orientations",
+      "path": "orientations.csv",
+      "size_bytes": 45,
+      "source_id": "source-02a2bee62d50478f",
+      "units": {
+        "x": "m",
+        "y": "m",
+        "z": "m"
+      }
+    }
+  ],
+  "evidence": {
+    "check_contact_0": {
+      "id": "validation-a28c1f28097a4fca",
+      "revision": 1,
+      "content_hash": "27ebc76e4b7b970758156ea2affad3a7ccae04556aa0ba725749fac3b25b7f53"
+    },
+    "check_contact_1": {
+      "id": "validation-f844f4038462452c",
+      "revision": 1,
+      "content_hash": "9a83ca84173bc05184e294624d52f9e9b9b0441d530539e451753e0956d9f70d"
+    },
+    "check_contact_2": {
+      "id": "validation-7a646ce80fbd43c9",
+      "revision": 1,
+      "content_hash": "dd7dce158ec81b832b6a567e9b962ef77c9a79ca99ebf83db2f0e27e94430777"
+    },
+    "check_input_0": {
+      "id": "validation-8c849b2171fd4d4e",
+      "revision": 1,
+      "content_hash": "cfe407371b5a238e8a0cfd4fa937308309c376da4d9536aec18e19298d3ed225"
+    },
+    "check_input_1": {
+      "id": "validation-01e2f8adba82427b",
+      "revision": 1,
+      "content_hash": "bf06a15bc2044270de36df76096dc42d591b03599b53e50b88fca2f565e23e63"
+    },
+    "check_model": {
+      "id": "validation-433b1a705f1c4c53",
+      "revision": 1,
+      "content_hash": "147be535e0f8025fe8c056106fb7f307da467fad7736a59b7e05deed6f726be4"
+    },
+    "check_properties": {
+      "id": "validation-fb72d72f693a44ab",
+      "revision": 1,
+      "content_hash": "4dc0476a192b44fdffd1d1bf8f6529f0f65641250d3974c5ffa2f7a57eaa19fd"
+    },
+    "check_uncertainty": {
+      "id": "validation-2281759e0f894fa6",
+      "revision": 1,
+      "content_hash": "470a637072551c1668bdd02ab6005679660bc490f669754b2cdf3b73869fc2c9"
+    },
+    "contact_0": {
+      "id": "volumetrics-3a61232d40f74e09",
+      "revision": 1,
+      "content_hash": "a14133f1b30fafc702672dbe81e7962704d03d930f82d8645125abd987f675c9"
+    },
+    "contact_1": {
+      "id": "volumetrics-b4e5807423db47c7",
+      "revision": 1,
+      "content_hash": "d25039c4a163051c16c86c298444d9887bd63e93d9b71b7e7b75255961e3d66d"
+    },
+    "contact_2": {
+      "id": "volumetrics-83f177935cb245ec",
+      "revision": 1,
+      "content_hash": "fa47678f1a15bd956b62d9ce0b7776f8aedafd15e204f981c6dc7b5d522f021a"
+    },
+    "input_0": {
+      "id": "dataset-75245c5e41fd4153",
+      "revision": 1,
+      "content_hash": "f73064ec458d9d887008920ee4f0b95ff983db318bfa537dff52a2e4d53fd5b7"
+    },
+    "input_1": {
+      "id": "dataset-1646b142562a469b",
+      "revision": 1,
+      "content_hash": "4c83f0f2a2646dd633328737a7808f5ebd04f186f1de57504c122562b34eb739"
+    },
+    "model": {
+      "id": "model-1893496ee7ef446f",
+      "revision": 1,
+      "content_hash": "4738fdb2dd05526dfd7298376a6f149209b81a902e8a61854e8cc2d9834ab1e9"
+    },
+    "plan": {
+      "id": "calculation_plan-ce685e6ff072408c",
+      "revision": 1,
+      "content_hash": "e633765c01d39f1790a93efa3f0c2b0d5e411cf22ccf74c4ba52736e3c4aa0e5"
+    },
+    "properties": {
+      "id": "properties-859b4c69de324c18",
+      "revision": 1,
+      "content_hash": "725d83bbe5cf39099f76f80e5b362c9e5f4d5bdff31a3b3dfbead4175a9375c5"
+    },
+    "uncertainty": {
+      "id": "scenarios-5948f0a5d85a4d87",
+      "revision": 1,
+      "content_hash": "ab8628fe4a89d4862d3ff4474fc62e9360e130d3a57076eb61f99aed8d9339f9"
+    }
+  },
+  "uncertainty": {
+    "backend": "cpu",
+    "count": 30,
+    "metric": "STOIIP",
+    "seed": 42,
+    "statistics": {
+      "P10": 2396485.508074838,
+      "P50": 2137764.759601365,
+      "P90": 1624720.0041967558,
+      "Q10": 1624720.0041967558,
+      "Q50": 2137764.759601365,
+      "Q90": 2396485.508074838,
+      "convention": "P — вероятность превышения; P90=Q10",
+      "max": 2475622.351636756,
+      "mean": 2059138.742320112,
+      "method": "linear",
+      "min": 1543803.7657872287,
+      "std": 290928.2224053475
+    },
+    "unit": "standard_m3"
+  }
+}

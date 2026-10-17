@@ -1,0 +1,44 @@
+{
+  "repository": "https://github.com/OPM/opm-data",
+  "commit": "eaa2261683a97027e057c2bc49612ad1c86390b3",
+  "license": "ODbL-1.0 database / DbCL-1.0 contents; original files and notices retained",
+  "description": "Upstream public SPE10 benchmark; not a real field dataset or solver reference output",
+  "files": [
+    {
+      "path": "raw/SPE10_MODEL2.DATA",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/spe10model2/SPE10_MODEL2.DATA",
+      "bytes": 4725,
+      "sha256": "74723a59446bdcae34e2b4f86c98216c03b1cf67286d1a6e45dc3134b2a96c63"
+    },
+    {
+      "path": "raw/SPE10MODEL2_TOPS.INC",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/spe10model2/SPE10MODEL2_TOPS.INC",
+      "bytes": 1028,
+      "sha256": "55b15a1c6793d02cbc3ff7f5f2d3cd386f0c0363d777d961a8c241a2bca75cc3"
+    },
+    {
+      "path": "raw/SPE10MODEL2_PHI.INC",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/spe10model2/SPE10MODEL2_PHI.INC",
+      "bytes": 19287206,
+      "sha256": "1426c8b40c8a1ffd3cce6653aad264685f100f82018d212ca74c8ae6d0bd1295"
+    },
+    {
+      "path": "raw/SPE10MODEL2_PERM.INC",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/spe10model2/SPE10MODEL2_PERM.INC",
+      "bytes": 57946924,
+      "sha256": "1829e331b64d2efb416fc40f4d68388087a11e4f7ff5ac6866eb8f1a88f8993d"
+    },
+    {
+      "path": "raw/odbl-10.txt",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/odbl-10.txt",
+      "bytes": 25279,
+      "sha256": "1d553feead201a7619788171b43cca12675e82d70b197aa45795986bb8603e72"
+    },
+    {
+      "path": "raw/dbcl-10.txt",
+      "source": "https://raw.githubusercontent.com/OPM/opm-data/eaa2261683a97027e057c2bc49612ad1c86390b3/dbcl-10.txt",
+      "bytes": 2374,
+      "sha256": "3cbfa990f26df856c6a7d3fff3d1f236e3b0165b1e8257ca0d00f15758754f81"
+    }
+  ]
+}

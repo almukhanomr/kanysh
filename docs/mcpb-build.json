@@ -1,0 +1,8 @@
+{
+  "path": "dist/kanysh-basic-0.2.0-dev1.mcpb",
+  "sha256": "4a25815c2cb9bf1cc786d860d9ad7ffbb2165635635b17e32996814d0c91dfca",
+  "archive_check": "PASS",
+  "host_installation": "NOT RUN",
+  "windows_acceptance": "NOT RUN",
+  "dependency_installation": "Host UV runtime; requires network and compatible packages"
+}

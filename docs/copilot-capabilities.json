@@ -1,0 +1,107 @@
+{
+  "profile": "local-cpu",
+  "cpu": true,
+  "cuda_available": false,
+  "cuda_device": null,
+  "cuda_devices": [],
+  "host": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "logical_cpus": 10
+  },
+  "memory": {
+    "total_bytes": 17179869184,
+    "available_bytes": 4329586688
+  },
+  "opm_available": false,
+  "remote_execution": "not configured",
+  "large_models": {
+    "storage": "cartesian-zarr-flat-v1",
+    "import_format": "Cartesian NPY / GRDECL properties manifest",
+    "max_cells": 2000000000,
+    "max_block_cells": 1048576,
+    "operations": [
+      "grid_import",
+      "volumetrics_calculate",
+      "scenarios_run",
+      "result_validate"
+    ],
+    "device": "CPU",
+    "gempy_out_of_core": false
+  },
+  "cornerpoint": {
+    "import_formats": [
+      "DATA",
+      "GRDECL",
+      "EGRID",
+      "ROFF"
+    ],
+    "limit_scope": "max_cells applies only to legacy XTGeo geometry; static DATA uses static_deck below",
+    "max_cells": 2000000,
+    "import_geometry": "full RAM with preflight",
+    "calculations": "chunked CPU tetra6",
+    "native_petrel_project": false
+  },
+  "static_deck": {
+    "operation": "eclipse_import",
+    "storage": "cornerpoint-zarr-v1",
+    "geometry": "Bounded COORD/ZCORN blocks; ASCII DATA/GRDECL only",
+    "parser_limit_cells": 500000000,
+    "max_block_cells": 16384,
+    "demonstrated_cells": 20000000,
+    "demonstrated_peak_rss_bytes": 1458208768,
+    "demonstrated_scope": "Synthetic regular corner-point grid, complete geometry/property comparison; not large field EGRID acceptance",
+    "norne_full_data": "Static import PASS; equilibrium SWAT and OPM NOT RUN",
+    "unsupported_keywords": "Explicit file/line report; never silently applied",
+    "device": "CPU"
+  },
+  "copilot": {
+    "operations": [
+      "folder_assess",
+      "eclipse_import",
+      "geodata_import",
+      "model_qc",
+      "volumes_reconcile",
+      "wells_vs_model",
+      "model_diff",
+      "regional_volumes",
+      "sensitivity_tornado",
+      "uncertainty_monte_carlo",
+      "results_export"
+    ],
+    "reports": [
+      "HTML",
+      "JSON",
+      "CSV",
+      "PNG",
+      "XLSX",
+      "PDF"
+    ],
+    "proposals": "File/line candidates require explicit user confirmation before plans/calculations",
+    "geological_fitness": "REQUIRES_REVIEW",
+    "windows_wsl_gpu_acceptance": "NOT RUN",
+    "claude_desktop_extension_install": "NOT RUN"
+  },
+  "scene": {
+    "backend": "PyVista/trame offline HTML",
+    "extra": "viewer",
+    "max_cells": 200000,
+    "max_points": 500000,
+    "persisted": true,
+    "twt_overlay": "explicit velocity/origin required"
+  },
+  "large_seismic": {
+    "operation": "seismic_source_import",
+    "dtype": "float32",
+    "max_input_bytes": 1099511627776,
+    "profile": "sorted regular zero-offset poststack; two bounded passes",
+    "openvds": false
+  },
+  "modules": {
+    "gempy": "2026.0.3",
+    "gstools": "1.7.0",
+    "segyio": "1.9.14",
+    "dask": "2026.8.0",
+    "mcp": "1.30.0"
+  }
+}

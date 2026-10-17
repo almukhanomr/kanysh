@@ -1,0 +1,1 @@
+{"profile":"local-cpu","host":"127.0.0.1","port":8765,"precision":"float64","dask_transport":"inproc","status":"validated on macOS arm64; Linux NOT RUN"}

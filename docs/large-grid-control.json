@@ -1,0 +1,48 @@
+{
+  "transport": "actual HTTP MCP SDK on running localhost daemon",
+  "run_id": "job-2efd90e47c444203",
+  "plan": {
+    "id": "calculation_plan-9062a2ebb4e644d3",
+    "revision": 1
+  },
+  "report": {
+    "id": "calculation_report-aa7d156b06554d90",
+    "revision": 1
+  },
+  "runtime": {
+    "flow": null,
+    "source_hash": "909788d273673c6197fb415207933d58c75877c2fda82f16b9b3c24cd37b2c6e",
+    "versions": {
+      "gempy": "2026.0.3",
+      "gempy-engine": "2026.0.3.post1",
+      "gstools": "1.7.0",
+      "matplotlib": "3.11.2",
+      "numpy": "2.5.4",
+      "resdata": "6.3.5",
+      "scipy": "1.18.1",
+      "segyio": "1.9.14",
+      "torch": "2.14.1"
+    }
+  },
+  "numerical_validation": "PASS",
+  "stoiip_standard_m3": [
+    419.9000000000002,
+    221.00000000000009,
+    0.0
+  ],
+  "expected_stoiip_standard_m3": [
+    419.9,
+    221,
+    0
+  ],
+  "source_format": "opensubsurface.cartesian.grdecl-properties.v1",
+  "scope": "Synthetic uniform Cartesian GRDECL property exchange, not arbitrary Petrel or corner-point geometry",
+  "external_llm_clients": "NOT RUN",
+  "stress_test_over_15_gib": "Separate synthetic Cartesian raw-model test PASS; see docs/benchmark-large.json. This SDK fixture is small.",
+  "full_regression": {
+    "passed": 104,
+    "skipped_cuda": 2,
+    "failures": 0,
+    "evidence": "docs/test-results.xml"
+  }
+}

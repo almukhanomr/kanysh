@@ -1,0 +1,329 @@
+{
+  "timestamp": "2026-10-17T18:11:33+05:00",
+  "environment": "macOS arm64 Python3.12.14 CPU",
+  "release_accepted": false,
+  "acceptance_scope": "Kanysh Advanced historical VISION; not the accepted Kanysh Basic A-D/O scope",
+  "copilot_scope_accepted": true,
+  "criteria": [
+    {
+      "id": "A-01",
+      "name": "Чистая local CPU установка",
+      "status": "PASS",
+      "evidence": "fresh core wheel install without Gradio/Plotly/LLM SDK: headless API, CPU calculation and offline Norne PASS; docs/core-install-check.json; browser viewer/report proof in MCP_FIRST_RESULT.md",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-02",
+      "name": "Импорт/QC",
+      "status": "PASS",
+      "evidence": "tests/scientific/test_imports.py; demo wells shared imports; supported CSV/LAS2 scope; LAS1.2 additional fixture pending",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-03",
+      "name": "Units/CRS/depth",
+      "status": "PASS",
+      "evidence": "feet→m; invalid datum API; time/Z roundtrip and asymmetric GridMapping; projected metric-only profile",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-04",
+      "name": "Геология",
+      "status": "PASS",
+      "evidence": "Real GemPy CPU horizontal boundary + 3-resolution dipping convergence",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-05",
+      "name": "Объёмы",
+      "status": "NOT RUN",
+      "evidence": "CPU analytical all metrics PASS; CUDA half of combined criterion NOT RUN",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-06",
+      "name": "Локальный GPU",
+      "status": "NOT RUN",
+      "evidence": "No NVIDIA CUDA device; tests/gpu skipped explicitly",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-07",
+      "name": "Remote GPU",
+      "status": "NOT RUN",
+      "evidence": "No remote host; transport adapter incomplete",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-08",
+      "name": "Jobs",
+      "status": "PASS",
+      "evidence": "Idempotency, process-group cancel/timeout, interrupted restart, bounded retry/attempt IDs, require-GPU rejection; persistent headless HTTP and metadata-client ownership isolation tests PASS",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-09",
+      "name": "UI",
+      "status": "PASS",
+      "evidence": "Read-only viewer in ui extra: projects/revisions, sandboxed reports/scenes, seismic slices, uploads, offline Norne. No chat/voice or scientific forms; tests/integration/test_viewer_pages.py",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-10",
+      "name": "Заменено MCP-клиентами",
+      "status": "REPLACED",
+      "evidence": "заменено MCP-клиентами; собственные чат и голос удалены; не обязательная приёмка",
+      "required": false,
+      "scope": "replaced"
+    },
+    {
+      "id": "A-11",
+      "name": "MCP",
+      "status": "NOT RUN",
+      "evidence": "MCP SDK stdio/shared ASGI + actual headless CLI HTTP daemon/source snapshot/import/disconnect PASS; agent profile pinned GemPy/static plan, independent checks, partial/resume and report/image SDK PASS; real ChatGPT/Claude OAuth connectors not tested",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "A-12",
+      "name": "Version/export",
+      "status": "PASS",
+      "evidence": "test_store bundle roundtrip/hash/revisions/backup; runtime credentials not included in object bundles",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-01",
+      "name": "SEG-Y",
+      "status": "FAIL",
+      "evidence": "IEEE float32 big/little scalar fixtures and direct-source 269.4MB/67.1M-sample float32 Zarr exact comparison PASS; both sorted trace orders/missing mask verified; IBM/affine field geometry acceptance incomplete",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-02",
+      "name": "Slices/picks",
+      "status": "FAIL",
+      "evidence": "Pick revisions/domain roundtrip PASS; pixel/polyline picking and interpolation UI incomplete",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-03",
+      "name": "Атрибуты",
+      "status": "NOT RUN",
+      "evidence": "RMS constant/impulse and sine-envelope CPU PASS; CUDA not run",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-04",
+      "name": "Time-depth",
+      "status": "PASS",
+      "evidence": "Constant velocity expected Z=-400m at TWT=.5s,v=2000,origin100; roundtrip atol1e-15",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-05",
+      "name": "Разлом",
+      "status": "PASS",
+      "evidence": "Real GemPy single planar fault CPU: left -40m/right -60m and valid zones; unsupported OPM bridge rejected",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-06",
+      "name": "Геостатистика",
+      "status": "FAIL",
+      "evidence": "GSTools exact/seed/logit/holdout and independent anisotropic covariance PASS; fitted variogram/ensemble statistical acceptance incomplete",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-07",
+      "name": "GridMapping",
+      "status": "PASS",
+      "evidence": "Independent 3x4x2 hardcoded I-fast/K-down fixture + inactive cell restoration",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-08",
+      "name": "PVT/SCAL/schedule",
+      "status": "FAIL",
+      "evidence": "Basic PVT/SCAL/report dates and explicit STCOND present; complete completions/events/PVT schemas incomplete",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-09",
+      "name": "Initialization",
+      "status": "NOT RUN",
+      "evidence": "No OPM initialization outputs; static input PORV3.2e6m3 verified only before export",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-10",
+      "name": "Waterflood",
+      "status": "NOT RUN",
+      "evidence": "Generated 20x20x5 case exported; Flow executable not installed",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-11",
+      "name": "OPM CUDA",
+      "status": "NOT RUN",
+      "evidence": "No validated CUDA OPM build/device",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-12",
+      "name": "Conservation",
+      "status": "NOT RUN",
+      "evidence": "Constant-FVF oil-water component balance/PORV/no-flow pressure-drift QC implemented; analytical conservation PASS; native no-flow/waterflood not run",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-13",
+      "name": "Result analysis",
+      "status": "FAIL",
+      "evidence": "Native summary SDK + artificial EGRID/INIT/two-report UNRST fixture and analytical UI/alignment/comparison PASS; real Flow outputs and per-well analysis acceptance incomplete",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-14",
+      "name": "Interoperability",
+      "status": "NOT RUN",
+      "evidence": "Direct OPM/ResInsight external opening unavailable; reproducible generated/reference files supplied",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-15",
+      "name": "Сквозной сценарий",
+      "status": "NOT RUN",
+      "evidence": "Seismic/picks/depth/property paths available; full solver integration not run",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "B-16",
+      "name": "MCP coverage",
+      "status": "NOT RUN",
+      "evidence": "Common contracts exist; real external clients and full B integration not run",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "C-01",
+      "name": "Ансамбль",
+      "status": "NOT RUN",
+      "evidence": "3 real property artifacts x 2 real case exporters; mocked solver 4 success/2 fail then resume only 2 PASS; 6 real Flow cases not run",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "C-02",
+      "name": "Статистика",
+      "status": "PASS",
+      "evidence": "Independent analytical Q/P, pointwise bands/sample counts, explicit partial failure policy/total/completed/excluded PASS; real solver inputs separate C-01",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "C-03",
+      "name": "Bounded search",
+      "status": "PASS",
+      "evidence": "Explicit completed-case ranking <=10, date/unit normalization, constraints/feasibility/direction and no-global-optimum declaration; analytical fixtures PASS",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "C-04",
+      "name": "Workflow",
+      "status": "FAIL",
+      "evidence": "Save/run/fan-out/fan-in/resume plus preflight typed artifact ports/missing parameters PASS; advanced multi-port/units coverage incomplete",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "C-05",
+      "name": "Resume",
+      "status": "PASS",
+      "evidence": "Workflow/ensemble resume and interrupted-parent snapshots PASS; verified blobs + input/config/package/source/Flow hashes; failed-only case resume",
+      "required": true,
+      "scope": "product"
+    },
+    {
+      "id": "C-06",
+      "name": "Cloud plan/policy",
+      "status": "EXPERIMENTAL",
+      "evidence": "Вынесено в experimental/runpod; не входит в пакет/MCP и обязательную приёмку",
+      "required": false,
+      "scope": "experimental"
+    },
+    {
+      "id": "C-07",
+      "name": "Provider lifecycle",
+      "status": "EXPERIMENTAL",
+      "evidence": "Вынесено в experimental/runpod; не входит в пакет/MCP и обязательную приёмку",
+      "required": false,
+      "scope": "experimental"
+    },
+    {
+      "id": "C-08",
+      "name": "Orphan/retry",
+      "status": "EXPERIMENTAL",
+      "evidence": "Вынесено в experimental/runpod; не входит в пакет/MCP и обязательную приёмку",
+      "required": false,
+      "scope": "experimental"
+    },
+    {
+      "id": "C-09",
+      "name": "Cleanup",
+      "status": "EXPERIMENTAL",
+      "evidence": "Вынесено в experimental/runpod; не входит в пакет/MCP и обязательную приёмку",
+      "required": false,
+      "scope": "experimental"
+    },
+    {
+      "id": "C-10",
+      "name": "Учёт стоимости",
+      "status": "EXPERIMENTAL",
+      "evidence": "Вынесено в experimental/runpod; не входит в пакет/MCP и обязательную приёмку",
+      "required": false,
+      "scope": "experimental"
+    },
+    {
+      "id": "C-11",
+      "name": "Experimental cloud policy",
+      "status": "EXPERIMENTAL",
+      "evidence": "Вынесено в experimental/runpod; не входит в пакет/MCP и обязательную приёмку",
+      "required": false,
+      "scope": "experimental"
+    },
+    {
+      "id": "C-12",
+      "name": "Полная демонстрация",
+      "status": "FAIL",
+      "evidence": "Full dynamic process with actual OPM not yet validated; cloud cleanup is experimental",
+      "required": true,
+      "scope": "product"
+    }
+  ]
+}

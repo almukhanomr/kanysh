@@ -1,0 +1,16 @@
+{
+  "wheel": "dist/opensubsurface-0.2.0.dev1-py3-none-any.whl",
+  "source": "dist/opensubsurface-0.2.0.dev1.tar.gz",
+  "no_experimental": true,
+  "no_builtin_llm_asr": true,
+  "ui_dependencies": [
+    "gradio<6,>=5.30; extra == 'ui'",
+    "plotly<7,>=6; extra == 'ui'"
+  ],
+  "bundled_norne": true,
+  "wheel_bytes": 13746401,
+  "wheel_sha256": "f0d6afe7b5b8baab0efd8a98a7c5683584f786bd778711c656452e78f5bdabe9",
+  "source_sha256": "4aa7bc27875f82328118da3ce8b87a372b7ce93b23534d9d2f54db439d6fe728",
+  "source_python_identical_to_clean_tested_installation": true,
+  "historical_scope": "Pre-renaming distribution check; current Kanysh Basic artifacts are recorded in copilot-distribution.json"
+}

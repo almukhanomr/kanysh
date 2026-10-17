@@ -1,0 +1,94 @@
+{
+  "status": "PASS",
+  "cells": 113344,
+  "active_cells": 44927,
+  "shape": [
+    46,
+    112,
+    22
+  ],
+  "zone_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "source_commit": "eaa2261683a97027e057c2bc49612ad1c86390b3",
+  "input_property_mapping": "exact vs independent XTGeo property reader",
+  "corner_mapping": "exact at four IJK control cells",
+  "volume_validation": "independent SciPy convex-hull clipping",
+  "report_validation": "PASS",
+  "scene_backend": "pyvista-trame-offline",
+  "displayed_cells": 44927,
+  "elapsed_seconds": 35.24414754200188,
+  "project_id": "project-0a127ee0f34d4a91",
+  "run_id": "job-b59790ed0fd54038",
+  "assumptions": [
+    "Public OPM Norne field benchmark geometry/ACTNUM/PORO/PERMX/NTG/FIPNUM; pinned source commit",
+    "Coordinates metres, Z = negative source depth; CRS/datum not independently established",
+    "Explicit benchmark constants Sw=0.25, Kz/Kx=0.1, Bo=1.2; not Norne dynamic initialization",
+    "Three uniform OWC sensitivity alternatives selected from full-deck EQUIL inside active geometry; not regional equilibrium",
+    "Warped corner-point cells use six tetrahedra along diagonal 0\u20137",
+    "Contact selection: {\"active_depth_range_m\": [2439.10888671875, 3090.133056640625], \"depths_m\": [2585.5, 2618.0, 2693.3], \"evidence\": [{\"file\": \"full/norne/INCLUDE/PETRO/E3.prop\", \"goc_depth_m\": 2500.0, \"line\": 19, \"owc_depth_m\": 2585.5, \"region_id\": 2}, {\"file\": \"full/norne/INCLUDE/PETRO/E3.prop\", \"goc_depth_m\": 2582.0, \"line\": 20, \"owc_depth_m\": 2618.0, \"region_id\": 3}, {\"file\": \"full/norne/INCLUDE/PETRO/E3.prop\", \"goc_depth_m\": 2585.0, \"line\": 22, \"owc_depth_m\": 2693.3, \"region_id\": 5}], \"source\": \"EQUIL OWC records; applied uniformly only as static sensitivity alternatives, not regional equilibrium initialization\"}"
+  ],
+  "contact_selection": {
+    "depths_m": [
+      2585.5,
+      2618.0,
+      2693.3
+    ],
+    "active_depth_range_m": [
+      2439.10888671875,
+      3090.133056640625
+    ],
+    "source": "EQUIL OWC records; applied uniformly only as static sensitivity alternatives, not regional equilibrium initialization",
+    "evidence": [
+      {
+        "region_id": 2,
+        "owc_depth_m": 2585.5,
+        "goc_depth_m": 2500.0,
+        "file": "full/norne/INCLUDE/PETRO/E3.prop",
+        "line": 19
+      },
+      {
+        "region_id": 3,
+        "owc_depth_m": 2618.0,
+        "goc_depth_m": 2582.0,
+        "file": "full/norne/INCLUDE/PETRO/E3.prop",
+        "line": 20
+      },
+      {
+        "region_id": 5,
+        "owc_depth_m": 2693.3,
+        "goc_depth_m": 2585.0,
+        "file": "full/norne/INCLUDE/PETRO/E3.prop",
+        "line": 22
+      }
+    ]
+  },
+  "contact_distinction": {
+    "status": "PASS",
+    "contacts_depth_m": [
+      2585.5,
+      2618.0,
+      2693.3
+    ],
+    "stoiip_standard_m3": [
+      43445409.37812338,
+      90908326.8459777,
+      234909634.21512446
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+{"profile":"remote-cuda","status":"not implemented / not validated","requirements":["Linux NVIDIA","SSH tunnel or private mTLS","owner project transfer policy","digest pinned worker image"]}

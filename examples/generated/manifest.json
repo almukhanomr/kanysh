@@ -1,0 +1,133 @@
+{
+  "content_hash": "edce32815324ba514b553c51ca37122c7177f9a95a788ffb4ce0d55775012513",
+  "created_at": "2026-10-16T03:33:26.703142+00:00",
+  "files": {
+    "CASE.DATA": "96f13694e404686153bdebeca40548e7e3db17beff977f96d2e7edeef341aa02",
+    "initial_state.npz": "fbc286e12fbe02c1171a4cc852c2fe2cfe11a74d3ec5c48b37f0a6da87adf877",
+    "mapping.npz": "35008b42b79dee4be71d738d0ce98558ad524711b4e6f390d5a1e7cbeed4f09a"
+  },
+  "id": "simulation_case-189924a10dff4a59",
+  "kind": "simulation_case",
+  "parameters": {
+    "demo_assumptions_accepted": true,
+    "environment": {
+      "device": "cpu",
+      "platform": "macOS-27.0.1-arm64-arm-64bit",
+      "precision": "float64",
+      "python": "3.12.14",
+      "versions": {
+        "gempy": "2026.0.3",
+        "gstools": "1.7.0",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "segyio": "1.9.14",
+        "torch": "2.14.1"
+      }
+    },
+    "execution": {
+      "allow_cpu_fallback": false,
+      "allow_remote": false,
+      "device_policy": "cpu",
+      "max_retries": 0,
+      "placement": "local",
+      "precision": "float64",
+      "target_id": null,
+      "timeout_seconds": 3600
+    },
+    "fluid": {
+      "bo": 1.2,
+      "bw": 1.0,
+      "oil_density_kg_m3": 800.0,
+      "oil_viscosity_cp": 2.0,
+      "reference_pressure_bara": 200.0,
+      "rock_compressibility_per_bar": 0.0,
+      "standard_pressure_bara": 1.01325,
+      "standard_temperature_c": 15.56,
+      "swof": [
+        [
+          0.2,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "water_density_kg_m3": 1000.0,
+      "water_viscosity_cp": 0.5
+    },
+    "idempotency_key": null,
+    "injector_bhp_bara": 350.0,
+    "injector_rate_sm3_day": 100.0,
+    "producer_bhp_bara": 50.0,
+    "producer_rate_sm3_day": 100.0,
+    "profile": "waterflood",
+    "project_id": "project-7c68c18cf29c4fa4",
+    "properties": {
+      "id": "properties-567acffdf4ce4752",
+      "revision": 1
+    },
+    "report_days": [
+      30.0,
+      60.0,
+      90.0,
+      180.0,
+      365.0
+    ],
+    "start_date": "2026-01-01"
+  },
+  "project_id": "project-7c68c18cf29c4fa4",
+  "revision": 1,
+  "schema_version": 1,
+  "source_ids": [
+    {
+      "id": "properties-567acffdf4ce4752",
+      "revision": 1
+    }
+  ],
+  "summary": {
+    "assumptions": "Synthetic demo PVT/SCAL, not measured; closed boundaries",
+    "bo": 1.2,
+    "bw": 1.0,
+    "grid": {
+      "extent": [
+        0.0,
+        1000.0,
+        0.0,
+        1000.0,
+        -1020.0,
+        -1000.0
+      ],
+      "shape": [
+        20,
+        20,
+        5
+      ]
+    },
+    "initialization": "explicit pressure/saturation; hydrostatic mixed density approximation",
+    "initialization_profile": "fresh_explicit",
+    "input_pore_volume_m3": 3200000.0,
+    "ntg_convention": "PORO net-rock; NTG separate keyword (not applied twice)",
+    "pressure": "bara",
+    "profile": "waterflood",
+    "report_days": [
+      30.0,
+      60.0,
+      90.0,
+      180.0,
+      365.0
+    ],
+    "rock_compressibility_per_bar": 0.0,
+    "solver_validation": "NOT RUN: requires pinned OPM binary and conservation checks",
+    "standard_conditions": {
+      "pressure_pa": 101325.0,
+      "temperature_k": 288.71
+    },
+    "start_date": "2026-01-01",
+    "units": "METRIC"
+  }
+}

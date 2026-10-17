@@ -1,0 +1,53 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    name: Python 3.12 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    env:
+      GRADIO_ANALYTICS_ENABLED: "False"
+      PYVISTA_OFF_SCREEN: "true"
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          python-version: "3.12"
+      - name: Linux rendering dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1 libegl1 fonts-dejavu-core
+      - name: Install locked development dependencies
+        run: uv sync --frozen --extra ui --extra viewer --extra solver --group dev
+      - name: Lint
+        run: uv run --no-sync ruff check src tests scripts examples/generators
+      - name: Audit publication candidates
+        run: uv run --no-sync python scripts/check_publication.py --report test-results/publication-audit.json
+      - name: CPU tests on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a uv run --no-sync pytest -q -m "not gpu and not opm and not external" --junitxml=test-results/junit-linux.xml
+      - name: CPU tests on macOS
+        if: runner.os == 'macOS'
+        run: uv run --no-sync pytest -q -m "not gpu and not opm and not external" --junitxml=test-results/junit-macos.xml
+      - name: Upload portable test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.os }}
+          path: test-results/junit-*.xml
+          if-no-files-found: ignore

@@ -1,0 +1,7 @@
+{
+  "source": "https://raw.githubusercontent.com/OPM/opm-data/939da224f80fb9045aebe359813c4976518a9cd6/spe1/SPE1CASE2.DATA",
+  "commit": "939da224f80fb9045aebe359813c4976518a9cd6",
+  "sha256": "29d9c02659031026ffbab9f62d6400642a61bf2bfaf8c0ac0c7b82f147f4bd29",
+  "license": "ODbL-1.0 / DbCL-1.0; copyright Statoil 2015; original header retained",
+  "validation": "NOT RUN: OPM executable unavailable; no reference results claimed"
+}

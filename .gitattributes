@@ -1,0 +1,11 @@
+# Keep code portable while preserving the exact bytes of licensed reference inputs.
+* text=auto eol=lf
+examples/reference/** -text
+src/opensubsurface/data/norne/** -text
+*.zip binary
+*.npz binary
+*.npy binary
+*.png binary
+*.jpg binary
+*.pdf binary
+*.xlsx binary

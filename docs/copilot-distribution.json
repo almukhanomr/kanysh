@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "product": "Kanysh Basic",
+  "future_development": "Kanysh Advanced",
+  "archive_hashes": {
+    "kanysh_basic-0.2.0.dev1-py3-none-any.whl": "1aa8d35df7a21cbc659a9819fa6c7b40bfe1a192769b00f3e1e8184545eabbc9",
+    "kanysh_basic-0.2.0.dev1.tar.gz": "c09646ad16742cf5754499e8b8dbea096261c671898eaa95ea0100f7f704d060",
+    "kanysh-basic-0.2.0-dev1.mcpb": "4a25815c2cb9bf1cc786d860d9ad7ffbb2165635635b17e32996814d0c91dfca"
+  },
+  "archive_files": {
+    "kanysh_basic-0.2.0.dev1-py3-none-any.whl": 73,
+    "kanysh_basic-0.2.0.dev1.tar.gz": 284,
+    "kanysh-basic-0.2.0-dev1.mcpb": 73
+  },
+  "runtime_source_hash": "516c2ad6e5c382e9a413f4a99c1198e88a09b11e5dcdecdb7f0e8820a92ae42f",
+  "source_identity": "Current production source/data bytes match wheel, sdist and MCPB",
+  "cleanup": "Unused production modules absent; full LICENSE/NOTICE and English third-party inventory present",
+  "excluded_experimental": "PASS",
+  "scope": "Local package/SDK/CPU checks only; actual Desktop installation, Windows hardware and GitHub-hosted CI NOT RUN"
+}
