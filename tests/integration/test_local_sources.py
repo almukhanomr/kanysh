@@ -1,8 +1,9 @@
 import io
+import os
 
 import pytest
 
-from opensubsurface.adapters.local_sources import LocalSources
+from opensubsurface.adapters.local_sources import LocalSources, revision
 from opensubsurface.errors import DomainError
 
 
@@ -168,3 +169,28 @@ def test_large_file_can_be_listed_without_claiming_large_model_compute(service, 
             ),
         )
     assert error.value.code == "UPLOAD_TOO_LARGE"
+
+
+@pytest.mark.parametrize("relative", ["collars.csv", "nested/Геология.INC"])
+def test_scan_revision_matches_open_file_and_mutation_still_rejected(service, tmp_path, relative):
+    directory, source = setup_source(service, tmp_path)
+    path = directory / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"PORO\n1*0.2 /\n")
+    parent = relative.rpartition("/")[0]
+    entry = next(e for e in scan(service, source, path=parent)["entries"] if e["path"] == relative)
+    sources = LocalSources(service.store)
+    with sources.opened(source["id"], relative) as (fd, _):
+        assert entry["file_revision"] == revision(os.fstat(fd))
+        assert entry["size_bytes"] == os.fstat(fd).st_size
+    pid = service.invoke("project_create", dict(name="Revision", vertical_datum="TEST"))["id"]
+    request = dict(
+        project_id=pid, source_id=source["id"], path=relative, file_revision=entry["file_revision"]
+    )
+    assert service.invoke("source_upload", request)["source"]["file_revision"] == entry["file_revision"]
+    path.write_bytes(b"PORO\n2*0.3 /\nchanged\n")
+    with pytest.raises(DomainError) as error:
+        service.invoke("source_upload", request)
+    assert error.value.code == "SOURCE_CHANGED"
+    changed = next(e for e in scan(service, source, path=parent)["entries"] if e["path"] == relative)
+    assert changed["file_revision"] != entry["file_revision"]

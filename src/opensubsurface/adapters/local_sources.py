@@ -198,10 +198,17 @@ class LocalSources:
                         or Path(entry.name).suffix.lower() not in EXTENSIONS
                     ):
                         continue
-                    info = entry.stat(follow_symlinks=False)
+                    path = str(PurePosixPath(p["path"]) / entry.name)
+                    if os.name == "nt" and not directory:
+                        # Windows DirEntry.stat has zero volume/file IDs. Use the
+                        # same pinned, no-reparse handle as every subsequent read.
+                        with self.opened(p["source_id"], path) as (fd, _):
+                            info = os.fstat(fd)
+                    else:
+                        info = entry.stat(follow_symlinks=False)
                     entries.append(
                         dict(
-                            path=str(PurePosixPath(p["path"]) / entry.name),
+                            path=path,
                             kind="directory" if directory else "file",
                             size_bytes=None if directory else info.st_size,
                             file_revision=None if directory else revision(info),

@@ -66,7 +66,7 @@ def test_setup_backup_idempotency_and_conflict_preserve_other_servers(service, t
     with pytest.raises(json.JSONDecodeError):
         register_config(desktop, {})
     assert desktop.read_text() == "invalid json"
-    assert "Application Support/Claude" in str(config_paths(tmp_path, "darwin")[0])
+    assert "Application Support/Claude" in config_paths(tmp_path, "darwin")[0].as_posix()
     assert config_paths(tmp_path, "linux")[0] is None
 
 

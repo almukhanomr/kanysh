@@ -118,6 +118,8 @@ def run_isolated(directory, timeout):
             time.sleep(0.1)
     result_path = directory / "result.json"
     if not result_path.is_file():
+        with (directory / "worker.log").open("a", encoding="utf-8") as log:
+            log.write(f"\nWorker exited without result.json; returncode={process.returncode}\n")
         return dict(
             ok=False,
             error=dict(
