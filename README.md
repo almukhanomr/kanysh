@@ -110,7 +110,7 @@ CI targets Windows/Ubuntu/macOS with ruff and CPU pytest, excluding gpu/opm/exte
 The Python namespace, data-format IDs, MCP resource URIs and `OPENSUBSURFACE_*`
 environment names retain their existing identifiers for compatibility. The package
 and public CLI are `kanysh-basic`; `opensubsurface` remains a CLI compatibility alias.
-This is a development release (`0.2.0.dev1`); [external acceptance](docs/ACCEPTANCE.md) is separate.
+This is a development release (`0.2.0.dev2`); [external acceptance](docs/ACCEPTANCE.md) is separate.
 
 Application source: Apache-2.0. Norne data: ODbL/DbCL with upstream notices retained.
 Dependencies have separate licences: [THIRD_PARTY](THIRD_PARTY.md).

@@ -74,7 +74,7 @@ be visible in the bounded assessment; inspect/import explicitly.
 uv run --no-sync python scripts/build_mcpb.py
 ```
 
-Output: `dist/kanysh-basic-0.2.0-dev1.mcpb`, a source-only ZIP using MCPB v0.4 `uv`
+Output: `dist/kanysh-basic-0.2.0-dev2.mcpb`, a source-only ZIP using MCPB v0.4 `uv`
 runtime. It contains the package, public demo/licences, dependency declarations and
 an agent-profile launcher. No virtual environment, local state, secrets or experimental
 Runpod code are included. The host resolves Python/dependencies; initial installation

@@ -1,7 +1,7 @@
 {
   "status": "PASS",
-  "source_archive": "dist/kanysh-basic-0.2.0-dev1.mcpb",
-  "archive_sha256": "e6e281d66ae5586dda75cd28ae87c3b0229e046aba4ca2534ebbe2e6b2881d83",
+  "source_archive": "dist/kanysh-basic-0.2.0-dev2.mcpb",
+  "archive_sha256": "ffafb6cf8138cf4654d0eb6a8dfa5f5c91bc9e5287f3c5cc97a23a7f9aee2507",
   "sdk_stdio": "PASS",
   "installer_selected_folder": "PASS",
   "startup_log": "PASS",

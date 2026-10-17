@@ -81,7 +81,7 @@ def create_app(root=None, service=None, with_ui=False, with_mcp=True, mcp_profil
                 unregister(service, viewer_record)
             service.close()
 
-    app = FastAPI(title="Kanysh Basic", version="0.2.0.dev1", lifespan=lifespan)
+    app = FastAPI(title="Kanysh Basic", version="0.2.0.dev2", lifespan=lifespan)
     app.state.service = service
     if mcp_app:
         app.mount("/mcp", mcp_app)
@@ -121,7 +121,7 @@ def create_app(root=None, service=None, with_ui=False, with_mcp=True, mcp_profil
 
     @app.get("/health")
     def health():
-        return {"status": "ok", "profile": "local", "version": "0.2.0.dev1"}
+        return {"status": "ok", "profile": "local", "version": "0.2.0.dev2"}
 
     @app.get("/")
     def index():

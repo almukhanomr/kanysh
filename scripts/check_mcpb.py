@@ -120,6 +120,6 @@ async def check(bundle):
 
 
 if __name__ == "__main__":
-    result = asyncio.run(check(Path("dist/kanysh-basic-0.2.0-dev1.mcpb").resolve()))
+    result = asyncio.run(check(Path("dist/kanysh-basic-0.2.0-dev2.mcpb").resolve()))
     Path("docs/mcpb-check.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))

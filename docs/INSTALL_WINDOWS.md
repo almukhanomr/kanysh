@@ -17,7 +17,7 @@ release until the acceptance checklist at the end has been completed.
 
 Install/update [Claude Desktop](https://claude.ai/download). From this project's
 [releases](https://github.com/almukhanomr/kanysh/releases), download
-`kanysh-basic-0.2.0-dev1.mcpb` **if the release provides it**. The GitHub source ZIP
+`kanysh-basic-0.2.0-dev2.mcpb` **if the release provides it**. The GitHub source ZIP
 is not the extension. Double-click the `.mcpb` file to open its installation dialog.
 If Windows does not associate it with Claude, use Claude's local extension installation
 option in its settings. UI names depend on the client version.

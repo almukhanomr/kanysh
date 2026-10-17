@@ -108,7 +108,7 @@ CI рассчитан на Windows/Ubuntu/macOS, ruff и CPU pytest без gpu/o
 
 Python namespace, идентификаторы форматов, MCP URI и `OPENSUBSURFACE_*` сохранены
 для совместимости. Пакет и основная команда — `kanysh-basic`; `opensubsurface` остаётся
-CLI-псевдонимом. Development-релиз `0.2.0.dev1`; [внешняя приёмка](docs/ACCEPTANCE.md) ведётся отдельно.
+CLI-псевдонимом. Development-релиз `0.2.0.dev2`; [внешняя приёмка](docs/ACCEPTANCE.md) ведётся отдельно.
 
 Код — Apache-2.0; данные Norne — ODbL/DbCL с исходными уведомлениями.
 У зависимостей свои лицензии: [THIRD_PARTY](THIRD_PARTY.md).

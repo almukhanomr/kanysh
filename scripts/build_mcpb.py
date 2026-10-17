@@ -10,12 +10,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def build(target=None):
-    target = Path(target or ROOT / "dist/kanysh-basic-0.2.0-dev1.mcpb")
+    target = Path(target or ROOT / "dist/kanysh-basic-0.2.0-dev2.mcpb")
     manifest = dict(
         manifest_version="0.4",
         name="kanysh-basic",
         display_name="Kanysh Basic",
-        version="0.2.0-dev.1",
+        version="0.2.0-dev.2",
         description="AI copilot for geological model calculations alongside Petrel/RMS",
         author=dict(name="Kanysh Basic contributors"),
         license="Apache-2.0",
@@ -59,7 +59,7 @@ def build(target=None):
         + pyproject["project"]["optional-dependencies"]["viewer"]
     )
     project = (
-        '[project]\nname = "kanysh-basic-mcpb"\nversion = "0.2.0.dev1"\nrequires-python = ">=3.12,<3.13"\ndependencies = '
+        '[project]\nname = "kanysh-basic-mcpb"\nversion = "0.2.0.dev2"\nrequires-python = ">=3.12,<3.13"\ndependencies = '
         + json.dumps(dependencies, indent=2)
         + "\n"
     )
