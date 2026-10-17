@@ -107,3 +107,13 @@ def test_orphan_identity_mismatch_never_signals_process(tmp_path):
         if process.poll() is None:
             process.kill()
             process.wait(timeout=5)
+
+
+def test_worker_crash_without_opengl_is_reported_as_renderer_unavailable():
+    # Excerpt of a real windows-latest CI worker.log: VTK aborts before result.json.
+    log = (
+        "vtkWin32OpenGLRenderWindow (0000021046722070): failed to get valid pixel format.\n"
+        "osmesa.dll not found. It appears that OSMesa is not installed in your system.\n"
+    )
+    assert runner.missing_result_error(log)["code"] == "RENDERER_UNAVAILABLE"
+    assert runner.missing_result_error("Segmentation fault\n")["code"] == "WORKER_CRASH"

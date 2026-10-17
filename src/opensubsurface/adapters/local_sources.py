@@ -57,6 +57,19 @@ def revision(info):
     )
 
 
+def path_revision(path):
+    """Revision of a file named by path, computed exactly as source reads do.
+
+    Windows os.stat(path) and os.fstat(fd) fill volume/file IDs through different APIs,
+    so a path stat can disagree with every later fstat check. Always use the descriptor.
+    """
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_BINARY", 0))
+    try:
+        return revision(os.fstat(fd))
+    finally:
+        os.close(fd)
+
+
 def parts(path):
     require(
         "\\" not in path and "\x00" not in path and ":" not in path,

@@ -6,7 +6,7 @@ import pytest
 import xtgeo
 
 from opensubsurface.adapters.geodata import import_geodata
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 
 
 def run(service, tmp_path, path, kind, fmt, resolved=None, **kw):
@@ -15,7 +15,7 @@ def run(service, tmp_path, path, kind, fmt, resolved=None, **kw):
     out.mkdir()
     p = dict(
         path=path.name,
-        file_revision=revision(path.stat()),
+        file_revision=path_revision(path),
         kind=kind,
         format=fmt,
         name="H1",

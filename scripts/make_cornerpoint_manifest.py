@@ -9,7 +9,7 @@ from pathlib import Path
 
 from opensubsurface.adapters.cornerpoint import FORMAT, Manifest
 from opensubsurface.adapters.large_grid import UNITS
-from opensubsurface.adapters.local_sources import opened_source, parts, revision
+from opensubsurface.adapters.local_sources import opened_source, parts, path_revision, revision
 
 
 def main(a):
@@ -55,7 +55,7 @@ def main(a):
     # Never overwrite an existing user manifest or symlink.
     with path.open("x") as stream:
         stream.write(manifest.model_dump_json(indent=2) + "\n")
-    print(json.dumps(dict(path=str(path), file_revision=revision(path.stat())), indent=2))
+    print(json.dumps(dict(path=str(path), file_revision=path_revision(path)), indent=2))
 
 
 if __name__ == "__main__":

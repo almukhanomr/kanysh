@@ -16,7 +16,7 @@ from norne_demo_support import contacts, strict_contact_results
 
 from opensubsurface.adapters.cornerpoint import FORMAT
 from opensubsurface.adapters.large_grid import UNITS, open_grid
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.persistence.store import uid
 from opensubsurface.service import Service, ref
 
@@ -44,7 +44,7 @@ def main():
     ]:
         path = prepared / filename
         shutil.copyfile(ROOT / "raw" / filename, path)
-        declarations[field] = dict(path=filename, keyword=keyword, file_revision=revision(path.stat()))
+        declarations[field] = dict(path=filename, keyword=keyword, file_revision=path_revision(path))
     assumptions = [
         "Public OPM Norne field benchmark geometry/ACTNUM/PORO/PERMX/NTG/FIPNUM; pinned source commit",
         "Coordinates metres, Z = negative source depth; CRS/datum not independently established",
@@ -55,7 +55,7 @@ def main():
     manifest = dict(
         format=FORMAT,
         shape=[46, 112, 22],
-        geometry=dict(path=geometry.name, format="grdecl", file_revision=revision(geometry.stat())),
+        geometry=dict(path=geometry.name, format="grdecl", file_revision=path_revision(geometry)),
         crs="LOCAL_METRIC",
         vertical_datum="NORNE_SOURCE_DEPTH_DATUM_UNVERIFIED",
         length_unit="m",
@@ -80,7 +80,7 @@ def main():
                     project_id=pid,
                     source_id=source["id"],
                     path="model.json",
-                    file_revision=revision(path.stat()),
+                    file_revision=path_revision(path),
                 ),
             )
         )

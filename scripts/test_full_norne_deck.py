@@ -13,7 +13,7 @@ import zarr
 
 from opensubsurface.adapters.eclipse_import import import_deck
 from opensubsurface.adapters.grdecl_properties import fill
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.service import Service
 
 ROOT = Path("examples/reference/norne/full").resolve()
@@ -44,7 +44,7 @@ def main():
         out.mkdir()
         p = dict(
             path="norne/NORNE_ATW2013.DATA",
-            file_revision=revision(path.stat()),
+            file_revision=path_revision(path),
             length_unit="m",
             z_direction="down",
             defaults={},

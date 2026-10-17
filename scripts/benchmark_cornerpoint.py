@@ -14,7 +14,7 @@ import psutil
 import zarr
 
 from opensubsurface.adapters.eclipse_import import import_deck
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.service import Service
 
 
@@ -54,7 +54,7 @@ def worker(base):
     started = time.monotonic()
     p = dict(
         path=path.name,
-        file_revision=revision(path.stat()),
+        file_revision=path_revision(path),
         length_unit="m",
         z_direction="down",
         defaults={},

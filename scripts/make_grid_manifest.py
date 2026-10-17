@@ -7,7 +7,7 @@ from pathlib import Path
 
 from opensubsurface.adapters.grdecl_properties import FORMAT as GRDECL_FORMAT
 from opensubsurface.adapters.large_grid import FIELDS, FORMAT, UNITS, Manifest, read_header
-from opensubsurface.adapters.local_sources import revision
+from opensubsurface.adapters.local_sources import path_revision, revision
 
 
 def main(args):
@@ -57,7 +57,7 @@ def main(args):
     if output.exists():
         raise SystemExit("Manifest already exists; use another --filename")
     output.write_text(manifest.model_dump_json(indent=2) + "\n")
-    print(json.dumps(dict(path=str(output.resolve()), file_revision=revision(output.stat())), indent=2))
+    print(json.dumps(dict(path=str(output.resolve()), file_revision=path_revision(output)), indent=2))
 
 
 if __name__ == "__main__":

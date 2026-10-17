@@ -18,7 +18,7 @@ import numpy as np
 import psutil
 
 from opensubsurface.adapters.large_grid import FORMAT, UNITS
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.execution.provenance import fingerprint
 from opensubsurface.service import Service, ref
 
@@ -95,7 +95,7 @@ def generate(folder, shape, block):
             import os
 
             os.fsync(stream.fileno())
-        arrays[name] = dict(path=path.name, file_revision=revision(path.stat()))
+        arrays[name] = dict(path=path.name, file_revision=path_revision(path))
         print("Wrote", name, path.stat().st_size, "bytes", flush=True)
     grid = dict(shape=shape, extent=[0, float(shape[0]), 0, float(shape[1]), -float(shape[2]), 0])
     manifest = dict(
@@ -161,7 +161,7 @@ def run(args):
                         project_id=pid,
                         source_id=source["id"],
                         path=manifest.name,
-                        file_revision=revision(manifest.stat()),
+                        file_revision=path_revision(manifest),
                         block_cells=args.block_cells,
                     ),
                 ),

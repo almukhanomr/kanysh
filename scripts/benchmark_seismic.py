@@ -14,7 +14,7 @@ import numpy as np
 import segyio
 from benchmark_large import Measurement
 
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.adapters.seismic import open_volume
 from opensubsurface.execution.provenance import fingerprint
 from opensubsurface.service import Service
@@ -68,7 +68,7 @@ def run(output):
                         project_id=pid,
                         source_id=registered["id"],
                         path=source.name,
-                        file_revision=revision(source.stat()),
+                        file_revision=path_revision(source),
                         crs="LOCAL_METRIC",
                         vertical_datum="TEST",
                         domain="twt",

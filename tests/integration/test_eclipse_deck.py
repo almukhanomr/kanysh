@@ -6,7 +6,7 @@ import zarr
 
 from opensubsurface.adapters.eclipse_deck import Interpreter
 from opensubsurface.adapters.eclipse_import import import_deck, reconstruct
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.errors import DomainError
 
 
@@ -117,7 +117,7 @@ def test_import_preserves_regions_and_reports_unsupported(service, tmp_path):
     out.mkdir()
     p = dict(
         path=path.name,
-        file_revision=revision(path.stat()),
+        file_revision=path_revision(path),
         length_unit="m",
         z_direction="down",
         defaults={},
@@ -177,7 +177,7 @@ def test_tall_box_selection_is_constant_memory_and_unit_modes_fail_closed(servic
             dict(source=source),
             dict(
                 path=path.name,
-                file_revision=revision(path.stat()),
+                file_revision=path_revision(path),
                 length_unit="m",
                 z_direction="down",
                 defaults={},

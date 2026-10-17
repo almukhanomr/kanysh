@@ -7,7 +7,7 @@ import xtgeo
 
 from opensubsurface.adapters.cornerpoint import FORMAT, cell_volumes, clipped_tetra, tetra_volume
 from opensubsurface.adapters.large_grid import UNITS, evaluate
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.calculations.cornerpoint_reference import integral
 from opensubsurface.errors import DomainError
 
@@ -29,7 +29,7 @@ def source(service, tmp_path, fmt):
     manifest = dict(
         format=FORMAT,
         shape=list(grid.dimensions),
-        geometry=dict(path=path.name, file_revision=revision(path.stat()), format=fmt),
+        geometry=dict(path=path.name, file_revision=path_revision(path), format=fmt),
         crs="LOCAL_METRIC",
         vertical_datum="TEST",
         length_unit="m",
@@ -43,7 +43,7 @@ def source(service, tmp_path, fmt):
     src = LocalSources(service.store).register("cornerpoint", folder)
     pid = service.invoke("project_create", dict(name="Corner point", vertical_datum="TEST"))["id"]
     return dict(
-        project_id=pid, source_id=src["id"], path=path.name, file_revision=revision(path.stat())
+        project_id=pid, source_id=src["id"], path=path.name, file_revision=path_revision(path)
     ), folder
 
 
@@ -103,15 +103,15 @@ def test_missing_geometry_chunk_and_include_cannot_pass(service, tmp_path):
     geometry = folder / "grid.grdecl"
     geometry.write_text(geometry.read_text() + "\nINCLUDE\n'/etc/passwd' /\n")
     manifest = json.loads((folder / "model.json").read_text())
-    manifest["geometry"]["file_revision"] = revision(geometry.stat())
+    manifest["geometry"]["file_revision"] = path_revision(geometry)
     (folder / "model.json").write_text(json.dumps(manifest))
-    args["file_revision"] = revision((folder / "model.json").stat())
+    args["file_revision"] = path_revision((folder / "model.json"))
     with pytest.raises(DomainError, match="INCLUDE"):
         service.wait(service.invoke("grid_import", args))
     geometry.write_text(geometry.read_text().split("\nINCLUDE")[0])
-    manifest["geometry"]["file_revision"] = revision(geometry.stat())
+    manifest["geometry"]["file_revision"] = path_revision(geometry)
     (folder / "model.json").write_text(json.dumps(manifest))
-    args["file_revision"] = revision((folder / "model.json").stat())
+    args["file_revision"] = path_revision((folder / "model.json"))
     props = service.wait(service.invoke("grid_import", args))
     damaged = tmp_path / "broken.zip"
     with zipfile.ZipFile(service.store.path(props, "grid.zip")) as old, zipfile.ZipFile(damaged, "w") as new:
@@ -131,8 +131,8 @@ def test_egrid_refinement_cannot_be_silently_dropped(service, tmp_path):
     with path.open("ab") as stream:
         stream.write(b"\x00\x00\x00\x10LGR     " + b"\x00\x00\x00\x01CHAR\x00\x00\x00\x10")
     manifest = json.loads((folder / "model.json").read_text())
-    manifest["geometry"]["file_revision"] = revision(path.stat())
+    manifest["geometry"]["file_revision"] = path_revision(path)
     (folder / "model.json").write_text(json.dumps(manifest))
-    args["file_revision"] = revision((folder / "model.json").stat())
+    args["file_revision"] = path_revision((folder / "model.json"))
     with pytest.raises(DomainError, match="LGR"):
         service.wait(service.invoke("grid_import", args))

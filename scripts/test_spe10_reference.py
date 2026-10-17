@@ -13,7 +13,7 @@ import numpy as np
 
 from opensubsurface.adapters.grdecl_properties import FORMAT
 from opensubsurface.adapters.large_grid import UNITS
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.persistence.store import file_hash
 from opensubsurface.service import Service, ref
 
@@ -92,7 +92,7 @@ def prepare():
     arrays = {name: dict(constant=v) for name, v in dict(active=1, zones=1, ntg=1, sw=0.2).items()}
     for name, keyword in dict(phi="PORO", permeability_md="PERMX", kz_ratio="PERMZ").items():
         path = output / (keyword + ".grdecl")
-        arrays[name] = dict(path=path.name, file_revision=revision(path.stat()), keyword=keyword)
+        arrays[name] = dict(path=path.name, file_revision=path_revision(path), keyword=keyword)
     grid = dict(shape=[60, 220, 85], extent=[0, 1200 * FT, 0, 2200 * FT, -12170 * FT, -12000 * FT])
     manifest = dict(
         format=FORMAT,
@@ -160,7 +160,7 @@ def run(args):
                     project_id=pid,
                     source_id=source["id"],
                     path="model.json",
-                    file_revision=revision((ROOT / "prepared/model.json").stat()),
+                    file_revision=path_revision((ROOT / "prepared/model.json")),
                     block_cells=65536,
                 ),
             ),

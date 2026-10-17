@@ -7,6 +7,14 @@ from pathlib import Path
 
 import psutil
 
+RENDERER_FAILURE_MARKERS = (
+    "failed to get valid pixel format",
+    "Failed to initialize OpenGL functions",
+    "osmesa.dll not found",
+    "bad X server connection",
+    "Unable to find a valid OpenGL",
+)
+
 
 def process_options():
     return (
@@ -49,6 +57,26 @@ def terminate_group(process):
         pass
     process.wait(timeout=5)
 
+
+
+def missing_result_error(log_text):
+    """Explain a worker that exited without result.json from its log."""
+    # VTK aborts the process (no Python exception) when no OpenGL context exists,
+    # e.g. a VM, RDP session or CI runner without a GPU driver.
+    if any(marker in log_text for marker in RENDERER_FAILURE_MARKERS):
+        return dict(
+            code="RENDERER_UNAVAILABLE",
+            message="3D-рендер недоступен: на этой машине нет рабочего OpenGL",
+            field="",
+            remediation="Обновите драйвер видеокарты или запустите на машине с GPU; "
+            "расчёты и отчёты без 3D-сцены работают",
+        )
+    return dict(
+        code="WORKER_CRASH",
+        message="Worker не опубликовал результат",
+        field="",
+        remediation="Проверьте worker.log",
+    )
 
 def run_isolated(directory, timeout):
     directory = Path(directory)
@@ -118,17 +146,11 @@ def run_isolated(directory, timeout):
             time.sleep(0.1)
     result_path = directory / "result.json"
     if not result_path.is_file():
-        with (directory / "worker.log").open("a", encoding="utf-8") as log:
+        log_path = directory / "worker.log"
+        log_text = log_path.read_text(encoding="utf-8", errors="replace")
+        with log_path.open("a", encoding="utf-8") as log:
             log.write(f"\nWorker exited without result.json; returncode={process.returncode}\n")
-        return dict(
-            ok=False,
-            error=dict(
-                code="WORKER_CRASH",
-                message="Worker не опубликовал результат",
-                field="",
-                remediation="Проверьте worker.log",
-            ),
-        )
+        return dict(ok=False, error=missing_result_error(log_text))
     return json.loads(result_path.read_text(encoding="utf-8"))
 
 

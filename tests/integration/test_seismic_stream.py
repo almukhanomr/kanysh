@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import segyio
 
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.adapters.seismic import open_volume, read_section
 from opensubsurface.adapters.seismic_stream import convert
 from opensubsurface.errors import DomainError
@@ -84,7 +84,7 @@ def test_unordered_units_and_source_revision_fail_closed(service, tmp_path):
     src = LocalSources(service.store).register("SEG-Y", tmp_path)
     pid = service.invoke("project_create", dict(name="SEG-Y", vertical_datum="TEST"))["id"]
     args = dict(
-        params(), project_id=pid, source_id=src["id"], path=path.name, file_revision=revision(path.stat())
+        params(), project_id=pid, source_id=src["id"], path=path.name, file_revision=path_revision(path)
     )
     volume = service.wait(service.invoke("seismic_source_import", args))
     assert volume["summary"]["storage"] == "seismic-zarr-f32-v1"

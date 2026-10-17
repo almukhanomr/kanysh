@@ -1,4 +1,5 @@
 import json
+import os
 
 import numpy as np
 import pyarrow as pa
@@ -50,7 +51,13 @@ def test_unified_pyvista_scene_persists_settings_and_publishes_real_html_png(ser
     service.invoke("scene_show", dict(project_id=pid, ref=vref, velocity_m_s=2000, origin_z_m=-990))
     snapshot = service.invoke("scene_inspect", dict(project_id=pid))
     assert snapshot[model["id"]]["opacity"] == 0.6
-    exported = service.wait(service.invoke("scene_export", dict(project_id=pid)))
+    try:
+        exported = service.wait(service.invoke("scene_export", dict(project_id=pid)))
+    except DomainError as e:
+        # Hosted CI runners (Windows) have no OpenGL; elsewhere a missing renderer is a failure.
+        if e.code == "RENDERER_UNAVAILABLE" and os.environ.get("CI"):
+            pytest.skip("No OpenGL context on this CI runner; scene rendering is NOT RUN here")
+        raise
     assert exported["summary"]["displayed_cells"] == 24
     assert len(exported["summary"]["actors"]) == 6
     assert exported["summary"]["displayed_points"] == 3 + 4 + 1 + 5 + 4 * 32

@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from opensubsurface.adapters.large_grid import FORMAT, UNITS, evaluate
-from opensubsurface.adapters.local_sources import LocalSources, revision
+from opensubsurface.adapters.local_sources import LocalSources, path_revision
 from opensubsurface.calculations.validation import reference_volumes
 from opensubsurface.domain.numerics import to_opm, volumes
 from opensubsurface.errors import DomainError
@@ -44,7 +44,7 @@ def fixture_source(service, tmp_path, arrays=None):
     for name, data in arrays.items():
         path = folder / (name + ".npy")
         np.save(path, data, allow_pickle=False)
-        manifest["arrays"][name] = dict(path=path.name, file_revision=revision(path.stat()))
+        manifest["arrays"][name] = dict(path=path.name, file_revision=path_revision(path))
     path = folder / "model.json"
     path.write_text(json.dumps(manifest))
     source = LocalSources(service.store).register("Cartesian control", folder)
@@ -53,7 +53,7 @@ def fixture_source(service, tmp_path, arrays=None):
         project_id=pid,
         source_id=source["id"],
         path="model.json",
-        file_revision=revision(path.stat()),
+        file_revision=path_revision(path),
         block_cells=1024,
     )
     return args, arrays, grid, folder
@@ -130,7 +130,7 @@ def test_unsafe_or_ambiguous_large_import_rejected_before_compute(service, tmp_p
             if invalid == "fortran"
             else np.full(grid["shape"], "arbitrary", dtype=object),
         )
-        manifest["arrays"]["phi"]["file_revision"] = revision((folder / "phi.npy").stat())
+        manifest["arrays"]["phi"]["file_revision"] = path_revision((folder / "phi.npy"))
     elif invalid == "units":
         manifest["units"]["phi"] = "percent"
     elif invalid == "escape":
@@ -139,7 +139,7 @@ def test_unsafe_or_ambiguous_large_import_rejected_before_compute(service, tmp_p
         (folder / "phi.npy").unlink()
         (folder / "phi.npy").symlink_to(folder / "ntg.npy")
     path.write_text(json.dumps(manifest))
-    args["file_revision"] = revision(path.stat())
+    args["file_revision"] = path_revision(path)
     with pytest.raises((DomainError, ValueError)):
         service.invoke("grid_import", args)
     assert service.store.list_jobs(args["project_id"]) == []
@@ -199,10 +199,10 @@ def grdecl_source(service, tmp_path):
                 stream.write("1*" + format(float(value), ".17e").replace("e", "D") + "\n")
             stream.write("/ -- end property\n")
         manifest["arrays"][name] = dict(
-            path=path.name, file_revision=revision(path.stat()), keyword=keywords[name]
+            path=path.name, file_revision=path_revision(path), keyword=keywords[name]
         )
     (folder / "model.json").write_text(json.dumps(manifest))
-    args["file_revision"] = revision((folder / "model.json").stat())
+    args["file_revision"] = path_revision((folder / "model.json"))
     return args, arrays, grid, folder
 
 
@@ -241,9 +241,9 @@ def test_large_eclipse_runs_and_explicit_constants_exceed_old_cell_limit(service
         manifest["arrays"][name] = dict(constant=value)
     path = folder / "PORO.grdecl"
     path.write_text("PORO\n4198400*0.2 /\n")
-    manifest["arrays"]["phi"]["file_revision"] = revision(path.stat())
+    manifest["arrays"]["phi"]["file_revision"] = path_revision(path)
     (folder / "model.json").write_text(json.dumps(manifest))
-    args.update(file_revision=revision((folder / "model.json").stat()), block_cells=262144)
+    args.update(file_revision=path_revision((folder / "model.json")), block_cells=262144)
     props = service.wait(service.invoke("grid_import", args))
     volume = service.wait(
         service.invoke(
@@ -270,9 +270,9 @@ def test_eclipse_rejects_implicit_defaults_full_decks_and_wrong_counts(service, 
         }[bad]
     )
     manifest = json.loads((folder / "model.json").read_text())
-    manifest["arrays"]["phi"]["file_revision"] = revision(path.stat())
+    manifest["arrays"]["phi"]["file_revision"] = path_revision(path)
     (folder / "model.json").write_text(json.dumps(manifest))
-    args["file_revision"] = revision((folder / "model.json").stat())
+    args["file_revision"] = path_revision((folder / "model.json"))
     with pytest.raises(DomainError):
         service.wait(service.invoke("grid_import", args))
     assert all(obj["kind"] != "properties" for obj in service.store.list_objects(args["project_id"]))
