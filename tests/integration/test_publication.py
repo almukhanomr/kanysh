@@ -11,7 +11,10 @@ import pytest
 
 
 @pytest.fixture
-def audit():
+def audit(tmp_path, monkeypatch):
+    # tmp_path may sit inside a checkout (e.g. --basetemp under the repo); Git must not
+    # discover that parent repository, or the "uninitialized project" cases are not tested.
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
     spec = importlib.util.spec_from_file_location(
         "publication_guard", Path(__file__).parents[2] / "scripts/check_publication.py"
     )
