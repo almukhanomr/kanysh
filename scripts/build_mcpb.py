@@ -19,27 +19,38 @@ def build(target=None):
         description="AI copilot for geological model calculations alongside Petrel/RMS",
         author=dict(name="Kanysh Basic contributors"),
         license="Apache-2.0",
+        homepage="https://kanysh.com",
         server=dict(
             type="uv",
             entry_point="server.py",
             mcp_config=dict(
                 command="uv",
                 args=["run", "--directory", "${__dirname}", "server.py"],
-                env={"OPENSUBSURFACE_HOME": "${user_config.home}"},
+                env={
+                    "OPENSUBSURFACE_HOME": "${user_config.home}",
+                    "KANYSH_SOURCE_FOLDER": "${user_config.data_folder}",
+                    "PYTHONUTF8": "1",
+                },
             ),
         ),
         user_config=dict(
             home=dict(
                 type="directory",
                 title="Local calculation home",
-                description="Metadata, immutable inputs and results. Register source folders separately as owner.",
-                default="${HOME}/.kanysh-basic",
+                description="Results and local metadata. Windows default: %LOCALAPPDATA%\\kanysh-basic. Other systems use ~/.kanysh-basic.",
+                default=r"%LOCALAPPDATA%\kanysh-basic",
                 required=True,
-            )
+            ),
+            data_folder=dict(
+                type="directory",
+                title="Model folder (optional)",
+                description="Allow read-only access to this exported model folder. You can also add it in the viewer.",
+                required=False,
+            ),
         ),
         tools_generated=True,
         prompts_generated=True,
-        compatibility=dict(platforms=["darwin", "linux"], runtimes=dict(python=">=3.12 <3.13")),
+        compatibility=dict(platforms=["win32", "darwin", "linux"], runtimes=dict(python=">=3.12 <3.13")),
     )
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text())
     dependencies = (
@@ -52,24 +63,23 @@ def build(target=None):
         + json.dumps(dependencies, indent=2)
         + "\n"
     )
+    project += """
+[tool.uv.sources]
+torch = { index = "pytorch-cpu", marker = "sys_platform != 'darwin'" }
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+"""
     launcher = """import os
 import sys
 from pathlib import Path
 source = str(Path(__file__).parent / "src")
 sys.path.insert(0, source)
 os.environ["PYTHONPATH"] = source + (os.pathsep + os.environ["PYTHONPATH"] if os.environ.get("PYTHONPATH") else "")
-from opensubsurface.service import Service
-from opensubsurface.setup import ensure_viewer
-from opensubsurface.mcp.server import create_mcp
+from opensubsurface.desktop import run
 if __name__ == "__main__":
-    service = Service(Path(os.environ["OPENSUBSURFACE_HOME"]).expanduser())
-    try:
-        result = ensure_viewer(service, open_browser=False)
-        if result["status"] not in ("RUNNING", "ALREADY_RUNNING"):
-            print("Viewer: " + str(result), file=sys.stderr)
-        create_mcp(service, profile="agent").run(transport="stdio")
-    finally:
-        service.close()
+    run()
 """
     target.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_DEFLATED) as bundle:

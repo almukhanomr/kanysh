@@ -23,6 +23,7 @@ from opensubsurface.adapters.local_sources import LocalSources, opened_source, p
 from opensubsurface.domain.numerics import PROPERTY_BOUNDS
 from opensubsurface.errors import require
 from opensubsurface.persistence.store import digest
+from opensubsurface.platform_io import read_at
 from opensubsurface.schemas import LargeGrid, Strict
 
 FORMAT = "opensubsurface.cartesian.npy.v1"
@@ -122,7 +123,7 @@ def prepare(service, p):
     with sources.opened(p["source_id"], p["path"]) as (fd, source):
         require(revision(os.fstat(fd)) == p["file_revision"], "SOURCE_CHANGED", "Repeat source_scan")
         require(os.fstat(fd).st_size <= 65536, "MANIFEST_TOO_LARGE", "Manifest limit 64 KiB")
-        raw = os.pread(fd, 65537, 0)
+        raw = read_at(fd, 65537, 0)
         if json.loads(raw).get("format") == "opensubsurface.cornerpoint.xtgeo.v1":
             from opensubsurface.adapters.cornerpoint import prepare as prepare_cornerpoint
 
@@ -236,10 +237,10 @@ def import_grid(context, block_cells, out):
                 require(revision(os.fstat(fd)) == header["file_revision"], "SOURCE_CHANGED", "NPY changed")
                 dtype, offset = read_header(fd, manifest["grid"]["shape"], name)
                 target = create(name, dtype)
-                sha = hashlib.sha256(os.pread(fd, offset, 0))
+                sha = hashlib.sha256(read_at(fd, offset, 0))
                 for start in range(0, cells, block_cells):
                     count = min(block_cells, cells - start)
-                    raw = os.pread(fd, count * dtype.itemsize, offset + start * dtype.itemsize)
+                    raw = read_at(fd, count * dtype.itemsize, offset + start * dtype.itemsize)
                     require(len(raw) == count * dtype.itemsize, "SOURCE_CHANGED", "Truncated NPY")
                     sha.update(raw)
                     target[start : start + count] = np.frombuffer(raw, dtype=dtype)

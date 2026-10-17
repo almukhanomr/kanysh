@@ -9,7 +9,7 @@ from opensubsurface.execution import provenance
 
 
 def test_cache_invalidates_on_reader_and_solver_changes(tmp_path, monkeypatch):
-    executable = tmp_path / "flow-test-identity-only"
+    executable = tmp_path / "flow-test-identity-only.exe"
     executable.write_bytes(b"fixture binary v1; never executed")
     executable.chmod(0o700)
     monkeypatch.setenv("OPENSUBSURFACE_FLOW_EXECUTABLE", str(executable))
@@ -30,6 +30,10 @@ def test_cache_invalidates_on_reader_and_solver_changes(tmp_path, monkeypatch):
     assert second["source_hash"] == third["source_hash"]
 
 
+@pytest.mark.skipif(
+    sys.platform != "linux",
+    reason="OPM execution preflight is Linux-only; native rejection has separate tests",
+)
 @pytest.mark.parametrize("missing", ["standard_conditions", "reader"])
 def test_invalid_case_or_missing_reader_rejected_before_solver(tmp_path, monkeypatch, missing):
     monkeypatch.setenv("OPENSUBSURFACE_FLOW_EXECUTABLE", sys.executable)

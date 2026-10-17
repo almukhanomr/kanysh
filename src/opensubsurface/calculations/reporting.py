@@ -20,7 +20,7 @@ def render(context, resolved, out):
         if artifact is None or validation is None:
             missing.append(name)
             continue
-        evidence = json.loads(Path(validation["paths"]["validation.json"]).read_text())
+        evidence = json.loads(Path(validation["paths"]["validation.json"]).read_text(encoding="utf-8"))
         target = dict(id=artifact["id"], revision=artifact["revision"], content_hash=artifact["content_hash"])
         if evidence["target"] != target:
             failures.append(dict(node=name, reason="Validation target/hash mismatch"))
@@ -63,7 +63,9 @@ def render(context, resolved, out):
     )
     if "uncertainty" in resolved:
         report["uncertainty"] = resolved["uncertainty"]["summary"]
-    (out / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False))
+    (out / "report.json").write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8"
+    )
     columns = ["name", "contact_z_m", "GRV", "GRV_oil_interval", "NetRockVolume", "PV", "HCPV", "STOIIP"]
     with (out / "volumes.csv").open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=columns)
@@ -92,7 +94,9 @@ def render(context, resolved, out):
         ax.text(0.5, 0.5, "No completed volumetrics", ha="center", transform=ax.transAxes)
     ax.set_title(f"Initial oil in place — numerical checks: {status}")
     if uncertain:
-        samples = json.loads(Path(resolved["uncertainty"]["paths"]["samples.json"]).read_text())
+        samples = json.loads(
+            Path(resolved["uncertainty"]["paths"]["samples.json"]).read_text(encoding="utf-8")
+        )
         axes[0, 1].hist([r["result"]["STOIIP"] for r in samples], bins=min(15, len(samples)), color="#527a9e")
         for key in ("Q10", "Q50", "Q90"):
             axes[0, 1].axvline(report["uncertainty"]["statistics"][key], linestyle="--", label=key)
@@ -130,7 +134,7 @@ def render(context, resolved, out):
 <h2>Missing / failed</h2><pre>{esc(json.dumps(dict(parent_status=context["parent_status"], run_error=context.get("error"), missing=missing, failures=failures, unavailable=unavailable), ensure_ascii=False, indent=2))}</pre>
 <h2>Validation evidence</h2>{check_table}<h2>Inputs and provenance</h2><pre>{esc(json.dumps(dict(plan=report["plan"], inputs=report["inputs"], runtime=report["runtime"]), ensure_ascii=False, indent=2))}</pre>
 <p>Full specification, uncertainty statistics and artifact hashes: report.json.</p></html>"""
-    (out / "report.html").write_text(body)
+    (out / "report.html").write_text(body, encoding="utf-8")
     # JSON strings keep untrusted user labels/assumptions delimited as data.
     md = f"# Kanysh Basic calculation report\n\nRun: `{context['run_id']}`\n\nNumerical checks: **{status}**. Geological fitness: **REQUIRES REVIEW**.\n\n{report['scope']}\n\n"
     md += (
@@ -142,7 +146,7 @@ def render(context, resolved, out):
         )
         + "\n```\n\nSee report.html, report.json, volumes.csv and volumes.png for the full evidence.\n"
     )
-    (out / "report.md").write_text(md)
+    (out / "report.md").write_text(md, encoding="utf-8")
     return (
         "calculation_report",
         dict(

@@ -5,7 +5,7 @@
 | local-cpu macOS arm64 / Python 3.12 | Проверен, включая UI, API, scientific kernel и MCP SDK |
 | local-cpu Linux x86_64 | Код подготовлен; чистая Linux установка NOT RUN |
 | local-cuda Linux/WSL2 NVIDIA | Tensor paths реализованы, tests есть; NOT RUN |
-| Windows + NVIDIA workstation | Первый целевой пользовательский профиль через WSL2; launcher подготовлен, на Windows/WSL ещё NOT RUN; native Windows backend отсутствует |
+| Windows + NVIDIA workstation | Нативный Win32 backend и MCPB подготовлены; CPU/CUDA/Claude Desktop на Windows NOT RUN; WSL нужен только для OPM Flow |
 | remote-cuda | Advanced backlog; transport/worker registration is not part of Basic |
 | server | Локальный Host/Origin/token/session guard и общий HTTP MCP проверены; нужны OIDC/HTTPS и реальные внешние клиенты |
 
@@ -37,13 +37,13 @@ Rotated anisotropy, nested variograms, ensemble statistical acceptance не за
 
 OPM: deck generator Cartesian oil-water/dead-oil, no upscaling; NTG отдельно. `simulation_submit`
 вызывает настоящий `flow`. Установите `uv sync --frozen --extra solver` для resdata.
-Без Flow возвращается SOLVER_UNAVAILABLE; без reader — RESULT_READER_UNAVAILABLE.
+На Windows/macOS запуск возвращает SOLVER_PLATFORM_UNSUPPORTED (требуется Linux/WSL). На Linux без Flow возвращается SOLVER_UNAVAILABLE; без reader — RESULT_READER_UNAVAILABLE.
 Reader и явные STCOND/initial-state проверяются до запуска solver. Выбранный executable разрешается
 в абсолютный путь; SHA-256 сохраняется в result и учитывается при resume. Это identity evidence,
 не подтверждение корректности или закреплённой upstream сборки.
 Generated case: `flow examples/generated/CASE.DATA --output-dir=/tmp/opm-demo` на отдельном Linux
 стенде с выбранным build. Не считайте этот deck проверенным до запуска и conservation checks.
-Resdata 6.3.5 установлен; native summary SDK roundtrip и искусственный binary EGRID/INIT/UNRST
+Resdata extra ограничен Linux; исторически с Resdata 6.3.5 native summary SDK roundtrip и искусственный binary EGRID/INIT/UNRST
 fixture проверены, включая два report steps, ACTNUM mismatch и inactive restoration. INIT/restart
 adapter и component balance ограничены generated Cartesian METRIC oil-water профилем;
 реальные Flow outputs ещё не проверены. Анализ и UI проверены на явно помеченных аналитических

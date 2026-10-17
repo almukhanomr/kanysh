@@ -11,9 +11,15 @@ the connection that lets your chat use the calculation tools. The chat requests 
 the viewer displays projects, revisions, reports and 3D scenes. Numerical work runs
 locally. Your chat client controls which messages and tool results reach its AI provider.
 
-**Start here: [Your first result in Kanysh Basic](docs/GETTING_STARTED.md).**
-The guide explains installation, what to expect at each step, how to connect your
-chat, check your own model and save Excel/PDF reports. [Russian guide](docs/GETTING_STARTED.ru.md).
+**Windows: [install the Claude Desktop extension in three steps](docs/INSTALL_WINDOWS.md).**
+Download the release `.mcpb` → double-click → Install → choose your exported model folder.
+No terminal or WSL is needed for static workflows. A client supporting MCPB 0.4's UV
+runtime and internet access for the initial dependency download are required.
+[Russian installation guide](docs/INSTALL_WINDOWS.ru.md).
+
+Native Windows and actual Claude Desktop installation acceptance remain **NOT RUN**.
+The package and Windows CI are prepared; this is not a claim of a validated Windows release.
+[macOS/Linux source installation and first result](docs/GETTING_STARTED.md).
 
 ![Norne corner-point model coloured by source porosity](examples/reference/norne/results/scene.png)
 
@@ -23,36 +29,29 @@ not a field reserves estimate.*
 
 ## Get your first result
 
-1. **Download and unzip the project.** Use the source ZIP from this repository/release;
-   open the inner folder containing `pyproject.toml`. Windows uses Ubuntu inside WSL2.
-   [Installation steps and prerequisites](docs/GETTING_STARTED.md#1-install-once).
-2. **Install and run setup.** In that folder, with [uv](https://docs.astral.sh/uv/getting-started/installation/) installed:
+1. **Install on Windows:** follow the [three-step extension guide](docs/INSTALL_WINDOWS.md).
+   Keep `%LOCALAPPDATA%\kanysh-basic` for results and choose your real model folder.
+2. **Open Norne demo** in the viewer to inspect saved public geometry and reports.
+   This does not run a new calculation.
+3. In Claude, ask: **“Use Kanysh Basic's start tool, then assess my registered model folder.”**
+   Confirm that actual tool results appear. Add another folder with **Add folder** in the viewer.
+4. Confirm file-derived proposals, then ask for QC or a scenario. Save the report and
+   XLSX/PDF exports. Use the same results home when reconnecting.
 
-   ```bash
-   uv python install 3.12
-   uv sync --frozen --no-dev --extra ui --extra viewer --python 3.12
-   uv run --no-sync kanysh-basic --home "$HOME/.kanysh-basic" setup
-   ```
+For **macOS/Linux or IT source installation**, install [uv](https://docs.astral.sh/uv/getting-started/installation/),
+open the source folder and run:
 
-   Close your Claude clients before setup. It backs up existing configuration and
-   opens the viewer. Use the viewer URL printed by setup if the browser does not open.
-3. **Click Open Norne demo.** You should see the saved porosity-coloured grid and
-   reports. This opens bundled results without downloading a model or calculating it again.
-4. **Restart your chat client and check the connection.** Ask: “Use Kanysh Basic's
-   start tool and show me its welcome message.” Confirm that an actual tool result appears.
-5. **Click Add folder for your exported model.** Ask the chat to assess the folder
-   first. Confirm its input proposals, then request a model check or scenario.
+```bash
+uv python install 3.12
+uv sync --frozen --no-dev --extra ui --extra viewer --python 3.12
+uv run --no-sync kanysh-basic --home "$HOME/.kanysh-basic" setup
+```
 
-Use the same state folder (`$HOME/.kanysh-basic` in these commands) when returning to
-work. [Troubleshooting](docs/GETTING_STARTED.md#if-something-goes-wrong) covers missing
-projects, connection problems, folder access and import failures.
-
-This development release may need IT assistance for installation. Actual external
-chat-client connections, Claude Desktop installation and Windows/WSL2/NVIDIA hardware
-acceptance are **NOT RUN**; local SDK/numerical checks do not establish those results.
-A source-only `.mcpb` is also available when supplied with the release; its host must
-support MCPB v0.4's UV runtime. Native Windows extension support is not advertised.
-[Extension and IT setup reference](docs/ONBOARDING.md).
+Close Claude clients before setup. It backs up configuration and opens the viewer.
+The default install uses **CPU PyTorch**; NVIDIA is an explicit [GPU option](docs/INSTALL_WINDOWS.md#gpu-nvidia-optional-for-it).
+**WSL/Linux is only needed for OPM Flow hydrodynamics**, which remains NOT RUN end to end.
+The source-only extension includes no Python environment; its host installs dependencies.
+Real external chat-client acceptance remains **NOT RUN**.
 
 ## Five things to ask
 
@@ -106,7 +105,7 @@ are excluded from Basic GitHub publication, packages and production MCP profiles
 
 [MCP/CLI/REST setup](docs/MCP_SETUP.md) · [IT setup reference](docs/ONBOARDING.md) ·
 [CONTRIBUTING](CONTRIBUTING.md) · [Publication audit](docs/PRE_PUBLICATION_AUDIT.md).
-CI targets Ubuntu/macOS with ruff and CPU pytest, excluding gpu/opm/external tests.
+CI targets Windows/Ubuntu/macOS with ruff and CPU pytest, excluding gpu/opm/external tests.
 
 The Python namespace, data-format IDs, MCP resource URIs and `OPENSUBSURFACE_*`
 environment names retain their existing identifiers for compatibility. The package

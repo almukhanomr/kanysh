@@ -3,6 +3,7 @@
 import json
 import shutil
 import subprocess
+import sys
 from datetime import timezone
 
 import numpy as np
@@ -112,7 +113,7 @@ def generate_case(p, arrays, grid, out, model_summary):
         if p["profile"] == "waterflood":
             deck += f"WCONINJE\n 'INJ' 'WATER' 'OPEN' 'RATE' {p['injector_rate_sm3_day']} 1* {p['injector_bhp_bara']} /\n/\n"
     deck += "TSTEP\n" + " ".join(str(x) for x in np.diff([0] + p["report_days"])) + " /\nEND\n"
-    (out / "CASE.DATA").write_text(deck)
+    (out / "CASE.DATA").write_text(deck, encoding="utf-8")
     idx = np.arange(count).reshape(shape)
     np.savez_compressed(
         out / "initial_state.npz",
@@ -162,6 +163,12 @@ def generate_case(p, arrays, grid, out, model_summary):
 
 
 def run_case(case_files, p, out):
+    require(
+        sys.platform == "linux",
+        "SOLVER_PLATFORM_UNSUPPORTED",
+        "OPM Flow requires Linux/WSL; native Windows simulation is unavailable",
+        remediation="Run hydrodynamics in a Linux/WSL installation; static calculations work natively.",
+    )
     identity = solver_identity()
     require(
         identity is not None,
@@ -221,7 +228,7 @@ def run_case(case_files, p, out):
         "INCOMPLETE_OUTPUT",
         "Summary не содержит все запрошенные report dates",
     )
-    (out / "series.json").write_text(json.dumps(summary, allow_nan=False))
+    (out / "series.json").write_text(json.dumps(summary, allow_nan=False), encoding="utf-8")
     from opensubsurface.adapters.results import read_restart_fields, write_series_csv
 
     fields_summary = read_restart_fields(run_dir, case_files["mapping.npz"], out / "states.zip")
@@ -233,7 +240,7 @@ def run_case(case_files, p, out):
     from opensubsurface.adapters.results import conservation_report
 
     conservation = conservation_report(out / "states.zip", case_files["initial_state.npz"], summary, context)
-    (out / "qc_report.json").write_text(json.dumps(conservation, allow_nan=False))
+    (out / "qc_report.json").write_text(json.dumps(conservation, allow_nan=False), encoding="utf-8")
     require(
         conservation["status"] != "FAIL",
         "CONSERVATION_FAILED",

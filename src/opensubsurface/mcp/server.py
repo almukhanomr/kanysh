@@ -135,7 +135,7 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
 
     @server.resource("opensubsurface://docs/petrel-export", mime_type="text/markdown")
     def export_guide() -> str:
-        return files("opensubsurface").joinpath("data/docs/PETREL_EXPORT.md").read_text()
+        return files("opensubsurface").joinpath("data/docs/PETREL_EXPORT.md").read_text(encoding="utf-8")
 
     @server.prompt(name="begin", description="Start: open the Norne demo or add your folder")
     def begin() -> str:

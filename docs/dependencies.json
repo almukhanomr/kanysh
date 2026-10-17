@@ -210,15 +210,6 @@
     ]
   },
   {
-    "name": "cwrap",
-    "version": "1.7.0",
-    "license_expression": null,
-    "license_text": "GPL-3.0",
-    "project_urls": [
-      "Repository, https://github.com/equinor/cwrap"
-    ]
-  },
-  {
     "name": "cycler",
     "version": "0.12.1",
     "license_expression": null,
@@ -674,7 +665,9 @@
     "version": "0.2.0.dev1",
     "license_expression": "Apache-2.0",
     "license_text": null,
-    "project_urls": []
+    "project_urls": [
+      "Homepage, https://kanysh.com"
+    ]
   },
   {
     "name": "kiwisolver",
@@ -857,13 +850,6 @@
       "Repository, https://github.com/narwhals-dev/narwhals",
       "Bug Tracker, https://github.com/narwhals-dev/narwhals/issues"
     ]
-  },
-  {
-    "name": "natsort",
-    "version": "8.4.0",
-    "license_expression": null,
-    "license_text": "MIT",
-    "project_urls": []
   },
   {
     "name": "nest-asyncio2",
@@ -1068,6 +1054,17 @@
       "Changelog, https://www.fatiando.org/pooch/latest/changes.html",
       "Bug Tracker, https://github.com/fatiando/pooch/issues",
       "Source Code, https://github.com/fatiando/pooch"
+    ]
+  },
+  {
+    "name": "portalocker",
+    "version": "3.2.0",
+    "license_expression": "BSD-3-Clause",
+    "license_text": null,
+    "project_urls": [
+      "bugs, https://github.com/wolph/portalocker/issues",
+      "documentation, https://portalocker.readthedocs.io/en/latest/",
+      "repository, https://github.com/wolph/portalocker/"
     ]
   },
   {
@@ -1393,13 +1390,6 @@
     ]
   },
   {
-    "name": "resdata",
-    "version": "6.3.5",
-    "license_expression": null,
-    "license_text": "GPL-3.0",
-    "project_urls": []
-  },
-  {
     "name": "resfo",
     "version": "5.0.1",
     "license_expression": "LGPL-3.0-or-later",
@@ -1409,18 +1399,6 @@
       "Repository, https://github.com/equinor/resfo",
       "Documentation, https://resfo.readthedocs.io/en/stable/",
       "Bug Tracker, https://github.com/equinor/resfo/issues"
-    ]
-  },
-  {
-    "name": "resfo-utilities",
-    "version": "1.1.1",
-    "license_expression": "LGPL-3.0-or-later",
-    "license_text": null,
-    "project_urls": [
-      "Homepage, https://github.com/equinor/resfo-utilities",
-      "Repository, https://github.com/equinor/resfo-utilities",
-      "Documentation, https://resfo-utilities.readthedocs.io/en/stable/",
-      "Bug Tracker, https://github.com/equinor/resfo-utilities/issues"
     ]
   },
   {

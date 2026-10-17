@@ -13,7 +13,7 @@ from opensubsurface.execution.tasks import run
 def main():
     directory = Path(sys.argv[1])
     start = time.monotonic()
-    request = json.loads((directory / "request.json").read_text())
+    request = json.loads((directory / "request.json").read_text(encoding="utf-8"))
     try:
         kind, summary, files = run(request, directory / "output")
         versions = {}
@@ -53,13 +53,13 @@ def main():
         output = directory / "output"
         output.mkdir(exist_ok=True)
         diagnostic = output / "error.json"
-        diagnostic.write_text(json.dumps(dict(error=result["error"]), ensure_ascii=False))
+        diagnostic.write_text(json.dumps(dict(error=result["error"]), ensure_ascii=False), encoding="utf-8")
         files = {"error.json": str(diagnostic)}
         if (output / "qc_report.json").is_file():
             files["qc_report.json"] = str(output / "qc_report.json")
         result["diagnostics"] = files
     path = directory / "result.tmp"
-    path.write_text(json.dumps(result, ensure_ascii=False, allow_nan=False))
+    path.write_text(json.dumps(result, ensure_ascii=False, allow_nan=False), encoding="utf-8")
     os.replace(path, directory / "result.json")
 
 

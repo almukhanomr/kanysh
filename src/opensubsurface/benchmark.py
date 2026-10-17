@@ -56,5 +56,5 @@ def benchmark(output):
         cuda="NOT RUN",
         opm="NOT RUN",
     )
-    (output / "cpu.json").write_text(json.dumps(report, indent=2))
+    (output / "cpu.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     return report

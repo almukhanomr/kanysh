@@ -22,7 +22,7 @@ def choose_folder():
             "-NoProfile",
             "-STA",
             "-Command",
-            "Add-Type -AssemblyName System.Windows.Forms; $picker = New-Object System.Windows.Forms.FolderBrowserDialog; $picker.Description = 'Kanysh Basic: allow read-only access'; if ($picker.ShowDialog() -eq 'OK') { Write-Output $picker.SelectedPath }",
+            "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new(); Add-Type -AssemblyName System.Windows.Forms; $picker = New-Object System.Windows.Forms.FolderBrowserDialog; $picker.Description = 'Kanysh Basic: allow read-only access'; if ($picker.ShowDialog() -eq 'OK') { Write-Output $picker.SelectedPath }",
         ]
     else:
         command = [
@@ -31,7 +31,9 @@ def choose_folder():
             "import tkinter as t; from tkinter import filedialog; r=t.Tk(); r.withdraw(); print(filedialog.askdirectory(title='Kanysh Basic: allow read-only access')); r.destroy()",
         ]
     try:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=300, check=False)
+        result = subprocess.run(
+            command, capture_output=True, text=True, encoding="utf-8", timeout=300, check=False
+        )
     except (OSError, subprocess.TimeoutExpired) as error:
         raise DomainError(
             "FOLDER_DIALOG_UNAVAILABLE", "Native dialog unavailable; use owner CLI source-add"

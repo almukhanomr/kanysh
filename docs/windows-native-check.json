@@ -1,0 +1,97 @@
+{
+  "status": "LOCAL_CHECKS_PASS_WINDOWS_NOT_RUN",
+  "platform": "Darwin arm64",
+  "runtime": {
+    "versions": {
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "gempy": "2026.0.3",
+      "gempy-engine": "2026.0.3.post1",
+      "gstools": "1.7.0",
+      "torch": "2.14.1",
+      "segyio": "1.9.14",
+      "resdata": null,
+      "matplotlib": "3.11.2",
+      "xtgeo": "4.27.0",
+      "pyvista": "0.49.1",
+      "trame": "3.13.2",
+      "trame-pyvista": "0.2.1",
+      "zarr": "2.18.7",
+      "shapely": "2.2.0",
+      "openpyxl": "3.1.5",
+      "reportlab": "4.5.1",
+      "pypdf": "6.21.0"
+    },
+    "flow": null,
+    "source_hash": "a42cad7ba79f2a35b722454cc404322283f97835a397a2236c0935c1239bfba8"
+  },
+  "cpu_regression": {
+    "passed": 159,
+    "skipped": 5,
+    "deselected": 2,
+    "failures": 0,
+    "errors": 0,
+    "seconds": 439.461,
+    "skipped_checks": [
+      {
+        "test": ".tests.integration.test_resdata",
+        "reason": "collection skipped"
+      },
+      {
+        "test": "tests.integration.test_solver_provenance.test_invalid_case_or_missing_reader_rejected_before_solver[standard_conditions]",
+        "reason": "OPM execution preflight is Linux-only; native rejection has separate tests"
+      },
+      {
+        "test": "tests.integration.test_solver_provenance.test_invalid_case_or_missing_reader_rejected_before_solver[reader]",
+        "reason": "OPM execution preflight is Linux-only; native rejection has separate tests"
+      },
+      {
+        "test": "tests.integration.test_windows_native.test_windows_drive_case_long_unicode_paths_and_identity",
+        "reason": "Native Windows NTFS handles and case semantics"
+      },
+      {
+        "test": "tests.integration.test_windows_native.test_windows_junction_cannot_expand_access_and_open_root_cannot_be_swapped",
+        "reason": "Native Windows junctions and deny-delete handle sharing"
+      }
+    ],
+    "evidence": "docs/test-results.xml"
+  },
+  "dependencies": {
+    "status": "PASS",
+    "scope": "Resolve exact MCPB dependencies for Windows x64 CPython 3.12; no Windows execution",
+    "native_packages_require_wheels": true,
+    "pure_python_source_exception": [
+      "asciitree"
+    ],
+    "torch": "2.14.1+cpu",
+    "xtgeo": "4.27.0",
+    "portalocker": "3.2.0",
+    "packages": 168,
+    "native_windows_install": "NOT RUN",
+    "claude_desktop_uv_install": "NOT RUN",
+    "gpu_hardware": "NOT RUN"
+  },
+  "mcpb_sdk": {
+    "status": "PASS",
+    "source_archive": "dist/kanysh-basic-0.2.0-dev1.mcpb",
+    "archive_sha256": "e6e281d66ae5586dda75cd28ae87c3b0229e046aba4ca2534ebbe2e6b2881d83",
+    "sdk_stdio": "PASS",
+    "installer_selected_folder": "PASS",
+    "startup_log": "PASS",
+    "shared_local_viewer_controller": "PASS",
+    "isolated_eclipse_import": "PASS",
+    "cells": 1,
+    "scientific_scope": "Synthetic geometry import only, no field estimates",
+    "claude_desktop_install": "NOT RUN",
+    "windows_native": "NOT RUN",
+    "windows_claude_uv_install": "NOT RUN"
+  },
+  "ruff": "PASS",
+  "uv_lock_check": "PASS",
+  "installed_dependencies": "PASS",
+  "github_hosted_windows_ci": "NOT RUN",
+  "native_windows_ntfs": "NOT RUN",
+  "claude_desktop_windows_uv_install": "NOT RUN",
+  "nvidia_hardware": "NOT RUN",
+  "scope": "Portable backend code, macOS CPU regression and Windows dependency resolution; no native Windows execution is implied"
+}

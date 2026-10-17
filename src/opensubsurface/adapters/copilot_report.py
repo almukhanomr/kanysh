@@ -7,7 +7,7 @@ import json
 
 def write_report(out, title, result):
     text = json.dumps(result, ensure_ascii=False, allow_nan=False, indent=2)
-    (out / "report.json").write_text(text)
+    (out / "report.json").write_text(text, encoding="utf-8")
     body = f"<!doctype html><meta charset='utf-8'><title>{html.escape(title)}</title>"
     body += "<style>body{font:15px system-ui;color:#17344a;max-width:1200px;margin:30px auto;padding:0 20px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f6fa;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #dbe5ee;padding:8px;text-align:left}</style>"
     body += f"<h1>{html.escape(title)}</h1>"
@@ -37,5 +37,5 @@ def write_report(out, title, result):
             if len(value) > 1000:
                 body += f"<p>Showing 1000 of {len(value)} rows; full evidence follows.</p>"
     body += "<h2>Full evidence / assumptions</h2><pre>" + html.escape(text) + "</pre>"
-    (out / "report.html").write_text(body)
+    (out / "report.html").write_text(body, encoding="utf-8")
     return {name: out / name for name in ("report.json", "report.html")}

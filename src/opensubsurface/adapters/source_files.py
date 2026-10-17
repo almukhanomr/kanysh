@@ -5,6 +5,7 @@ import os
 
 from opensubsurface.adapters.local_sources import LocalSources, opened_source, revision
 from opensubsurface.errors import require
+from opensubsurface.platform_io import read_at
 
 
 def prepare_file(service, p):
@@ -27,7 +28,7 @@ def copy_file(context, header, target):
         size = os.fstat(fd).st_size
         offset = 0
         while offset < size:
-            raw = os.pread(fd, min(4 * 1024**2, size - offset), offset)
+            raw = read_at(fd, min(4 * 1024**2, size - offset), offset)
             require(bool(raw), "SOURCE_CHANGED", "Source truncated during snapshot")
             stream.write(raw)
             sha.update(raw)

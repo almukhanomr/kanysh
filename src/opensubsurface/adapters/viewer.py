@@ -237,5 +237,7 @@ def export_scene(scene, objects, p, out):
         scene=scene,
         scope="Interactive bounded preview; calculations always use complete immutable inputs",
     )
-    (out / "scene.json").write_text(json.dumps(summary, ensure_ascii=False, allow_nan=False))
+    (out / "scene.json").write_text(
+        json.dumps(summary, ensure_ascii=False, allow_nan=False), encoding="utf-8"
+    )
     return "scene", summary, {name: out / name for name in ("scene.html", "scene.png", "scene.json")}

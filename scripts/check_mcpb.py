@@ -3,8 +3,6 @@
 import asyncio
 import hashlib
 import json
-import os
-import signal
 import sys
 import tempfile
 import zipfile
@@ -14,7 +12,7 @@ import psutil
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from opensubsurface.adapters.local_sources import LocalSources
+from opensubsurface.execution.runner import terminate_tree
 from opensubsurface.service import Service
 from opensubsurface.viewer_links import STATE
 
@@ -33,13 +31,18 @@ async def check(bundle):
             + " /\nZCORN\n4*0 4*10 /\nACTNUM\n1 /\nPORO\n0.2 /\nNTG\n0.8 /\nPERMX\n100 /\nPROPS\nSWAT\n0.25 /\nREGIONS\nFIPNUM\n1 /\nEND\n"
         )
         service = Service(home)
-        source = LocalSources(service.store).register("Synthetic bundle control", folder)
         record = None
         try:
             params = StdioServerParameters(
                 command=sys.executable,
                 args=[str(package / "server.py")],
-                env=dict(OPENSUBSURFACE_HOME=str(home), GRADIO_ANALYTICS_ENABLED="False"),
+                env=dict(
+                    OPENSUBSURFACE_HOME=str(home),
+                    GRADIO_ANALYTICS_ENABLED="False",
+                    KANYSH_OPEN_BROWSER="0",
+                    KANYSH_SOURCE_FOLDER=str(folder),
+                    PYTHONUTF8="1",
+                ),
             )
             async with stdio_client(params) as (read, write):
                 async with ClientSession(read, write) as session:
@@ -57,9 +60,14 @@ async def check(bundle):
                     assert capabilities["static_deck"]["demonstrated_cells"] == 20_000_000
                     greeting = await call("start")
                     assert greeting["first_connection"]
+                    startup = json.loads((home / "startup-status.json").read_text(encoding="utf-8"))
+                    assert startup["stage"] == "MCP_READY" and (home / "startup.log").is_file()
                     pid = (await call("project_create", name="Source bundle control", vertical_datum="TEST"))[
                         "id"
                     ]
+                    sources = await call("source_list")
+                    assert len(sources) == 1 and Path(sources[0]["root"]).resolve() == folder.resolve()
+                    source = sources[0]
                     listing = await call("source_scan", source_id=source["id"])
                     entry = listing["entries"][0]
                     job = await call(
@@ -89,12 +97,15 @@ async def check(bundle):
                         source_archive=str(bundle),
                         archive_sha256=hashlib.sha256(Path(bundle).read_bytes()).hexdigest(),
                         sdk_stdio="PASS",
+                        installer_selected_folder="PASS",
+                        startup_log="PASS",
                         shared_local_viewer_controller="PASS",
                         isolated_eclipse_import="PASS",
                         cells=1,
                         scientific_scope="Synthetic geometry import only, no field estimates",
                         claude_desktop_install="NOT RUN",
-                        windows_wsl_gpu="NOT RUN",
+                        windows_native="NOT RUN",
+                        windows_claude_uv_install="NOT RUN",
                     )
         finally:
             record = service.store.get_state(STATE, {})
@@ -102,14 +113,9 @@ async def check(bundle):
             if record:
                 process = psutil.Process(record["pid"])
                 assert process.create_time() == record["process_created"] and any(
-                    Path(arg).resolve() == home.resolve() for arg in process.cmdline() if arg.startswith("/")
+                    Path(arg).resolve() == home.resolve() for arg in process.cmdline()
                 )
-                os.killpg(process.pid, signal.SIGTERM)
-                try:
-                    process.wait(timeout=15)
-                except psutil.TimeoutExpired:
-                    os.killpg(process.pid, signal.SIGKILL)
-                    process.wait(timeout=5)
+                terminate_tree(process, timeout=15)
         return result
 
 

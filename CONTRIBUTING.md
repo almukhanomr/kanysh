@@ -61,3 +61,10 @@ working tree, not Git history; it cannot detect every possible secret format.
 Commit through Git so `.gitignore` applies. Do not upload the entire local working
 folder through a browser or zip it wholesale: it contains ignored owner state and
 virtual environments. See [pre-publication audit](docs/PRE_PUBLICATION_AUDIT.md).
+
+Windows-only NTFS/junction/long-path tests run on windows-latest. Symlink creation tests
+skip explicitly if the OS lacks Developer Mode/SeCreateSymbolicLinkPrivilege; this does
+not skip junction, root identity, cancellation or owner-lock coverage. OPM preflight
+execution checks are Linux-only; platform rejection is checked on every CPU test host.
+CPU is the default uv group. For NVIDIA use `uv sync --no-group cpu --extra gpu`;
+accelerator index choices require uv, and hardware acceptance is separate.

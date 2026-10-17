@@ -1,6 +1,6 @@
 """Owner-configured read-only filesystem sources for the single-owner local profile.
 
-POSIX openat/O_NOFOLLOW binds access to registered directories, never agent-supplied roots.
+POSIX openat/O_NOFOLLOW and native Windows pinned handles bind access to registered roots.
 Scan is metadata-only; explicit upload creates the existing bounded immutable import snapshot.
 """
 
@@ -11,6 +11,7 @@ from pathlib import Path, PurePosixPath
 
 from opensubsurface.errors import DomainError, require
 from opensubsurface.persistence.store import digest, now, uid
+from opensubsurface.platform_io import is_reparse, normalized_path, scan_descriptor, windows_opened
 
 STATE = "owner:local_sources"
 EXTENSIONS = {
@@ -57,10 +58,15 @@ def revision(info):
 
 
 def parts(path):
-    require("\\" not in path and "\x00" not in path, "INVALID_SOURCE_PATH", "Неверный относительный путь")
+    require(
+        "\\" not in path and "\x00" not in path and ":" not in path,
+        "INVALID_SOURCE_PATH",
+        "Неверный относительный путь",
+    )
     p = PurePosixPath(path)
     require(
-        not p.is_absolute() and all(not part.startswith(".") for part in p.parts),
+        not p.is_absolute()
+        and all(not part.startswith(".") and not part.endswith((".", " ")) for part in p.parts),
         "INVALID_SOURCE_PATH",
         "Нужен относительный путь внутри source; скрытые пути и .. запрещены",
     )
@@ -71,6 +77,20 @@ def parts(path):
 def opened_source(source, path, directory=False):
     components = parts(path)
     require(directory or bool(components), "INVALID_SOURCE_PATH", "Выберите файл")
+    if os.name == "nt":
+        try:
+            with windows_opened(Path(source["root"]), components, directory) as (fd, info):
+                require(
+                    (info.st_dev, info.st_ino) == (source["device"], source["inode"]),
+                    "SOURCE_CHANGED",
+                    "Корневая папка source заменена; требуется регистрация владельца",
+                )
+                yield fd, source
+        except OSError as error:
+            raise DomainError(
+                "SOURCE_ACCESS_DENIED", "Source unavailable or contains a reparse point"
+            ) from error
+        return
     descriptors = []
     try:
         flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
@@ -110,11 +130,19 @@ class LocalSources:
 
     def register(self, name, directory):
         require(bool(name.strip()) and len(name) <= 120, "INVALID_ARGUMENTS", "Укажите короткое имя source")
-        root = Path(directory).expanduser().resolve()
-        require(root.is_dir(), "INVALID_SOURCE_PATH", "Источник должен быть существующей папкой")
-        info = root.stat()
+        root = normalized_path(directory)
+        if os.name == "nt":
+            with windows_opened(root, (), True) as (_, info):
+                require(info.st_ino != 0, "SOURCE_ACCESS_DENIED", "Filesystem must expose a stable file ID")
+        else:
+            require(not root.is_symlink(), "SOURCE_ACCESS_DENIED", "Source cannot be a symlink")
+            root = root.resolve()
+            require(root.is_dir(), "INVALID_SOURCE_PATH", "Источник должен быть существующей папкой")
+            info = root.stat()
         sources = self.store.get_state(STATE, {})
-        existing = next((s for s in sources.values() if s["root"] == str(root)), None)
+        existing = next(
+            (s for s in sources.values() if os.path.normcase(s["root"]) == os.path.normcase(str(root))), None
+        )
         if existing:
             require(
                 (existing["device"], existing["inode"]) == (info.st_dev, info.st_ino),
@@ -155,14 +183,14 @@ class LocalSources:
     def scan(self, p):
         entries = []
         with self.opened(p["source_id"], p["path"], directory=True) as (descriptor, _):
-            with os.scandir(descriptor) as iterator:
+            with scan_descriptor(descriptor) as iterator:
                 for count, entry in enumerate(iterator, 1):
                     require(
                         count <= MAX_DIRECTORY_ENTRIES,
                         "SOURCE_DIRECTORY_TOO_LARGE",
                         "Больше 10 000 записей; выберите более узкую папку",
                     )
-                    if entry.name.startswith(".") or entry.is_symlink():
+                    if entry.name.startswith(".") or is_reparse(entry.stat(follow_symlinks=False)):
                         continue
                     directory = entry.is_dir(follow_symlinks=False)
                     if not directory and (

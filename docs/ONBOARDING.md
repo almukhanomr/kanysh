@@ -17,7 +17,7 @@ uv run --extra ui --extra viewer kanysh-basic setup
 ```
 
 Existing installations may pass `--home` with their original state directory.
-Default setup home: `~/.kanysh-basic` (other commands retain `.data` for compatibility).
+Default setup home: `%LOCALAPPDATA%\kanysh-basic` on Windows, `~/.kanysh-basic` elsewhere (other commands retain `.data` for compatibility).
 `--home /absolute/state` before `setup` overrides it. Setup checks import availability,
 registers `agent` stdio entries, creates a backup before changing an existing JSON
 configuration, preserves unrelated settings and refuses an existing conflicting
@@ -35,12 +35,12 @@ Advanced/test options:
 `setup --desktop-config PATH --code-config PATH --no-viewer --no-browser`.
 These options allow isolated configuration tests without editing a real account.
 
-Windows profile: **WSL2**, with `uv`/Python installed inside the distribution.
-Setup discovers Windows APPDATA with PowerShell, converts the path with `wslpath`,
-and registers a `wsl.exe --distribution … --exec …` launcher for Desktop. Claude Code
-registration is for the WSL-side user. Native Win32 numerical core is not supported
-by this POSIX filesystem/process profile. WSL2/Windows/NVIDIA acceptance: **NOT RUN**.
-Linux without WSL has no native Desktop registration; Claude Code still gets configured.
+Windows uses the **native Win32 backend**; [three-step MCPB installation](INSTALL_WINDOWS.md).
+Owner registration accepts paths such as `D:\Geology\FieldA`. Portalocker excludes a
+second controller; Windows source handles reject reparse points and pin ancestors.
+WSL is optional for Linux-only OPM Flow. Native Windows/Claude Desktop/NVIDIA acceptance
+remains **NOT RUN**. Linux without WSL has no native Desktop registration; Claude Code
+still gets configured.
 
 The viewer opens at a loopback address, reusing an active viewer or choosing a free
 port. `viewer.log` contains launch diagnostics. If the `[ui]` extra is absent, install
@@ -71,7 +71,7 @@ be visible in the bounded assessment; inspect/import explicitly.
 ## Desktop extension package
 
 ```bash
-.venv/bin/python scripts/build_mcpb.py
+uv run --no-sync python scripts/build_mcpb.py
 ```
 
 Output: `dist/kanysh-basic-0.2.0-dev1.mcpb`, a source-only ZIP using MCPB v0.4 `uv`
@@ -81,7 +81,10 @@ Runpod code are included. The host resolves Python/dependencies; initial install
 requires network/storage and a compatible host supporting the v0.4 UV runtime.
 [Official MCPB specification](https://github.com/modelcontextprotocol/mcpb/blob/main/MANIFEST.md).
 
-The source bundle currently declares macOS/Linux platforms. Windows users use the
-WSL2 setup workflow; a native Windows extension is not advertised. Archive inspection
-and SDK launches are separate from actual Claude Desktop extension installation,
-which is **NOT RUN**. Real ChatGPT/Claude chat acceptance remains **NOT RUN**.
+The source bundle declares Windows/macOS/Linux. Windows defaults to LocalAppData;
+other hosts use their normal local home. An optional owner-selected model folder is
+registered read-only at startup. CPU PyTorch is selected explicitly; no solver extra
+is included. The viewer opens on first startup and startup.log records MCP_READY or
+failure. UV installation failures happen before the launcher and belong to host logs.
+Archive inspection and SDK launches are separate from actual Claude Desktop extension
+installation, which remains **NOT RUN**. See [Windows acceptance](INSTALL_WINDOWS.md).

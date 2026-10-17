@@ -24,7 +24,7 @@ Restart the client, choose the `begin` prompt, then add an owner-authorized fold
 The `.mcpb` uses the v0.4 UV runtime. Build it with `python scripts/build_mcpb.py`
 and open the resulting archive in a compatible Desktop host. Archive/SDK execution
 is tested separately from actual Claude Desktop installation, which remains NOT RUN.
-Windows uses the documented WSL2 setup; native Win32 execution is not advertised.
+Windows uses the [native MCPB installation](INSTALL_WINDOWS.md); WSL is optional for Linux-only OPM Flow. Native Windows/Desktop acceptance remains NOT RUN.
 
 ## Manual stdio configuration
 

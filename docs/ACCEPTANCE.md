@@ -72,7 +72,7 @@ Solver SDK fixtures: `uv sync --frozen --extra solver --group dev`. Raw evidence
 - XTGeo corner-point GRDECL/EGRID/ROFF rotated analytic controls; public Norne all113344 cells/44927 active, original properties/mapping, independent ConvexHull contact clipping, plan/report PASS and full active-cell PyVista/trame scene; docs/PETREL_WORKFLOW.md. XTGeo geometry import uses full RAM, <=2M-cell profile.
 - Large SEG-Y source import: actual269422096-byte synthetic IEEE file, all67108864 samples bitwise exact, import sampled peak RSS402.5MiB, working amplitude buffer2MiB; benchmark-seismic.json. No1TiB or Volve claim.
 - Published OPM SPE10 model2 input files: 1.122M cells, pinned commit+SHA-256, original PORO/PERMX/PERMZ preserved, independent source-layer sums and numerical validation PASS. NTG/Sw/Bo are explicit static-control settings; no Flow/real field/>15GiB acceptance inferred.
-- Windows + NVIDIA via WSL2 is the first user deployment target. PowerShell launcher prepared, NOT RUN on Windows/WSL; no CUDA acceptance inferred from macOS CPU tests.
+- Native Windows x64 is the main Basic deployment target; NVIDIA is optional and WSL is reserved for Linux-only OPM Flow. Backend/MCPB/Windows CI are prepared; native workstation/Desktop/NVIDIA acceptance remains NOT RUN. See INSTALL_WINDOWS.md.
 
 ## Blockers
 

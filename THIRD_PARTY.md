@@ -7,6 +7,7 @@ Versions are pinned in `uv.lock`. This table uses installed distribution metadat
 | numpy | 2.5.4 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | Python dependency; dynamically imported |
 | pandas | 2.3.3 | BSD-3-Clause; see bundled notices | Python dependency; dynamically imported |
 | psutil | 7.2.2 | BSD-3-Clause | Python dependency; dynamically imported |
+| portalocker | 3.2.0 | BSD-3-Clause | Python dependency; dynamically imported |
 | scipy | 1.18.1 | BSD-3-Clause + bundled library notices | Python dependency; dynamically imported |
 | pydantic | 2.12.3 | MIT | Python dependency; dynamically imported |
 | fastapi | 0.143.2 | MIT | Python dependency; dynamically imported |
@@ -20,7 +21,7 @@ Versions are pinned in `uv.lock`. This table uses installed distribution metadat
 | gstools | 1.7.0 | LGPL-3.0 | Python dependency; dynamically imported |
 | gempy | 2026.0.3 | EUPL-1.2 | Python dependency; dynamically imported |
 | gempy-engine | 2026.0.3.post1 | EUPL-1.2 | Python dependency; dynamically imported |
-| torch | 2.14.1 | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT | Python dependency; dynamically imported |
+| torch | 2.11.0+cu128 / 2.14.1 / 2.14.1+cpu | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT | Python dependency; dynamically imported |
 | dask | 2026.8.0 | BSD-3-Clause | Python dependency; dynamically imported |
 | distributed | 2026.8.0 | BSD-3-Clause | Python dependency; dynamically imported |
 | gradio | 5.50.0 | Apache-2.0 | Python dependency; dynamically imported |
@@ -31,7 +32,7 @@ Versions are pinned in `uv.lock`. This table uses installed distribution metadat
 | pyarrow | 23.0.1 | Apache-2.0 | Python dependency; dynamically imported |
 | zarr | 2.18.7 | MIT | Python dependency; dynamically imported |
 | itsdangerous | 2.2.0 | See upstream LICENSE | Python dependency; dynamically imported |
-| resdata | 6.3.5 | GPL-3.0 | Python dependency; dynamically imported |
+| resdata | 6.3.5 | Not installed; consult upstream LICENSE before distribution | Optional extra; NOT RUN; presence in the lock does not establish support |
 | pyvista | 0.49.1 | MIT | Python dependency; dynamically imported |
 | trame | 3.13.2 | Apache License 2.0 | Python dependency; dynamically imported |
 | xtgeo | 4.27.0 | LGPL-3.0 | Python dependency; dynamically imported |

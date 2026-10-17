@@ -1,4 +1,3 @@
-import fcntl
 import importlib.metadata
 import json
 import os
@@ -7,6 +6,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import portalocker
 
 from opensubsurface.adapters.imports import check_coordinates
 from opensubsurface.errors import DomainError, require
@@ -90,8 +90,8 @@ class Service:
                 return
             self.file_lock = (self.store.root / "control-plane.lock").open("a+")
             try:
-                fcntl.flock(self.file_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
+                portalocker.lock(self.file_lock, portalocker.LOCK_EX | portalocker.LOCK_NB)
+            except portalocker.exceptions.LockException:
                 self.file_lock.close()
                 self.file_lock = None
                 raise DomainError(
@@ -205,14 +205,16 @@ class Service:
             self.cluster.close()
             self.client = None
         if self.file_lock:
-            fcntl.flock(self.file_lock, fcntl.LOCK_UN)
+            portalocker.unlock(self.file_lock)
             self.file_lock.close()
             self.file_lock = None
         self.owns_controller = False
+        self.store.engine.dispose()
 
     def capabilities(self):
         import platform
         import shutil
+        import sys
 
         import psutil
         import torch
@@ -239,7 +241,9 @@ class Service:
             cuda_devices=devices,
             host=dict(system=platform.system(), machine=platform.machine(), logical_cpus=psutil.cpu_count()),
             memory=dict(total_bytes=memory.total, available_bytes=memory.available),
-            opm_available=shutil.which(os.environ.get("OPENSUBSURFACE_FLOW_EXECUTABLE", "flow")) is not None,
+            opm_available=sys.platform == "linux"
+            and shutil.which(os.environ.get("OPENSUBSURFACE_FLOW_EXECUTABLE", "flow")) is not None,
+            simulation_requirement="OPM Flow requires Linux/WSL; native Windows simulation is unavailable",
             remote_execution="not configured",
             large_models=dict(
                 storage="cartesian-zarr-flat-v1",
@@ -654,7 +658,7 @@ class Service:
                 attempt_id = job["attempt_id"] if index == 0 else uid("attempt")
                 directory = self.store.root / "attempts" / attempt_id
                 directory.mkdir(parents=True, exist_ok=True)
-                (directory / "request.json").write_text(canonical(request))
+                (directory / "request.json").write_text(canonical(request), encoding="utf-8")
                 attempts.append(dict(id=attempt_id, index=index, started_at=now(), status="running"))
                 with self.lock:
                     cancelled = self.store.job(job["id"])["status"] == "cancel_requested"
@@ -1058,7 +1062,7 @@ class Service:
 
             with tempfile.TemporaryDirectory(dir=self.store.root) as temp:
                 path = Path(temp) / "analysis.json"
-                path.write_text(canonical(summary))
+                path.write_text(canonical(summary), encoding="utf-8")
                 from opensubsurface.adapters.results import write_analysis_csv
 
                 csv_path = Path(temp) / "analysis.csv"
@@ -1084,7 +1088,7 @@ class Service:
     def result_case(self, obj):
         require(obj["kind"] == "simulation_result", "TYPE_MISMATCH", "Требуется simulation_result artifact")
         require("series.json" in obj["files"], "INVALID_RESULTS", "Отсутствует нормализованный series.json")
-        raw = json.loads(self.store.path(obj, "series.json").read_text())
+        raw = json.loads(self.store.path(obj, "series.json").read_text(encoding="utf-8"))
         return dict(id=obj["id"] + ":r" + str(obj["revision"]), status="succeeded", series=raw)
 
     def demo(self):

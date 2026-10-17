@@ -161,7 +161,9 @@ def run(request, out):
 
         artifact = input_obj(request, "artifact")
         evidence = check_artifact(artifact, {k: v for k, v in request["resolved"].items() if k != "artifact"})
-        (out / "validation.json").write_text(json.dumps(evidence, ensure_ascii=False, allow_nan=False))
+        (out / "validation.json").write_text(
+            json.dumps(evidence, ensure_ascii=False, allow_nan=False), encoding="utf-8"
+        )
         return (
             "validation",
             {k: v for k, v in evidence.items() if k != "checks"},
@@ -189,7 +191,7 @@ def run(request, out):
             "Точки не лежат в плоскости с заданной нормалью",
         )
         geometry = dict(name=p["name"], points=p["points"], normal=p["normal"], relation=p["relation"])
-        (out / "fault.json").write_text(json.dumps(geometry))
+        (out / "fault.json").write_text(json.dumps(geometry), encoding="utf-8")
         return (
             "fault",
             dict(profile="single_planar", geometry=geometry, units="m", relations=[[0, 1], [0, 0]]),
@@ -303,7 +305,9 @@ def run(request, out):
                 device,
                 p["execution"]["precision"],
             )
-        (out / "result.json").write_text(json.dumps(summary, ensure_ascii=False, allow_nan=False))
+        (out / "result.json").write_text(
+            json.dumps(summary, ensure_ascii=False, allow_nan=False), encoding="utf-8"
+        )
         return "volumetrics", summary, {"result.json": out / "result.json"}
     if operation == "scenarios_run":
         props = input_obj(request, "properties")
@@ -366,7 +370,7 @@ def run(request, out):
             )
             rows.append(dict(realization=i, seed=p["seed"], parameters=row, result=result["values"]))
             metrics.append(result["values"]["STOIIP"])
-        (out / "samples.json").write_text(json.dumps(rows, allow_nan=False))
+        (out / "samples.json").write_text(json.dumps(rows, allow_nan=False), encoding="utf-8")
         return (
             "scenarios",
             dict(
@@ -461,7 +465,7 @@ def run(request, out):
                 x, y = float(group["x"][i, j]), float(group["y"][i, j])
                 require(np.isfinite([x, y, value]).all(), "QC_FAILED", "Pick на missing trace")
                 picks.append(dict(**pick, x=x, y=y, value=value))
-            (out / "picks.json").write_text(json.dumps(picks))
+            (out / "picks.json").write_text(json.dumps(picks), encoding="utf-8")
             return (
                 "interpretation",
                 dict(
@@ -484,7 +488,7 @@ def run(request, out):
         require(
             p["datum"] == obj["summary"]["vertical_datum"], "MISSING_DATUM", "Datum velocity не совпадает"
         )
-        points = json.loads(Path(obj["paths"]["picks.json"]).read_text())
+        points = json.loads(Path(obj["paths"]["picks.json"]).read_text(encoding="utf-8"))
 
         def convert_time(value):
             if p.get("time_depth_table") is not None:

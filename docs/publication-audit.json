@@ -1,8 +1,8 @@
 {
   "status": "PASS",
-  "candidate_files": 284,
-  "candidate_bytes": 26389168,
-  "inspected_files_and_archive_members": 433,
+  "candidate_files": 294,
+  "candidate_bytes": 26503097,
+  "inspected_files_and_archive_members": 443,
   "findings": [],
   "scope": "Current tracked and non-ignored working-tree files, including nested ZIP contents; Git history is not scanned. Signature checks do not prove absence of every possible secret."
 }

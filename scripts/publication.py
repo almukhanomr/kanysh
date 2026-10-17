@@ -10,8 +10,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def portable_text(text):
-    text = text.replace(str(ROOT) + "/", "").replace(str(ROOT), ".")
-    text = text.replace(str(Path.home()) + "/", "environment/")
+    for prefix in (str(ROOT) + "/", str(ROOT) + "\\"):
+        text = text.replace(prefix, "")
+    text = text.replace(str(ROOT), ".")
+    for prefix in (str(Path.home()) + "/", str(Path.home()) + "\\"):
+        text = text.replace(prefix, "environment/")
     text = text.replace("/private/tmp/", "test-environment/").replace("/tmp/", "test-environment/")
     # Historical runner paths from another checkout are also private, not test evidence.
     text = re.sub(r"/Users/[^/\s\"<>]+/[^\s\"<>]*?/opensubsurface/", "", text)

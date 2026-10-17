@@ -217,7 +217,9 @@ def import_deck(context, p, out):
             "Only the explicitly declared static arrays/edits are applied",
         ],
     )
-    (out / "import_report.json").write_text(json.dumps(report, ensure_ascii=False, allow_nan=False, indent=2))
+    (out / "import_report.json").write_text(
+        json.dumps(report, ensure_ascii=False, allow_nan=False, indent=2), encoding="utf-8"
+    )
     from opensubsurface.adapters.copilot_report import write_report
 
     report_files = write_report(out, "ECLIPSE static import", report)

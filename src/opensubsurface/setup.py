@@ -105,11 +105,9 @@ def ensure_viewer(service, port=8765, open_browser=True):
         port = sock.getsockname()[1]
     url = f"http://127.0.0.1:{port}"
     log = service.store.root / "viewer.log"
-    kwargs = (
-        {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
-        if sys.platform == "win32"
-        else {"start_new_session": True}
-    )
+    from opensubsurface.execution.runner import process_options
+
+    kwargs = process_options()
     with log.open("ab") as stream:
         process = subprocess.Popen(
             [

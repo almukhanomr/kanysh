@@ -15,7 +15,7 @@ from opensubsurface.errors import require
 
 def cps_surface(path, p):
     header, values, data = {}, [], False
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         if line.strip().startswith("->"):
             data = True
             continue
@@ -73,7 +73,7 @@ def ascii_table(path, p):
         "Explicit column indices required for Petrel/RMS whitespace ASCII",
     )
     records = []
-    for line in path.read_text().splitlines()[p["skiprows"] :]:
+    for line in path.read_text(encoding="utf-8").splitlines()[p["skiprows"] :]:
         if not line.strip() or line.lstrip().startswith(("#", "--", "!")):
             continue
         row = shlex.split(line)

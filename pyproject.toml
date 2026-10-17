@@ -11,6 +11,8 @@ requires-python = ">=3.12,<3.13"
 license = "Apache-2.0"
 dependencies = [
   "numpy>=1.26,<3",
+  "portalocker>=3.2,<4",
+  "psutil>=7,<8",
   "scipy>=1.13,<2",
   "pydantic>=2.10,<3",
   "fastapi>=0.115,<1",
@@ -51,9 +53,11 @@ viewer = [
     "trame-pyvista>=0.1,<1",
     "trame-vtk>=2.9,<3",
 ]
-solver = ["resdata>=6,<7"]
+solver = ["resdata>=6,<7; sys_platform == 'linux'"]
+gpu = ["torch>=2.6,<3; sys_platform == 'win32' or sys_platform == 'linux'"]
 
 [dependency-groups]
+cpu = ["torch>=2.6,<3"]
 dev = ["pytest>=8.3,<9", "ruff>=0.11,<1", "pytest-asyncio>=0.26,<2", "playwright>=1.51,<2"]
 
 [project.scripts]
@@ -75,3 +79,25 @@ packages = ["src/opensubsurface"]
 
 [tool.hatch.build]
 exclude = ["/experimental", "/docs/copilot-distribution.json"]
+
+# PyTorch accelerator indexes are explicit. CPU group is installed by default;
+# --no-group cpu --extra gpu selects CUDA without changing the default release.
+[tool.uv]
+default-groups = ["dev", "cpu"]
+conflicts = [[{ group = "cpu" }, { extra = "gpu" }]]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", group = "cpu", marker = "sys_platform != 'darwin'" },
+  { index = "pytorch-cuda", extra = "gpu", marker = "sys_platform == 'win32' or sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cuda"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

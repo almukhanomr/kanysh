@@ -3,18 +3,19 @@
   "product": "Kanysh Basic",
   "future_development": "Kanysh Advanced",
   "archive_hashes": {
-    "kanysh_basic-0.2.0.dev1-py3-none-any.whl": "1aa8d35df7a21cbc659a9819fa6c7b40bfe1a192769b00f3e1e8184545eabbc9",
-    "kanysh_basic-0.2.0.dev1.tar.gz": "c09646ad16742cf5754499e8b8dbea096261c671898eaa95ea0100f7f704d060",
-    "kanysh-basic-0.2.0-dev1.mcpb": "4a25815c2cb9bf1cc786d860d9ad7ffbb2165635635b17e32996814d0c91dfca"
+    "kanysh_basic-0.2.0.dev1-py3-none-any.whl": "60e8d5f24de33b4a1e028ddb3566b5be50dc4fd4339323736e2479568d02f2a9",
+    "kanysh_basic-0.2.0.dev1.tar.gz": "e6188fa3e26fc23c7649c9df08cac800724ad8da385f244e5971664777e76822",
+    "kanysh-basic-0.2.0-dev1.mcpb": "e6e281d66ae5586dda75cd28ae87c3b0229e046aba4ca2534ebbe2e6b2881d83"
   },
   "archive_files": {
-    "kanysh_basic-0.2.0.dev1-py3-none-any.whl": 73,
-    "kanysh_basic-0.2.0.dev1.tar.gz": 284,
-    "kanysh-basic-0.2.0-dev1.mcpb": 73
+    "kanysh_basic-0.2.0.dev1-py3-none-any.whl": 75,
+    "kanysh_basic-0.2.0.dev1.tar.gz": 294,
+    "kanysh-basic-0.2.0-dev1.mcpb": 75
   },
-  "runtime_source_hash": "516c2ad6e5c382e9a413f4a99c1198e88a09b11e5dcdecdb7f0e8820a92ae42f",
+  "runtime_source_hash": "a42cad7ba79f2a35b722454cc404322283f97835a397a2236c0935c1239bfba8",
   "source_identity": "Current production source/data bytes match wheel, sdist and MCPB",
   "cleanup": "Unused production modules absent; full LICENSE/NOTICE and English third-party inventory present",
   "excluded_experimental": "PASS",
-  "scope": "Local package/SDK/CPU checks only; actual Desktop installation, Windows hardware and GitHub-hosted CI NOT RUN"
+  "scope": "macOS CPU regression and MCP SDK PASS; Windows dependency resolution PASS; native Windows/Claude Desktop UV install/NVIDIA and hosted Windows CI NOT RUN",
+  "windows_evidence": "docs/windows-native-check.json"
 }

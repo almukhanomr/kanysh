@@ -15,8 +15,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     env:
+      PYTHONUTF8: "1"
       GRADIO_ANALYTICS_ENABLED: "False"
       PYVISTA_OFF_SCREEN: "true"
       OMP_NUM_THREADS: "1"
@@ -44,10 +45,14 @@ jobs:
       - name: CPU tests on macOS
         if: runner.os == 'macOS'
         run: uv run --no-sync pytest -q -m "not gpu and not opm and not external" --junitxml=test-results/junit-macos.xml
+      - name: CPU tests on Windows
+        if: runner.os == 'Windows'
+        run: uv run --no-sync pytest -q -m "not gpu and not opm and not external" --junitxml=test-results/junit-windows.xml
       - name: Upload portable test evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: junit-${{ matrix.os }}
+          retention-days: 7
           path: test-results/junit-*.xml
           if-no-files-found: ignore

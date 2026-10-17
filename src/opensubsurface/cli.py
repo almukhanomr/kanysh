@@ -56,7 +56,9 @@ def main():
     sub.add_parser("benchmark")
     args = parser.parse_args()
     if args.command == "setup" and args.home == ".data" and not os.environ.get("OPENSUBSURFACE_HOME"):
-        args.home = str(Path.home() / ".kanysh-basic")
+        from opensubsurface.platform_io import default_home
+
+        args.home = str(default_home())
     service = Service(args.home)
     try:
         if args.command == "setup":
@@ -99,7 +101,7 @@ def main():
             else:
                 result = sources.list()
         elif args.command == "run":
-            submission = service.invoke(args.operation, json.loads(args.json.read_text()))
+            submission = service.invoke(args.operation, json.loads(args.json.read_text(encoding="utf-8")))
             # CLI owns local worker lifetime; waits for completion before exiting.
             result = service.wait(submission)
         elif args.command == "status":

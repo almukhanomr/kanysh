@@ -1,6 +1,7 @@
 #Requires -Version 5.1
 <#
-Starts an already installed Kanysh Basic environment in WSL on this Windows workstation.
+Optional Linux/OPM workflow: starts an already installed Kanysh Basic WSL environment.
+For native Windows static calculations use the MCPB extension; see docs/INSTALL_WINDOWS.md.
 Does not install drivers, alter WSL settings, start remote compute or expose a public endpoint.
 Prepared launcher; execution on Windows/WSL has not yet been validated.
 #>

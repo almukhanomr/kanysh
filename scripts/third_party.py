@@ -4,11 +4,15 @@ import tomllib
 from pathlib import Path
 
 lock = tomllib.loads(Path("uv.lock").read_text())
-versions = {p["name"]: p["version"] for p in lock["package"]}
+versions = {
+    name: " / ".join(sorted({p["version"] for p in lock["package"] if p["name"] == name}))
+    for name in {p["name"] for p in lock["package"]}
+}
 primary = [
     "numpy",
     "pandas",
     "psutil",
+    "portalocker",
     "scipy",
     "pydantic",
     "fastapi",

@@ -15,7 +15,11 @@ MCP results/resources → optional local web viewer
 они находятся в extra `[ui]`.
 
 Service использует Dask/inproc и отдельные worker-процессы. Входы immutable, окружение ограничено,
-таймаут/отмена завершают группу процессов. FAIL/INCOMPLETE сохраняют evidence и partial reports.
+таймаут/отмена завершают дерево процессов через psutil (terminate → wait → kill).
+Единственный владелец control plane защищён portalocker на всех ОС. Windows использует
+CREATE_NEW_PROCESS_GROUP и проверку create_time при остановке orphan. Источники на NTFS
+открываются Win32 handles с запретом reparse points и удаления/переименования открытых
+предков; POSIX использует openat/O_NOFOLLOW. Чтение по смещению имеет Windows fallback. FAIL/INCOMPLETE сохраняют evidence и partial reports.
 Store: SQLite WAL/SQLAlchemy/Alembic, SHA-256 blobs и manifests, атомарная публикация, revisions,
 backup/import/export. Воспроизводимость включает входы, параметры и runtime fingerprint.
 Все каналы вызывают один Service; MCP не предоставляет arbitrary shell/Python/SQL.

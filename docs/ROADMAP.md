@@ -30,7 +30,7 @@ from the Basic package and production MCP profiles.
 
 These are verification/deployment tasks for **Kanysh Basic**, not Advanced features:
 
-- Windows/WSL2/NVIDIA workstation checks and the documented PowerShell launcher.
+- Native Windows x64 / Claude Desktop UV installation and optional NVIDIA workstation checks. The native backend is implemented; WSL is optional for OPM Flow.
 - Actual Claude Desktop extension installation and real external MCP-client checks.
 - GitHub-hosted Ubuntu/macOS CI execution and user-supplied Petrel/RMS reconciliation
   datasets with confirmed assumptions. The workflow is configured; hosted CI is NOT RUN.

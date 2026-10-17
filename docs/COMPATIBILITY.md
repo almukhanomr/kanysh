@@ -36,13 +36,14 @@
 
 Для OPM отсутствует проверенный build/digest. Он намеренно не объявлен поддержанным:
 выбрать build в Linux, pin digest, выполнить no-flow/waterflood/upstream CPU и CUDA tests.
-Первый пользовательский профиль графстанции — Windows + NVIDIA через WSL2.
-Реальные WSL2/DrvFs/reparse-point/GPU memory и native numerical tests на такой станции ещё нужны;
-подготовленная инструкция/launcher не считаются этой приёмкой.
+Основной профиль графстанции — нативная Windows x64, CPU; NVIDIA подключается отдельно.
+WSL нужен только для Linux-гидродинамики OPM Flow. Windows NTFS/reparse-point/process-tree
+тесты и CI подготовлены, но их реальное выполнение на Windows и Desktop UV installation
+остаются NOT RUN. [Инструкция и приёмка](INSTALL_WINDOWS.md).
 
-Публикационная CPU-регрессия: **150 passed, 2 deselected**, 0 failures/errors, 420.60 s;
-gpu/opm/external исключены. GitHub-hosted Ubuntu/macOS CI пока NOT RUN
-([raw XML](test-results.xml)). Ruff и offline uv lock check — PASS.
+Текущая CPU-регрессия: [raw XML](test-results.xml); Windows-переносимость и статус
+внешней приёмки отражены в [Windows evidence](WINDOWS_NATIVE.md). GitHub-hosted
+Windows/Ubuntu/macOS execution остаётся отдельной проверкой.
 Контроль через постоянный HTTP MCP daemon: [agent-control.json](agent-control.json),
 [HTML report](../examples/agent-demo/generated/report.html),
 [report ZIP](../examples/agent-demo/generated/report.zip).

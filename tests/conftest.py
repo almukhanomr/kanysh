@@ -83,3 +83,29 @@ def _demo_wells(service, project_id):
 @pytest.fixture
 def demo_wells():
     return _demo_wells
+
+
+@pytest.fixture(autouse=True)
+def windows_symlink_privilege(monkeypatch):
+    """Only symlink creation tests skip on Windows lacking Developer Mode privilege.
+
+    Native junction, source identity, cancellation and lock tests still execute.
+    """
+    import os
+    from pathlib import Path
+
+    if os.name != "nt":
+        return
+    original = Path.symlink_to
+
+    def symlink(path, *args, **kwargs):
+        try:
+            return original(path, *args, **kwargs)
+        except OSError as error:
+            if getattr(error, "winerror", None) == 1314:
+                pytest.skip(
+                    "Windows symlink creation requires Developer Mode or SeCreateSymbolicLinkPrivilege"
+                )
+            raise
+
+    monkeypatch.setattr(Path, "symlink_to", symlink)

@@ -28,7 +28,7 @@ def load_reports(objects):
             "REPORT_TOO_LARGE",
             "Report JSON exceeds 32 MiB export budget",
         )
-        report = json.loads(path.read_text())
+        report = json.loads(path.read_text(encoding="utf-8"))
         require(isinstance(report, dict), "INVALID_REPORT", "Report must be a JSON object")
         reports.append((obj, report))
     return reports

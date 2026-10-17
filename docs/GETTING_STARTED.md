@@ -11,8 +11,8 @@ Your chat client controls what messages and tool results it sends to its AI prov
 
 This is a development release. Numerical code and local SDK connections have been
 checked. Actual Claude Desktop installation, real external chat-client acceptance
-and Windows/WSL2/NVIDIA workstation checks remain **NOT RUN**. You may need IT help
-for installation, especially on Windows. A GPU is not required for the Basic CPU workflows.
+and native Windows/NVIDIA workstation checks remain **NOT RUN**. You may need IT help
+for a source installation. Windows users should follow the [native extension guide](INSTALL_WINDOWS.md). A GPU is not required for the Basic CPU workflows.
 
 ## 1. Install once
 
@@ -21,7 +21,7 @@ for installation, especially on Windows. A GPU is not required for the Basic CPU
 | Your computer | Where to run the commands below |
 |---|---|
 | macOS | The Terminal application. Install your chosen Claude client separately. |
-| Windows | An Ubuntu terminal inside **WSL2**, which runs Linux applications on Windows. Ask IT to prepare it using [Microsoft's WSL instructions](https://learn.microsoft.com/en-us/windows/wsl/install). Do not paste the Linux commands into PowerShell. The Windows route is prepared but not hardware-validated. |
+| Windows | Use the [native MCPB guide](INSTALL_WINDOWS.md), with no terminal or WSL. The source commands below are for macOS/Linux; Windows source users should ask IT to use PowerShell and Windows paths. |
 | Linux | A terminal. Use Claude Code or another compatible MCP client; setup does not register a native Claude Desktop application on Linux. |
 
 **Download the source ZIP from this project's GitHub page or release and unzip it.**
@@ -79,12 +79,10 @@ original `--home` instead of starting an empty one. Details: [setup reference](O
 
 ### If you received a Desktop extension instead
 
-A `.mcpb` file is an extension package, not a geological model. The current
-`kanysh-basic-0.2.0-dev1.mcpb` needs a host supporting MCPB v0.4's UV runtime.
-Its archive/SDK launch is checked; installation in the actual Desktop application
-is **NOT RUN**. This bundle does not advertise native Windows support. If the host
-rejects it, use the source route above or ask IT; do not rename the file to force an install.
-[Extension details](ONBOARDING.md#desktop-extension-package).
+Follow [Install on Windows](INSTALL_WINDOWS.md). The bundle also declares macOS/Linux;
+its host must support MCPB 0.4 UV. Actual host installation remains NOT RUN. Choose the
+same results home on future runs. The viewer opens on first startup; its URL and
+status are recorded in startup.log. A real tool call confirms the client connection.
 
 ## 2. Open Norne before adding your files
 

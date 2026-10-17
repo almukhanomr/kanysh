@@ -164,7 +164,7 @@ def test_opm_export_ntg_and_unavailable_solver(service, demo, monkeypatch):
     assert "NTG\n" in text and "PORO\n" in text and "WCONINJE" in text
     assert case["summary"]["input_pore_volume_m3"] == pytest.approx(3.2e6)
     monkeypatch.setenv("OPENSUBSURFACE_FLOW_EXECUTABLE", "no-such-flow-binary")
-    with pytest.raises(DomainError, match="не установлен"):
+    with pytest.raises(DomainError, match="не установлен|requires Linux/WSL"):
         service.wait(service.invoke("simulation_submit", dict(project_id=pid, case=ref(case))))
 
 

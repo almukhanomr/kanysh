@@ -9,7 +9,7 @@ from opensubsurface.errors import DomainError, require
 
 def open_demo(store):
     folder = files("opensubsurface").joinpath("data/norne")
-    declaration = json.loads(folder.joinpath("demo.json").read_text())
+    declaration = json.loads(folder.joinpath("demo.json").read_text(encoding="utf-8"))
     pid = declaration["project_id"]
     try:
         store.project(pid)

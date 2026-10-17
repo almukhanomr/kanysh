@@ -8,6 +8,7 @@ from pathlib import Path
 
 from opensubsurface.adapters.local_sources import LocalSources, revision
 from opensubsurface.errors import require
+from opensubsurface.platform_io import is_reparse, scan_descriptor
 
 EXPORT_GUIDE = "opensubsurface://docs/petrel-export"
 EXT_ROLES = {
@@ -110,7 +111,7 @@ def assess(store, p):
     while pending and not truncated:
         path, depth = pending.pop(0)
         with sources.opened(p["source_id"], path, directory=True) as (fd, _):
-            with os.scandir(fd) as iterator:
+            with scan_descriptor(fd) as iterator:
                 entries = []
                 for entry in iterator:
                     scanned += 1
@@ -119,7 +120,7 @@ def assess(store, p):
                         "SOURCE_DIRECTORY_TOO_LARGE",
                         "Assessment budget exceeded; choose a narrower directory",
                     )
-                    if entry.name.startswith(".") or entry.is_symlink():
+                    if entry.name.startswith(".") or is_reparse(entry.stat(follow_symlinks=False)):
                         continue
                     entries.append(
                         (

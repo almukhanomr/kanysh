@@ -8,7 +8,7 @@ MCP-клиент предоставляет агента; внутри Kanysh Ba
 
 ## Запуск
 
-Python 3.12; команды из корня проекта. Для Windows выполнить внутри подготовленного WSL2
+Python 3.12; команды этого справочника — для macOS/Linux из корня проекта. Для Windows используйте нативный MCPB: [инструкция](INSTALL_WINDOWS.ru.md). WSL нужен только для OPM Flow. Старый дополнительный профиль WSL2
 или использовать [PowerShell launcher](../scripts/start-workstation.ps1).
 
 ```bash
