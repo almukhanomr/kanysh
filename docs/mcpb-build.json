@@ -4,7 +4,7 @@
     "cpu": {
       "path": "dist/kanysh-basic-0.2.0-dev3.mcpb",
       "variant": "cpu",
-      "sha256": "386a543838296802e928c1f02a1ad08620ee2ed741a435cd2f942cc07a83ddfd",
+      "sha256": "4fa3a00938467061cbe2885bc26521f31c4adce3cdb29003c7cfba8aa4d993f8",
       "archive_check": "PASS",
       "mcpb_validate": "PASS",
       "packager": "mcpb pack 2.1.2",
@@ -16,7 +16,7 @@
     "gpu": {
       "path": "dist/kanysh-basic-gpu-0.2.0-dev3.mcpb",
       "variant": "gpu",
-      "sha256": "2b9c52ca365d2e8f5cccf0f33383a9d4fde25106c45cacf0d4d4d3df64c4bf9a",
+      "sha256": "d8ed525c93f9dec9c1add6d87d759164564f579047a600a5ed4736d76d1c1412",
       "archive_check": "PASS",
       "mcpb_validate": "PASS",
       "packager": "mcpb pack 2.1.2",
@@ -33,5 +33,6 @@
     "method": "python -X importtime server.py with stdin EOF; warm macOS environment; exit time includes lifespan cleanup, not MCP protocol latency"
   },
   "windows_claude_desktop": "NOT RUN",
-  "real_nvidia": "NOT RUN"
+  "real_nvidia": "NOT RUN",
+  "source_note": "Rebuilt with Windows shared-viewer Job Object lifetime fix; native WMI execution awaits Windows CI"
 }

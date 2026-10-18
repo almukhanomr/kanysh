@@ -109,6 +109,11 @@ uv run --no-sync kanysh-basic --home "$env:LOCALAPPDATA\kanysh-basic-gpu" doctor
 Keep `--no-group cpu --extra gpu` on future sync commands. Plain sync restores CPU.
 [Startup/build details](DESKTOP_STARTUP.md).
 
+The shared viewer uses the built-in local Windows Management Instrumentation (WMI)
+service, under your user account. If workstation policy blocks process creation,
+`VIEWER_LAUNCH_UNAVAILABLE` explains the failure in the startup/viewer log. Ask IT to
+review the local WMI policy; installation does not request administrator elevation.
+
 ## OPM Flow through WSL (optional)
 
 **Only hydrodynamic simulation requires Linux/WSL.** Native Windows simulation tools

@@ -65,3 +65,18 @@ jobs:
           retention-days: 7
           path: ${{ runner.temp }}/pytest/**/attempts/**/worker.log
           if-no-files-found: warn
+
+      - name: Upload failed Desktop diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-logs-${{ matrix.os }}
+          retention-days: 7
+          path: |
+            ${{ runner.temp }}/pytest/**/startup*.json
+            ${{ runner.temp }}/pytest/**/startup.log
+            ${{ runner.temp }}/pytest/**/viewer.log
+            ${{ runner.temp }}/pytest/**/viewer-process.json
+            ${{ runner.temp }}/pytest/**/desktop-leases/*.json
+            ${{ runner.temp }}/pytest/**/*-client.log
+          if-no-files-found: ignore

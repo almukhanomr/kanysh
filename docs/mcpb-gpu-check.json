@@ -1,10 +1,10 @@
 {
   "status": "PASS",
   "source_archive": "dist/kanysh-basic-gpu-0.2.0-dev3.mcpb",
-  "archive_sha256": "2b9c52ca365d2e8f5cccf0f33383a9d4fde25106c45cacf0d4d4d3df64c4bf9a",
+  "archive_sha256": "d8ed525c93f9dec9c1add6d87d759164564f579047a600a5ed4736d76d1c1412",
   "sdk_stdio": "PASS",
   "variant": "gpu",
-  "initialize_and_list_seconds": 0.44815725000808015,
+  "initialize_and_list_seconds": 0.42485491700062994,
   "installer_selected_folder": "PASS",
   "startup_log": "PASS",
   "shared_local_viewer_controller": "PASS",

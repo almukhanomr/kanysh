@@ -32,7 +32,16 @@ def write_json(path, value):
     temp = path.with_name(path.name + f".{os.getpid()}.{uuid.uuid4().hex}.tmp")
     try:
         temp.write_text(json.dumps(value), encoding="utf-8")
-        os.replace(temp, path)
+        for attempt in range(6):
+            try:
+                os.replace(temp, path)
+                break
+            except PermissionError as error:
+                # Windows readers/antivirus can briefly hold a deny-delete handle.
+                # Preserve atomic replacement; never truncate the existing status.
+                if getattr(error, "winerror", None) not in (5, 32, 33) or attempt == 5:
+                    raise
+                time.sleep(0.01 * 2**attempt)
     finally:
         temp.unlink(missing_ok=True)
 

@@ -141,6 +141,44 @@ def _ensure_viewer(service, port, open_browser, managed):
     from opensubsurface.execution.runner import process_options
 
     kwargs = process_options()
+    if managed and sys.platform == "win32":
+        from opensubsurface.desktop_spawn import launch_windows_viewer
+
+        process = launch_windows_viewer(service.store.root, port, log)
+    else:
+        process = _spawn_viewer(service, port, log, managed, kwargs)
+    write_json(
+        process_record,
+        dict(
+            identity(process.pid),
+            managed=managed,
+            stopping=False,
+            launch_method=getattr(process, "launch_method", "subprocess"),
+        ),
+    )
+    for _ in range(300):
+        if process.poll() is not None:
+            return dict(status="FAILED", log=str(log), returncode=process.returncode)
+        try:
+            with httpx.Client(trust_env=False, timeout=1) as client:
+                response = client.get(url + "/health")
+                if (
+                    response.is_success
+                    and response.json().get("status") == "ok"
+                    and response.json().get("home") == str(service.store.root.resolve())
+                ):
+                    if open_browser:
+                        webbrowser.open(url + "/app/")
+                    return dict(status="RUNNING", pid=process.pid, url=url + "/app/", log=str(log))
+        except (httpx.HTTPError, ValueError):
+            pass
+        time.sleep(0.2)
+    return dict(
+        status="FAILED", pid=process.pid, url=url + "/app/", log=str(log), reason="Viewer startup timed out"
+    )
+
+
+def _spawn_viewer(service, port, log, managed, kwargs):
     with log.open("ab") as stream:
         process = subprocess.Popen(
             [sys.executable, "-m", "opensubsurface.desktop_viewer", str(service.store.root), str(port)]
@@ -163,27 +201,7 @@ def _ensure_viewer(service, port, open_browser, managed):
             stdin=subprocess.DEVNULL,
             **kwargs,
         )
-    write_json(process_record, dict(identity(process.pid), managed=managed, stopping=False))
-    for _ in range(300):
-        if process.poll() is not None:
-            return dict(status="FAILED", log=str(log), returncode=process.returncode)
-        try:
-            with httpx.Client(trust_env=False, timeout=1) as client:
-                response = client.get(url + "/health")
-                if (
-                    response.is_success
-                    and response.json().get("status") == "ok"
-                    and response.json().get("home") == str(service.store.root.resolve())
-                ):
-                    if open_browser:
-                        webbrowser.open(url + "/app/")
-                    return dict(status="RUNNING", pid=process.pid, url=url + "/app/", log=str(log))
-        except (httpx.HTTPError, ValueError):
-            pass
-        time.sleep(0.2)
-    return dict(
-        status="FAILED", pid=process.pid, url=url + "/app/", log=str(log), reason="Viewer startup timed out"
-    )
+    return process
 
 
 def setup(service, desktop_path=None, code_path=None, start_viewer=True, open_browser=True):

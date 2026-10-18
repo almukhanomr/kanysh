@@ -34,6 +34,12 @@ LocalAppData may resolve inside Claude's `Packages/.../LocalCache/Local` directo
   and stops after the last live client disappears, including a killed client. PID
   creation time prevents confusing a reused PID with the original client.
 
+On Windows, a managed viewer is created through local WMI as the caller, with its
+own lifetime rather than as a child in one MCP client's kill-on-close Job Object.
+WMI must be available and permitted by workstation policy. Failure is explicit
+(`VIEWER_LAUNCH_UNAVAILABLE`); no administrator elevation or scheduled task is used.
+Existing worker cancellation continues to own and terminate worker descendants.
+
 An independently launched CLI viewer is reused but is never stopped by Desktop lease
 cleanup. The execution control-plane lock remains separate; clients route calculations
 to the active local viewer/controller and do not start duplicate owners.
@@ -93,27 +99,41 @@ macOS arm64, Python 3.12, warm installed environment:
 
 | Check | Result |
 |---|---|
-| Full CPU regression | 171 passed, 5 skipped, 2 deselected in 422.80 s |
-| New Desktop process tests | 11 passed in 27.60 s |
+| Full CPU regression | 177 passed, 5 skipped, 2 deselected in 444.85 s |
+| New Desktop process tests | 15 passed; includes two mocked WMI marshalling/error cases |
 | Four simultaneous Store processes on empty home | PASS; head `0001`, one schema marker, one registered source |
 | Two real stdio Desktop clients, shared viewer | PASS; one viewer, no FAILED; closing one preserves the other |
 | Abruptly killed Desktop process | PASS; its managed viewer exits after the stale lease is removed |
 | Foreign occupied port / independently launched viewer | PASS; select another port / preserve standalone viewer |
 | Deliberately slow/failing background startup | PASS; initialize+tools <3 s; STARTING / FAILED, connection stays alive |
 | CPU archive real SDK initialize + tools/list | 0.425 s |
-| GPU archive real SDK initialize + tools/list | 0.448 s; CPU fallback without CUDA |
+| GPU archive real SDK initialize + tools/list | 0.425 s; CPU fallback without CUDA |
 | Official CPU and GPU MCPB validation/packing | PASS |
 | Root / CPU / GPU frozen lock consistency and installed package compatibility | PASS |
 | Real Windows Claude Desktop installation, toggle/re-enable, no orphans | NOT RUN |
 | Real Windows/NVIDIA CUDA computations | NOT RUN |
 
-`python -X importtime server.py` with stdin EOF: **4.269 s before**, **0.881 s after**,
+Initial dev3 measurement of `python -X importtime server.py` with stdin EOF: **4.269 s before**, **0.881 s after**,
 both exit 0. This compares process lifetime (including shutdown), not protocol latency;
 SDK timing above measures the MCP exchange. Importing `opensubsurface.mcp.server`
 does not import torch, gempy, gradio, pyvista, trame, distributed, numpy or scipy.
 Timing is a local observation, not a Windows performance guarantee.
 
 Archive hashes and SDK evidence: [CPU](mcpb-check.json), [GPU](mcpb-gpu-check.json).
-Full regression: [JUnit](test-results.xml); later-added lifecycle cases are included in
-the separate [11-test Desktop suite](test-results-desktop.xml). Windows acceptance stays separate in
+Full regression: [JUnit](test-results.xml); Desktop cases are also collected in
+the separate [15-test Desktop suite](test-results-desktop.xml). Windows acceptance stays separate in
 [WINDOWS_NATIVE](WINDOWS_NATIVE.md). No current hosted CI result is implied.
+
+
+## Hosted Windows follow-up
+
+[Run 39111905173](https://github.com/almukhanomr/kanysh/actions/runs/39111905173)
+on 3ac2e68: Windows **172 passed, 4 skipped, 2 failed, 2 deselected**; Linux/macOS green.
+Both failures concern Desktop/viewer lifetime. The fix uses local WMI for managed Windows
+viewers, exercises an initialized MCP connection before killing its actual server PID,
+and collects Desktop logs on CI failure. Windows status replacements retry transient
+sharing violations. [Details and evidence limits](WINDOWS_NATIVE.md#windows-ci-lifetime-fix-after-3ac2e68).
+A new Windows run is required; local macOS or mocked COM checks do not prove that result.
+
+After this fix, the local full CPU suite passed: **177 passed, 5 skipped, 2 deselected**
+in 444.85 s. Native Windows execution of the WMI launcher still awaits the next CI run.

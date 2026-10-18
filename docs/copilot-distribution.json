@@ -4,16 +4,16 @@
   "future_development": "Kanysh Advanced",
   "version": "0.2.0.dev3",
   "archive_hashes": {
-    "kanysh-basic-0.2.0-dev3.mcpb": "386a543838296802e928c1f02a1ad08620ee2ed741a435cd2f942cc07a83ddfd",
-    "kanysh-basic-gpu-0.2.0-dev3.mcpb": "2b9c52ca365d2e8f5cccf0f33383a9d4fde25106c45cacf0d4d4d3df64c4bf9a",
-    "kanysh_basic-0.2.0.dev3-py3-none-any.whl": "7abbf624c84dd6cd4367f126bb47d81779a54470bebb00d4ab66b06c3c320a7c",
-    "kanysh_basic-0.2.0.dev3.tar.gz": "fe0f5390455ad18b14ba8b681ebcdcd0f5c78c28ed831d15f2a8d05c58b0d741"
+    "kanysh-basic-0.2.0-dev3.mcpb": "4fa3a00938467061cbe2885bc26521f31c4adce3cdb29003c7cfba8aa4d993f8",
+    "kanysh-basic-gpu-0.2.0-dev3.mcpb": "d8ed525c93f9dec9c1add6d87d759164564f579047a600a5ed4736d76d1c1412",
+    "kanysh_basic-0.2.0.dev3-py3-none-any.whl": "1de76b355906db1468dc0357e0d3ac2cba2899d476035d82141a97f43d5b89f5",
+    "kanysh_basic-0.2.0.dev3.tar.gz": "cde3ffce9a6c8253ccea6fad6eacb4e526345d52331d5ff60e94b250630ac123"
   },
   "archive_files": {
-    "kanysh-basic-0.2.0-dev3.mcpb": 79,
-    "kanysh-basic-gpu-0.2.0-dev3.mcpb": 79,
-    "kanysh_basic-0.2.0.dev3-py3-none-any.whl": 78,
-    "kanysh_basic-0.2.0.dev3.tar.gz": 306
+    "kanysh-basic-0.2.0-dev3.mcpb": 80,
+    "kanysh-basic-gpu-0.2.0-dev3.mcpb": 80,
+    "kanysh_basic-0.2.0.dev3-py3-none-any.whl": 79,
+    "kanysh_basic-0.2.0.dev3.tar.gz": 309
   },
   "source_identity": "Current production source/data bytes match wheel, sdist and both MCPB variants",
   "excluded_experimental": "PASS",

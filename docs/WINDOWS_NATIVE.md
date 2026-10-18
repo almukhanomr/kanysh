@@ -13,7 +13,7 @@ actual Windows acceptance. [User installation: English](INSTALL_WINDOWS.md) /
 | W2: folder selection | Native Windows PowerShell folder picker with UTF-8 output; CLI drive paths and installer model-folder configuration share the source boundary | Installer-selected folder automatically registers and is assessed through real MCP SDK on macOS. Actual Windows picker/Claude dialog NOT RUN |
 | W3: dependencies | CPU uv group is default. Exclusive gpu extra selects CUDA 12.6 with `--no-group cpu --extra gpu`. Explicit PyTorch indexes. resdata solver extra is Linux-only; native simulation execution returns SOLVER_PLATFORM_UNSUPPORTED | Exact MCPB resolves 168 packages for Windows x64 CPython 3.12 with torch 2.14.1+cpu; no CUDA/resdata. Native packages require wheels, with only pure-Python asciitree allowed from source. Resolution is not installation; NVIDIA NOT RUN |
 | W4: extension | win32/darwin/linux platforms; Windows default `%LOCALAPPDATA%\kanysh-basic`; optional owner-selected model folder; first-run browser; startup.log/startup-status.json and viewer.log | Archive bytes checked against current source/notices. MCP stdio SDK, startup status, shared viewer/controller and isolated one-cell DATA import pass on macOS. Claude Desktop Windows UV install NOT RUN |
-| W5: CI | Windows/Ubuntu/macOS CPU matrix, ruff, publication guard, no gpu/opm/external. Explicit skips for Linux-only OPM/optional reader and symlink privilege. Native Windows junction tests do not require symlink privilege | Local macOS CPU dev3: 171 passed, 5 skipped, 2 deselected; 0 failures/errors, 422.80 s. Additional Desktop process suite: 11 passed (includes two later-added lifecycle cases). GitHub-hosted Windows CI NOT RUN. The previously observed account billing lock must be resolved by the account owner before hosted runs can execute |
+| W5: CI | Windows/Ubuntu/macOS CPU matrix, ruff, publication guard, no gpu/opm/external. Explicit skips for Linux-only OPM/optional reader and symlink privilege. Native Windows junction tests do not require symlink privilege | Local macOS CPU after the fix: 177 passed, 5 skipped, 2 deselected; 0 failures/errors, 444.85 s. Desktop cases: 15 passed, including two mocked COM cases. Latest hosted run on commit 3ac2e68: Windows 172 passed, 4 skipped, 2 failed, 2 deselected (583.41 s); Linux/macOS green. [Run 39111905173](https://github.com/almukhanomr/kanysh/actions/runs/39111905173). Fixes below are awaiting a new Windows run |
 | W6/W7: installation | Three-step English/Russian guide with labelled illustrations, GPU and optional OPM/WSL sections; README makes native Windows the primary installation route | Guides/links checked. Pictures are illustrations, not Windows acceptance screenshots |
 
 Additional portability work: all application Path.read_text/write_text calls explicitly
@@ -43,3 +43,29 @@ passes. These are **not** Windows Desktop or NVIDIA acceptance. Windows Claude U
 installation, enable/disable/re-enable with no orphan processes, GPU detection and
 actual CUDA computations remain **NOT RUN**. New hosted CI for these uncommitted changes
 has not been run. See [Desktop startup evidence](DESKTOP_STARTUP.md).
+
+## Windows CI lifetime fix (after 3ac2e68)
+
+The failing hosted run reported two Desktop lifetime failures, rather than scientific
+or source-security failures. The MCP SDK assigns each Windows stdio server and its
+children to a kill-on-close Job Object. A new process group does not isolate a shared
+viewer from that job's teardown. Managed Windows viewers now launch through local
+WMI `Win32_Process.Create`, with the caller's environment and an independent process
+lifetime, still bounded by the existing PID/create-time leases. Worker process groups,
+job cancellation and source boundaries are unchanged. No service, scheduled task,
+administrator elevation or new dependency is added (`pywin32` is already an MCP Windows
+dependency). A local WMI policy denial returns `VIEWER_LAUNCH_UNAVAILABLE` and a log
+message, rather than silently using the broken client-child lifetime.
+
+The crash test now establishes a real MCP session, then kills the server PID from
+its own status (rather than a possible Windows venv redirector). It verifies viewer
+cleanup **before** the SDK tears down its client Job Object. Its old raw-process test
+reached no ready status and discarded stderr, so that earlier timeout's precise cause
+cannot be established from the supplied CI output. Client stderr, startup status and
+viewer logs will now be uploaded on any subsequent CI failure. Atomic status replacement
+also retries bounded Windows sharing violations without truncating the previous record.
+
+Local targeted tests pass; native WMI/Job Object execution and fixed Windows CI are
+**NOT RUN** until a new hosted run. See [Microsoft Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects),
+[WMI Create](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/create-method-in-class-win32-process)
+and [startup environment](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-processstartup).

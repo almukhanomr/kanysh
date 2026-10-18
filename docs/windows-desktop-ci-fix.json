@@ -1,0 +1,32 @@
+{
+  "failed_run": "https://github.com/almukhanomr/kanysh/actions/runs/39111905173",
+  "check_suite_id": 105990489772,
+  "commit": "3ac2e68",
+  "windows_result_before_fix": {
+    "passed": 172,
+    "failed": 2,
+    "skipped": 4,
+    "deselected": 2
+  },
+  "other_jobs_before_fix": {
+    "ubuntu": "PASS",
+    "macos": "PASS"
+  },
+  "local_after_fix": {
+    "platform": "macOS arm64",
+    "passed": 177,
+    "failed": 0,
+    "skipped": 5,
+    "deselected": 2,
+    "seconds": 444.85,
+    "desktop_cases": 15,
+    "wmi_native": "NOT RUN",
+    "wmi_marshalling_and_denial": "PASS (mocked)",
+    "ruff": "PASS",
+    "publication_audit": "PASS",
+    "mcpb_cpu_and_gpu": "official validate/pack and local SDK PASS"
+  },
+  "fixed_windows_ci": "NOT RUN; changes are not committed/pushed",
+  "claude_desktop_windows": "NOT RUN",
+  "nvidia": "NOT RUN"
+}

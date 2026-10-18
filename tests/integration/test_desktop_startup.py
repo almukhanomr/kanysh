@@ -6,6 +6,7 @@ import multiprocessing
 import os
 import sys
 import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -64,12 +65,21 @@ async def desktop(home, entry=None, variant="cpu", folder=None):
     if folder:
         env["KANYSH_SOURCE_FOLDER"] = str(folder)
     args = [str(entry)] if entry else ["-m", "opensubsurface.desktop"]
-    async with stdio_client(StdioServerParameters(command=sys.executable, args=args, env=env)) as (
-        read,
-        write,
-    ):
-        async with ClientSession(read, write) as session:
-            yield session
+    log = home.parent / f"{home.name}-{uuid.uuid4().hex}-client.log"
+    with log.open("w", encoding="utf-8") as errlog:
+        async with stdio_client(
+            StdioServerParameters(command=sys.executable, args=args, env=env), errlog=errlog
+        ) as (read, write):
+            async with ClientSession(read, write) as session:
+                yield session
+
+
+def diagnostics(home):
+    return {
+        path.name: path.read_text(encoding="utf-8", errors="replace")[-12000:]
+        for path in home.glob("*")
+        if path.suffix in (".json", ".log") and path.is_file()
+    }
 
 
 async def tool(session, name="project_list"):
@@ -146,13 +156,15 @@ async def test_two_desktops_share_viewer_and_last_client_cleanup(tmp_path):
             assert len(one["result"]) == 1 and one == two
             record = json.loads((home / "viewer-process.json").read_text())
             assert record["managed"] and alive(record)
+            if sys.platform == "win32":
+                assert record["launch_method"] == "windows-wmi"
             leases = list((home / "desktop-leases").glob("*.json"))
             assert len(leases) == 2
             lines = [json.loads(line) for line in (home / "startup.log").read_text().splitlines()]
             assert not any(line["stage"] == "FAILED" for line in lines)
             assert sum(line["stage"] == "VIEWER_RUNNING" for line in lines) == 1
             assert sum(line["stage"] == "VIEWER_ALREADY_RUNNING" for line in lines) == 1
-        assert alive(record), "Second client shutdown killed first client's viewer"
+        assert alive(record), diagnostics(home)
         assert "result" in await tool(a)
     deadline = time.monotonic() + 30
     while alive(record) and time.monotonic() < deadline:
@@ -282,37 +294,63 @@ async def test_foreign_port_chooses_another_and_standalone_viewer_survives_deskt
 
 @pytest.mark.asyncio
 async def test_managed_viewer_exits_when_desktop_process_is_killed(tmp_path):
-    import subprocess
+    import psutil
 
     from opensubsurface.desktop_lifecycle import alive
 
     home = tmp_path / "abrupt-home"
-    process = subprocess.Popen(
-        [sys.executable, "-m", "opensubsurface.desktop"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        env=dict(os.environ, OPENSUBSURFACE_HOME=str(home), KANYSH_OPEN_BROWSER="0", KANYSH_VARIANT="cpu"),
-    )
-    record = None
-    try:
-        deadline = time.monotonic() + 90
-        while time.monotonic() < deadline:
-            assert process.poll() is None
-            status = home / "startup-status.json"
-            if status.exists() and json.loads(status.read_text(encoding="utf-8"))["stage"] == "MCP_READY":
-                record = json.loads((home / "viewer-process.json").read_text(encoding="utf-8"))
-                break
-            await asyncio.sleep(0.2)
+    async with desktop(home) as session:
+        await session.initialize()
+        await wait_ready(session)
+        status = json.loads((home / "startup-status.json").read_text(encoding="utf-8"))
+        record = json.loads((home / "viewer-process.json").read_text(encoding="utf-8"))
         assert record and alive(record)
+        # Kill the actual server recorded by itself. Windows venv's Popen PID can
+        # belong to a redirector; killing only that wrapper leaves Python alive.
+        process = psutil.Process(status["pid"])
         process.kill()
-        await asyncio.to_thread(process.wait, 10)
         deadline = time.monotonic() + 30
         while alive(record) and time.monotonic() < deadline:
             await asyncio.sleep(0.2)
-        assert not alive(record), "Viewer must prune a killed client lease using PID/create_time"
-    finally:
-        if process.poll() is None:
-            process.kill()
-            await asyncio.to_thread(process.wait, 10)
-        process.stdin.close()
+        # Assert before SDK context cleanup, so the SDK's own job teardown cannot
+        # make a missing lease supervisor look successful.
+        assert not alive(record), diagnostics(home)
+
+
+def test_status_atomic_replace_retries_windows_sharing_violation(tmp_path, monkeypatch):
+    from opensubsurface.desktop_lifecycle import write_json
+
+    path = tmp_path / "status.json"
+    write_json(path, {"stage": "STARTING"})
+    replace = os.replace
+    attempts = []
+
+    def held_by_reader(source, target):
+        attempts.append(True)
+        if len(attempts) == 1:
+            assert json.loads(path.read_text()) == {"stage": "STARTING"}
+            error = PermissionError("sharing violation")
+            error.winerror = 32
+            raise error
+        replace(source, target)
+
+    monkeypatch.setattr(os, "replace", held_by_reader)
+    write_json(path, {"stage": "MCP_READY"})
+    assert json.loads(path.read_text()) == {"stage": "MCP_READY"}
+    assert len(attempts) == 2 and not list(tmp_path.glob("*.tmp"))
+
+
+def test_status_replace_preserves_previous_record_on_permanent_denial(tmp_path, monkeypatch):
+    from opensubsurface.desktop_lifecycle import write_json
+
+    path = tmp_path / "status.json"
+    write_json(path, {"stage": "STARTING"})
+
+    def denied(source, target):
+        raise PermissionError("permanent denial")
+
+    monkeypatch.setattr(os, "replace", denied)
+    with pytest.raises(PermissionError):
+        write_json(path, {"stage": "MCP_READY"})
+    assert json.loads(path.read_text()) == {"stage": "STARTING"}
+    assert not list(tmp_path.glob("*.tmp"))

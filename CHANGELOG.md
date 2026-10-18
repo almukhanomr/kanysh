@@ -2,6 +2,13 @@
 
 ## 0.2.0.dev3
 
+- Windows CI follow-up: launch managed viewers via local WMI so one MCP client's
+  Job Object teardown cannot terminate another client's shared viewer. Preserve
+  lease cleanup and existing worker/source safety behavior.
+- Verify crash cleanup after a real MCP handshake using the server's actual PID;
+  upload Desktop diagnostic logs on CI failure. Retry transient Windows status-file
+  sharing violations while preserving atomic replacement.
+
 - Serialize first-run SQLite WAL, Alembic migrations and schema markers across processes.
 - Serialize folder registration, viewer launch and the first-run browser marker.
 - Start MCP initialize/tool discovery immediately; initialize services in the background.
