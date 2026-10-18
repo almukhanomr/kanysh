@@ -9,7 +9,10 @@ from opensubsurface.errors import require
 
 MIB = 1024**2
 PROCESS_BYTES = 256 * MIB
-BYTES_PER_CELL = 8192
+# Measured (tracemalloc, 262 144-cell corner-point block): geometry flags peak ~0.7 KiB/cell, volumes
+# ~0.6, independent integral ~0.3, plus the block itself and per-region copies: ~1.5-2 KiB/cell.
+# Twice that is budgeted. This is a resource estimate only; no scientific input depends on it.
+BYTES_PER_CELL = 4096
 
 
 def memory_check(required, field="execution.max_workers", available=None):
@@ -45,8 +48,8 @@ def plan(cells, block_cells=16384, max_workers=None, fixed_bytes=0):
         1, min(os.cpu_count() or 1, platform_limit, blocks, (budget - fixed_bytes) // per_worker - 1)
     )
     workers = recommended if max_workers is None else min(max_workers, platform_limit, blocks)
-    # Two bounded in-flight result blocks per worker, plus the coordinator.
-    required = fixed_bytes + (workers + 1) * per_worker
+    # Parallel: N workers plus the coordinator. One worker runs in-process (no child, no coordinator copy).
+    required = fixed_bytes + (workers + 1 if workers > 1 else 1) * per_worker
     memory_check(required)
     return dict(
         max_workers=workers,
