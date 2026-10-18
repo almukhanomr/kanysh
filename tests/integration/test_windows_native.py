@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from opensubsurface.adapters.local_sources import LocalSources, parts, revision
+from opensubsurface.adapters.local_sources import LocalSources, parts, path_revision, revision
 from opensubsurface.desktop import configured_home
 from opensubsurface.errors import DomainError
-from opensubsurface.platform_io import read_at
+from opensubsurface.platform_io import _extended, read_at
 
 
 @pytest.mark.parametrize("path", ["C:/outside.csv", "C:outside.csv", "file.csv:secret", "dir./x", "dir /x"])
@@ -47,10 +47,12 @@ def test_windows_drive_case_long_unicode_paths_and_identity(service, tmp_path):
     assert sources.register("same root different case", str(root).swapcase())["id"] == source["id"]
     assert Path(source["root"]).is_absolute() and source["inode"] != 0
     with sources.opened(source["id"], "poro.inc") as (fd, _):
-        assert revision(os.fstat(fd)) == revision(file.stat())
+        assert revision(os.fstat(fd)) == path_revision(file)
         assert os.read(fd, 100) == file.read_bytes()
     relative = "/".join(["long-directory-" + str(i) + "a" * 30 for i in range(8)])
-    deep = root / relative
+    # Fixture creation must work even when Windows LongPathsEnabled is off.
+    # The production reader below still receives the ordinary registered path.
+    deep = Path(_extended(root / relative))
     deep.mkdir(parents=True)
     (deep / "data.inc").write_bytes(b"NTG\n1 /\n")
     with sources.opened(source["id"], relative + "/data.inc") as (fd, _):

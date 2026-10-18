@@ -37,11 +37,11 @@ def opened(obj):
             yield {k: arrays[k].ravel() for k in arrays.files}, "C"
 
 
-def iterate(obj):
+def iterate(obj, include_corners=True):
     with opened(obj) as (group, order):
         if is_large(obj):
             for start, data in blocks(group):
-                if "corners" not in data:
+                if include_corners and "corners" not in data:
                     data["corners"] = cartesian_corners(
                         obj, np.arange(start, start + len(data["active"])), order
                     )
@@ -49,7 +49,10 @@ def iterate(obj):
         else:
             for start in range(0, len(group["active"]), 16384):
                 data = {k: a[start : start + 16384] for k, a in group.items()}
-                data["corners"] = cartesian_corners(obj, np.arange(start, start + len(data["active"])), order)
+                if include_corners:
+                    data["corners"] = cartesian_corners(
+                        obj, np.arange(start, start + len(data["active"])), order
+                    )
                 yield start, data, order
 
 

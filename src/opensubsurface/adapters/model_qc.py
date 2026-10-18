@@ -7,7 +7,7 @@ import numpy as np
 from scipy import ndimage
 
 from opensubsurface.adapters.cornerpoint import cell_volumes
-from opensubsurface.adapters.model_arrays import ijk, iterate, provenance, region
+from opensubsurface.adapters.model_arrays import ijk, provenance, region
 from opensubsurface.calculations.cornerpoint_reference import integral
 from opensubsurface.execution import progress
 
@@ -84,12 +84,33 @@ def geometry_flags(corners, storage=None):
     )
 
 
+def _scan_block(start, data, order, storage):
+    flags = geometry_flags(data["corners"], storage)
+    reference = integral(flags["safe"])
+    valid = bool(np.allclose(flags["volume"], reference, rtol=1e-10, atol=1e-8))
+    # Only the coordinator emits CSV, cluster labels and ordered reductions.
+    return start, data, order, flags, valid
+
+
 def run(obj, p, out):
     shape = obj["summary"]["grid"]["shape"]
     cells = math.prod(shape)
+    from opensubsurface.execution.blocks import mapped
+    from opensubsurface.execution.resources import memory_check, plan
+
+    # Worst-case isolated voxels: labels, bincount, first indices and temporary masks.
+    memory_check(cells * 80 + 512 * 1024**2, "properties.grid.shape")
+    config = plan(
+        cells,
+        obj["summary"].get("block_cells", 16384),
+        (p.get("execution") or {}).get("max_workers"),
+        fixed_bytes=cells * 80,
+    )
+    execution = dict(p.get("execution") or {}, max_workers=config["max_workers"])
     active_all = np.empty(cells, bool)
     counts, examples, summaries = {}, [], {}
     independent_ok, checked = True, 0
+    region_parts = {}
     with (out / "issues.csv").open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=["severity", "code", "i", "j", "k", "cell_id", "region"])
         writer.writeheader()
@@ -124,17 +145,17 @@ def run(obj, p, out):
                     region="",
                 )
             )
-        for start, data, order in iterate(obj):
+        for start, data, order, flags, block_ok in mapped(
+            obj, _scan_block, obj["summary"].get("storage"), execution=execution
+        ):
             progress.report(start / cells, "model_qc geometry/property scan")
             active = data["active"].astype(bool)
             active_all[start : start + len(active)] = active
             ids = ijk(np.arange(start, start + len(active)), shape, order)
             regions = region(data, p["region_field"])
-            flags = geometry_flags(data["corners"], obj["summary"].get("storage"))
-            finite, safe, volume = flags["finite"], flags["safe"], flags["volume"]
+            finite, volume = flags["finite"], flags["volume"]
             issue(active & ~finite, "ERROR", "nonfinite_geometry", start, ids, regions)
-            reference = integral(safe)
-            independent_ok &= bool(np.allclose(volume, reference, rtol=1e-10, atol=1e-8))
+            independent_ok &= block_ok
             checked += len(active)
             issue(active & flags["negative"], "ERROR", "negative_signed_volume", start, ids, regions)
             issue(active & flags["twisted"], "ERROR", "twisted_cell", start, ids, regions)
@@ -161,9 +182,10 @@ def run(obj, p, out):
                     dict(region_id=int(rid), active_cells=0, GRV_m3=0.0, PV_m3=0.0, invalid_pore_cells=0),
                 )
                 row["active_cells"] += int(selected.sum())
-                row["GRV_m3"] += float(volume[selected].sum())
+                parts = region_parts.setdefault(int(rid), ([], []))
+                parts[0].append(float(volume[selected].sum()))
                 good = selected & np.isfinite(pore)
-                row["PV_m3"] += float(pore[good].sum())
+                parts[1].append(float(pore[good].sum()))
                 row["invalid_pore_cells"] += int((selected & ~np.isfinite(pore)).sum())
         labels, number = ndimage.label(
             active_all.reshape(shape, order="F" if order == "ECLIPSE" else "C"),
@@ -200,6 +222,9 @@ def run(obj, p, out):
             if len(cluster_rows) < p["max_examples"]:
                 cluster_rows.append(row)
         counts["small_isolated_clusters"] = len(small)
+    for rid, (bulk, pore) in region_parts.items():
+        summaries[rid]["GRV_m3"] = math.fsum(bulk)
+        summaries[rid]["PV_m3"] = math.fsum(pore)
     review_only = {"ntg_zero_with_porosity", "small_isolated_clusters", "pinched_pillar_cell"}
     return dict(
         operation="model_qc",

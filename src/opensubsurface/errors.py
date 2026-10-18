@@ -4,6 +4,10 @@ class DomainError(Exception):
         self.code, self.message, self.field, self.remediation = code, message, field, remediation
         self.details = details
 
+    def __reduce__(self):
+        # Process workers must preserve structured domain errors across spawn/IPC.
+        return type(self), (self.code, self.message, self.field, self.remediation, self.details)
+
     def as_dict(self):
         result = {
             "code": self.code,

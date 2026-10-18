@@ -1,12 +1,13 @@
 """Regional oil/free-gas volumetrics with explicit user parameters and independent integrals."""
 
 import math
+from collections import OrderedDict
 
 import numpy as np
 import pyarrow.parquet as pq
 
 from opensubsurface.adapters.cornerpoint import cell_volumes
-from opensubsurface.adapters.model_arrays import ijk, iterate, provenance, region
+from opensubsurface.adapters.model_arrays import ijk, provenance, region
 from opensubsurface.calculations.cornerpoint_reference import integral
 from opensubsurface.errors import DomainError, require
 
@@ -93,11 +94,9 @@ def water_saturation(data, corners, case):
     return np.interp(argument, x, y)
 
 
-def evaluate(obj, p, polygon=None, independent=True):
+def _block(start, data, order, obj, p, polygon, independent, device="cpu", cache=None):
     from opensubsurface.adapters.model_qc import geometry_flags
-    from opensubsurface.execution import progress
 
-    rows = []
     indices = {}
     accumulators = {}
     reference = {}
@@ -114,175 +113,291 @@ def evaluate(obj, p, polygon=None, independent=True):
             excluded[key] = dict(
                 path=f"scenarios[{s}].regions[{r}]", cells=0, GRV_tetra6_m3=[], GRV_bbox_m3=[], PV_bbox_m3=[]
             )
-    selected_by_polygon = 0
     witnesses = []
-    total_cells = math.prod(obj["summary"]["grid"]["shape"])
-    for start, data, _ in iterate(obj):
-        progress.report(start / total_cells, "regional volumes")
-        active = data["active"].astype(bool)
-        regions = region(data, p["region_field"])
-        if polygon is not None:
-            from shapely import contains_xy, intersects_xy
+    volumes = cell_volumes
+    if device == "cuda":
+        from opensubsurface.execution.cornerpoint_gpu import cell_volumes as volumes
+    active = data["active"].astype(bool)
+    regions = region(data, p["region_field"])
+    if polygon is not None:
+        from shapely import contains_xy, intersects_xy
 
-            center = data["corners"].mean(axis=1)
-            selected = (intersects_xy if p["polygon_boundary"] == "include" else contains_xy)(
-                polygon, center[:, 0], center[:, 1]
+        center = data["corners"].mean(axis=1)
+        selected = (intersects_xy if p["polygon_boundary"] == "include" else contains_xy)(
+            polygon, center[:, 0], center[:, 1]
+        )
+        active &= selected
+    cache = {} if cache is None else cache
+    flags = cache.get("flags")
+    for key, case in indices.items():
+        mask = active & (regions == case["region_id"])
+        if not mask.any():
+            continue
+        if flags is None:
+            flags = cache["flags"] = geometry_flags(data["corners"], obj["summary"].get("storage"))
+        path = excluded[key]["path"]
+        invalid = mask & ~flags["valid"]
+        if invalid.any():
+            local_ids = np.flatnonzero(invalid)
+            first = ijk(
+                local_ids[:5] + start, obj["summary"]["grid"]["shape"], obj["summary"].get("order", "C")
             )
-            active &= selected
-            selected_by_polygon += int(active.sum())
-        flags = None
-        for key, case in indices.items():
-            mask = active & (regions == case["region_id"])
+            require(
+                policy == "exclude_flagged",
+                "INVALID_GEOMETRY",
+                f"Region {case['region_id']}: at least {len(local_ids)} selected active cells are "
+                f"degenerate/inverted/twisted (first IJK {(first + 1).tolist()}); geometry_policy=strict "
+                "refuses volumetrics on them",
+                "geometry_policy",
+                f"Inspect model_qc of properties {obj['id']} r{obj['revision']} (issues.csv lists every IJK "
+                "witness). If the user confirms excluding flagged cells, resend with "
+                "geometry_policy='exclude_flagged' and parameters_confirmed=true: the excluded count, "
+                "bounding GRV/PV and share are reported and validation_status becomes PASS_WITH_EXCLUSIONS.",
+                dict(region_id=case["region_id"], first_ijk=(first + 1).tolist(), request_path=path),
+            )
+            bad = data["corners"][invalid]
+            bbox = np.prod(np.ptp(bad, axis=1), axis=1)
+            record = excluded[key]
+            record["cells"] += len(local_ids)
+            record["GRV_tetra6_m3"].append(float(np.sum(flags["volume"][invalid])))
+            record["GRV_bbox_m3"].append(float(np.sum(bbox)))
+            pore = bbox * np.asarray(data["phi"])[invalid] * np.asarray(data["ntg"])[invalid]
+            record["PV_bbox_m3"].append(float(np.sum(pore[np.isfinite(pore)])))
+            for local in local_ids[: max(0, 1000 - len(witnesses))]:
+                witnesses.append(
+                    dict(
+                        scenario=p["scenarios"][key[0]]["name"],
+                        region_id=case["region_id"],
+                        cell_id=int(start + local),
+                        ijk=(
+                            ijk(
+                                np.array([start + local]),
+                                obj["summary"]["grid"]["shape"],
+                                obj["summary"].get("order", "C"),
+                            )[0]
+                            + 1
+                        ).tolist(),
+                        code="twisted_cell"
+                        if flags["twisted"][local]
+                        else "negative_signed_volume"
+                        if flags["negative"][local]
+                        else "degenerate_cell",
+                        GRV_tetra6_m3=float(flags["volume"][local]),
+                    )
+                )
+            mask = mask & flags["valid"]
             if not mask.any():
                 continue
-            if flags is None:
-                flags = geometry_flags(data["corners"], obj["summary"].get("storage"))
-            path = excluded[key]["path"]
-            invalid = mask & ~flags["valid"]
-            if invalid.any():
-                local_ids = np.flatnonzero(invalid)
-                first = ijk(
-                    local_ids[:5] + start, obj["summary"]["grid"]["shape"], obj["summary"].get("order", "C")
-                )
-                require(
-                    policy == "exclude_flagged",
-                    "INVALID_GEOMETRY",
-                    f"Region {case['region_id']}: at least {len(local_ids)} selected active cells are "
-                    f"degenerate/inverted/twisted (first IJK {(first + 1).tolist()}); geometry_policy=strict "
-                    "refuses volumetrics on them",
-                    "geometry_policy",
-                    f"Inspect model_qc of properties {obj['id']} r{obj['revision']} (issues.csv lists every IJK "
-                    "witness). If the user confirms excluding flagged cells, resend with "
-                    "geometry_policy='exclude_flagged' and parameters_confirmed=true: the excluded count, "
-                    "bounding GRV/PV and share are reported and validation_status becomes PASS_WITH_EXCLUSIONS.",
-                    dict(region_id=case["region_id"], first_ijk=(first + 1).tolist(), request_path=path),
-                )
-                bad = data["corners"][invalid]
-                bbox = np.prod(np.ptp(bad, axis=1), axis=1)
-                record = excluded[key]
-                record["cells"] += len(local_ids)
-                record["GRV_tetra6_m3"].append(float(np.sum(flags["volume"][invalid])))
-                record["GRV_bbox_m3"].append(float(np.sum(bbox)))
-                pore = bbox * np.asarray(data["phi"])[invalid] * np.asarray(data["ntg"])[invalid]
-                record["PV_bbox_m3"].append(float(np.sum(pore[np.isfinite(pore)])))
-                for local in local_ids[: max(0, 1000 - len(witnesses))]:
-                    witnesses.append(
-                        dict(
-                            scenario=p["scenarios"][key[0]]["name"],
-                            region_id=case["region_id"],
-                            cell_id=int(start + local),
-                            ijk=(
-                                ijk(
-                                    np.array([start + local]),
-                                    obj["summary"]["grid"]["shape"],
-                                    obj["summary"].get("order", "C"),
-                                )[0]
-                                + 1
-                            ).tolist(),
-                            code="twisted_cell"
-                            if flags["twisted"][local]
-                            else "negative_signed_volume"
-                            if flags["negative"][local]
-                            else "degenerate_cell",
-                            GRV_tetra6_m3=float(flags["volume"][local]),
-                        )
-                    )
-                mask = mask & flags["valid"]
-                if not mask.any():
-                    continue
-            counts[key] += int(mask.sum())
-            c = data["corners"][mask]
-            subset = {name: v[mask] for name, v in data.items() if name != "corners"}
-            phi = (
-                np.full(len(c), case["phi_override"])
-                if case.get("phi_override") is not None
-                else subset["phi"]
+        counts[key] += int(mask.sum())
+        c = data["corners"][mask]
+        subset = {name: v[mask] for name, v in data.items() if name != "corners"}
+        phi = np.full(len(c), case["phi_override"]) if case.get("phi_override") is not None else subset["phi"]
+        ntg = np.full(len(c), case["ntg_override"]) if case.get("ntg_override") is not None else subset["ntg"]
+        if case.get("phi_multiplier") is not None:
+            phi = phi * case["phi_multiplier"]
+        if case.get("ntg_multiplier") is not None:
+            ntg = ntg * case["ntg_multiplier"]
+        sw = water_saturation(subset, c, case)
+        if case.get("sw_multiplier") is not None:
+            sw = sw * case["sw_multiplier"]
+        for name, values, fix in (
+            ("phi", phi, "phi_override"),
+            ("ntg", ntg, "ntg_override"),
+            ("sw", sw, "sw_override"),
+        ):
+            bad = ~(np.isfinite(values) & (values >= 0) & (values <= 1))
+            nonfinite = int((~np.isfinite(values)).sum())
+            require(
+                not bad.any(),
+                "INVALID_PROPERTY",
+                f"Region {case['region_id']}: {int(bad.sum())} selected cells have "
+                + ("missing/nonfinite " if nonfinite else "out-of-range ")
+                + f"{name} after overrides/multipliers ({nonfinite} nonfinite)",
+                f"{path}.{fix}",
+                f"Run model_qc to locate the cells. If {name} is absent or must be replaced, set {fix}"
+                + (" or sw_height" if name == "sw" else "")
+                + " for this region with user confirmation; multipliers never supply missing values.",
             )
-            ntg = (
-                np.full(len(c), case["ntg_override"])
-                if case.get("ntg_override") is not None
-                else subset["ntg"]
+        # Oil interval: Sw + free gas + oil = 1. Gas cap: Sw + residual oil + gas = 1.
+        oil_fraction = 1 - sw - case["sg_in_oil_zone"]
+        gas_fraction = (
+            1 - sw - case["so_in_gas_zone"] if case.get("goc_z_m") is not None else np.zeros(len(c))
+        )
+        require(
+            (oil_fraction >= 0).all(),
+            "INVALID_SATURATION",
+            f"Region {case['region_id']}: Sw + sg_in_oil_zone exceeds 1",
+            path + ".sg_in_oil_zone",
+            "Reduce sg_in_oil_zone or Sw so that Sw + Sg <= 1 in the oil interval",
+        )
+        require(
+            (gas_fraction >= 0).all(),
+            "INVALID_SATURATION",
+            f"Region {case['region_id']}: Sw + so_in_gas_zone exceeds 1",
+            path + ".so_in_gas_zone",
+            "Reduce so_in_gas_zone or Sw so that Sw + So <= 1 in the gas cap",
+        )
+
+        def reduce(volumes):
+            whole, above_owc, gas = volumes
+            oil = np.maximum(above_owc - gas, 0)
+            oil_pore = oil * ntg * phi
+            gas_pore = gas * ntg * phi
+            return (
+                whole,
+                oil,
+                oil * ntg,
+                oil_pore,
+                oil_pore * oil_fraction,
+                whole * ntg * phi,
+                gas,
+                gas_pore,
+                gas_pore * gas_fraction,
+                np.ones(len(c)),
             )
-            if case.get("phi_multiplier") is not None:
-                phi = phi * case["phi_multiplier"]
-            if case.get("ntg_multiplier") is not None:
-                ntg = ntg * case["ntg_multiplier"]
-            sw = water_saturation(subset, c, case)
-            if case.get("sw_multiplier") is not None:
-                sw = sw * case["sw_multiplier"]
-            for name, values, fix in (
-                ("phi", phi, "phi_override"),
-                ("ntg", ntg, "ntg_override"),
-                ("sw", sw, "sw_override"),
+
+        # Geometry is identical across property-only variants. Bound the cache even
+        # for thousands of independently sampled contacts; reference entries are
+        # computed exclusively with the independent barycentric algorithm.
+        geometry_cache = cache.setdefault("integrals", OrderedDict())
+        selection_key = mask.tobytes()
+
+        def geometry(contact, check=False):
+            cache_key = (selection_key, contact, check, device)
+            if cache_key not in geometry_cache:
+                geometry_cache[cache_key] = (integral if check else volumes)(c, contact)
+                if len(geometry_cache) > 32:
+                    geometry_cache.popitem(last=False)
+            geometry_cache.move_to_end(cache_key)
+            return geometry_cache[cache_key]
+
+        whole = geometry(None)
+        above = geometry(case["owc_z_m"])
+        gas = geometry(case["goc_z_m"]) if case.get("goc_z_m") is not None else np.zeros(len(c))
+        for target, values in zip(accumulators[key], reduce((whole, above, gas))):
+            target.append(float(np.sum(values, dtype=np.float64)))
+        if independent:
+            independent_whole = geometry(None, True)
+            independent_above = geometry(case["owc_z_m"], True)
+            independent_gas = (
+                geometry(case["goc_z_m"], True) if case.get("goc_z_m") is not None else np.zeros(len(c))
+            )
+            # Reference geometry is computed by independent determinant/barycentric fractions;
+            # scalar products are accumulated separately using math.fsum.
+            for target, values in zip(
+                reference[key], reduce((independent_whole, independent_above, independent_gas))
             ):
-                bad = ~(np.isfinite(values) & (values >= 0) & (values <= 1))
-                nonfinite = int((~np.isfinite(values)).sum())
-                require(
-                    not bad.any(),
-                    "INVALID_PROPERTY",
-                    f"Region {case['region_id']}: {int(bad.sum())} selected cells have "
-                    + ("missing/nonfinite " if nonfinite else "out-of-range ")
-                    + f"{name} after overrides/multipliers ({nonfinite} nonfinite)",
-                    f"{path}.{fix}",
-                    f"Run model_qc to locate the cells. If {name} is absent or must be replaced, set {fix}"
-                    + (" or sw_height" if name == "sw" else "")
-                    + " for this region with user confirmation; multipliers never supply missing values.",
-                )
-            # Oil interval: Sw + free gas + oil = 1. Gas cap: Sw + residual oil + gas = 1.
-            oil_fraction = 1 - sw - case["sg_in_oil_zone"]
-            gas_fraction = (
-                1 - sw - case["so_in_gas_zone"] if case.get("goc_z_m") is not None else np.zeros(len(c))
-            )
-            require(
-                (oil_fraction >= 0).all(),
-                "INVALID_SATURATION",
-                f"Region {case['region_id']}: Sw + sg_in_oil_zone exceeds 1",
-                path + ".sg_in_oil_zone",
-                "Reduce sg_in_oil_zone or Sw so that Sw + Sg <= 1 in the oil interval",
-            )
-            require(
-                (gas_fraction >= 0).all(),
-                "INVALID_SATURATION",
-                f"Region {case['region_id']}: Sw + so_in_gas_zone exceeds 1",
-                path + ".so_in_gas_zone",
-                "Reduce so_in_gas_zone or Sw so that Sw + So <= 1 in the gas cap",
-            )
+                target.append(math.fsum(map(float, values)))
+    return accumulators, reference, counts, excluded, witnesses
 
-            def reduce(volumes):
-                whole, above_owc, gas = volumes
-                oil = np.maximum(above_owc - gas, 0)
-                oil_pore = oil * ntg * phi
-                gas_pore = gas * ntg * phi
-                return (
-                    whole,
-                    oil,
-                    oil * ntg,
-                    oil_pore,
-                    oil_pore * oil_fraction,
-                    whole * ntg * phi,
-                    gas,
-                    gas_pore,
-                    gas_pore * gas_fraction,
-                    np.ones(len(c)),
-                )
 
-            whole = cell_volumes(c)
-            above = cell_volumes(c, case["owc_z_m"])
-            gas = cell_volumes(c, case["goc_z_m"]) if case.get("goc_z_m") is not None else np.zeros(len(c))
-            for target, values in zip(accumulators[key], reduce((whole, above, gas))):
-                target.append(float(np.sum(values, dtype=np.float64)))
-            if independent:
-                independent_whole = integral(c)
-                independent_above = integral(c, case["owc_z_m"])
-                independent_gas = (
-                    integral(c, case["goc_z_m"]) if case.get("goc_z_m") is not None else np.zeros(len(c))
-                )
-                # Reference geometry is computed by independent determinant/hull clipping;
-                # scalar products are accumulated separately using math.fsum.
-                for target, values in zip(
-                    reference[key], reduce((independent_whole, independent_above, independent_gas))
-                ):
-                    target.append(math.fsum(map(float, values)))
+def _state(p):
+    from opensubsurface.execution.reduction import Fsum
+
+    indices = {
+        (s, case["region_id"]): case
+        for s, scenario in enumerate(p["scenarios"])
+        for case in scenario["regions"]
+    }
+    sums = {key: [Fsum() for _ in range(10)] for key in indices}
+    refs = {key: [Fsum() for _ in range(10)] for key in indices}
+    counts = dict.fromkeys(indices, 0)
+    excluded = {
+        (s, case["region_id"]): dict(
+            path=f"scenarios[{s}].regions[{r}]",
+            cells=0,
+            GRV_tetra6_m3=Fsum(),
+            GRV_bbox_m3=Fsum(),
+            PV_bbox_m3=Fsum(),
+        )
+        for s, scenario in enumerate(p["scenarios"])
+        for r, case in enumerate(scenario["regions"])
+    }
+    return sums, refs, counts, excluded, []
+
+
+def _merge(state, block):
+    accumulators, reference, counts, excluded, witnesses = state
+    parts, refs, nums, omitted, examples = block
+    for key in accumulators:
+        for target, values in zip(accumulators[key], parts[key]):
+            target.extend(values)
+        for target, values in zip(reference[key], refs[key]):
+            target.extend(values)
+        counts[key] += nums[key]
+        excluded[key]["cells"] += omitted[key]["cells"]
+        for name in ("GRV_tetra6_m3", "GRV_bbox_m3", "PV_bbox_m3"):
+            excluded[key][name].extend(omitted[key][name])
+    witnesses.extend(examples[: max(0, 1000 - len(witnesses))])
+
+
+def evaluate(obj, p, polygon=None, independent=True):
+    from opensubsurface.execution.blocks import mapped, settings
+
+    device = settings.get().get("resolved_device", "cpu")
+    execution = dict(p.get("execution") or settings.get(), resolved_device=device)
+    state = _state(p)
+    for block in mapped(obj, _block, obj, p, polygon, independent, device, execution=execution):
+        _merge(state, block)
+    return _finish(obj, p, independent, state)
+
+
+def _variants_block(start, data, order, obj, requests, polygon, device):
+    answers = []
+    cache = {}
+    for p in requests:
+        try:
+            answers.append(_block(start, data, order, obj, p, polygon, True, device, cache))
+        except DomainError as error:
+            answers.append(error.as_dict())
+    return answers
+
+
+def evaluate_many(obj, requests, polygon=None):
+    """One storage pass for all draws; preserve each physical/validation failure."""
+    from opensubsurface.execution.blocks import mapped, settings
+
+    device = settings.get().get("resolved_device", "cpu")
+    execution = dict(requests[0].get("execution") or settings.get(), resolved_device=device)
+    from opensubsurface.execution.resources import memory_check, plan
+
+    case_count = sum(len(s["regions"]) for p in requests for s in p["scenarios"])
+    config = plan(
+        math.prod(obj["summary"]["grid"]["shape"]),
+        obj["summary"].get("block_cells", 16384),
+        execution.get("max_workers"),
+    )
+    memory_check(
+        config["estimated_peak_bytes"] + case_count * 4096 * (2 * config["max_workers"] + 1), "samples"
+    )
+    states = [_state(p) for p in requests]
+    errors = [None] * len(requests)
+    for answers in mapped(obj, _variants_block, obj, requests, polygon, device, execution=execution):
+        for i, answer in enumerate(answers):
+            if isinstance(answer, dict):
+                errors[i] = errors[i] or answer
+            elif errors[i] is None:
+                _merge(states[i], answer)
+    results = []
+    for p, state, error in zip(requests, states, errors):
+        try:
+            if error:
+                raise DomainError(**error)
+            results.append(_finish(obj, p, True, state))
+        except DomainError as failure:
+            results.append(failure)
+    return results
+
+
+def _finish(obj, p, independent, state):
+    accumulators, reference, counts, excluded, witnesses = state
+    rows = []
+    policy = p.get("geometry_policy", "strict")
+    indices = {
+        (s, case["region_id"]): case
+        for s, scenario in enumerate(p["scenarios"])
+        for case in scenario["regions"]
+    }
     checks = []
     for key, case in indices.items():
         require(
@@ -301,7 +416,7 @@ def evaluate(obj, p, polygon=None, independent=True):
                 dict(
                     scenario=p["scenarios"][key[0]]["name"],
                     region_id=key[1],
-                    name="independent_determinant_hull_integral",
+                    name="independent_determinant_barycentric_integral",
                     status="PASS",
                     max_absolute_difference=float(np.max(np.abs(np.array(values) - expected))),
                 )

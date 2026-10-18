@@ -54,7 +54,7 @@ MCP-клиент использует собственный AI-интерфей
 
 Большие готовые Cartesian grids имеют отдельный блоковый профиль (NPY либо раздельные GRDECL
 property tables + явная Cartesian geometry): [LARGE_MODELS](LARGE_MODELS.md).
-Он не повышает лимиты GemPy и обычного ZIP/CSV import; не принимает native Petrel. Corner-point имеет отдельный XTGeo/Zarr backend с RAM preflight и лимитом 2 млн ячеек.
+Он не повышает лимиты GemPy и обычного ZIP/CSV import; не принимает native Petrel. Corner-point имеет потоковый DATA/GRDECL/EGRID backend; старый XTGeo/ROFF путь сохраняет RAM preflight и лимит 2 млн ячеек. [Масштабирование и CUDA](SCALING.md).
 До2 млрд cells — контрактный предел. Фактически проверены 402.7M cells и18.119GB raw-модель
 (семь NPY файлов), sampled peak process-tree RSS353.5MiB: [evidence](LARGE_MODEL_RESULT.md).
 Большие corner-point/native Petrel, Windows/CUDA и один файл/ZIP>15GiB остаются отдельными критериями.
@@ -62,3 +62,14 @@ property tables + явная Cartesian geometry): [LARGE_MODELS](LARGE_MODELS.md
 Corner-point Norne: все113344 cells/44927 active, оригинальные PORO/NTG/PERMX/FIPNUM,
 independent tetrahedral contact checks и 3D export PASS. [Доказательства](PETREL_WORKFLOW.md).
 Установка viewer: `uv sync --frozen --extra viewer --extra solver --group dev`.
+
+## Запуск колоды пользователя в OPM Flow (опционально)
+
+`simulation_deck_run` запускает готовую колоду `.DATA` с INCLUDE как есть. Исполнители: Linux
+(`flow` в PATH или `OPENSUBSURFACE_FLOW_EXECUTABLE`) или Windows → WSL2, отдельный дистрибутив
+`kanysh-opm`. Подготовка одной командой `kanysh-basic setup-opm` (на Windows сначала, один раз,
+`wsl --install --no-distribution` с правами администратора и перезагрузкой). Версия OPM
+фиксируется (`apt-mark hold`, sha256 бинарника в `opm-runtime.json`) и пишется в отчёт. Без
+настроенного исполнителя все статические операции работают, а запуск возвращает
+`SIMULATOR_UNAVAILABLE`. Удалённый SSH-исполнитель: NOT RUN.
+

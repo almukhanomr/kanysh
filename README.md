@@ -116,15 +116,16 @@ comparison, explicit saturation-height functions and correlated scalar Monte Car
 
 ## Current limits
 
-- Binary EGRID/ROFF geometry import uses full RAM and has a **2 million-cell cap**.
-  Streaming ASCII COORD/ZCORN was checked at **20 million synthetic cells**, peak RSS
-  **1.46 GB**; this is not acceptance of a large field EGRID.
+- `eclipse_import` streams ASCII DATA/GRDECL and binary EGRID with INIT/GRDECL properties.
+  The legacy XTGeo/ROFF import retains its **2 million-cell cap**.
+  [Scaling implementation](docs/SCALING.md) · [Measured limits and benchmarks](docs/BENCHMARKS.md).
 - Unsupported DATA keywords are listed in the import report. SWATINIT is not equilibrium SWAT.
 - Bo/Bg, contacts, saturations, units and CRS/datum need an explicit basis. STOIIP/GIIP
   are initial volumes, not recoverable reserves or production forecasts.
 - Polygon selection keeps whole cells by mean corner XY; saturation-height functions
   use mean corner Z. Scalar uncertainty is not spatial simulation.
-- Basic block imports and copilot analyses use CPU. Viewer previews are bounded;
+- CPU blocks support resource-bounded process pools. Regional/imported corner-point volumes
+  also support float64 CUDA with mandatory CPU comparison. Viewer previews are bounded;
   calculation inputs are not downsampled. OPM Flow end-to-end remains **NOT RUN**.
 - The web app is an English-language viewer. Calculations run through the connected
   chat/MCP, CLI or REST. Gradio/Plotly are optional `[ui]` dependencies; `[viewer]` enables scenes.

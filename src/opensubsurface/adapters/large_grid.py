@@ -306,7 +306,6 @@ def open_grid(obj):
                 "Invalid stored array metadata",
             )
             expected = (cells + a.chunks[0] - 1) // a.chunks[0]
-            require(expected <= 10000, "INVALID_FORMAT", "Too many chunks")
             # Missing Zarr chunks otherwise read as fill values, potentially a plausible false result.
             actual = [
                 key
@@ -329,8 +328,12 @@ def blocks(group):
         return
     count = group["active"].shape[0]
     step = min(a.chunks[0] for _, a in group.arrays())
+    arrays = {name: group[name] for name in FIELDS}
     for start in range(0, count, step):
-        yield start, {name: np.asarray(group[name][start : min(count, start + step)]) for name in FIELDS}
+        yield (
+            start,
+            {name: np.asarray(array[start : min(count, start + step)]) for name, array in arrays.items()},
+        )
 
 
 def qc_block(data):
@@ -357,53 +360,60 @@ def scan_properties(obj):
     return dict(active_cells=active_count, zone_ids=sorted(zones), qc_status="PASS")
 
 
+def _cartesian_volume_block(start, data, order, grid, cases):
+    nz, e = grid["shape"][2], grid["extent"]
+    spacing = [(e[2 * i + 1] - e[2 * i]) / grid["shape"][i] for i in range(3)]
+    cell_volume, dz = math.prod(spacing), spacing[2]
+    active = qc_block(data)
+    index = np.arange(start, start + len(active), dtype=np.int64)
+    top = (
+        e[5] - (index // (grid["shape"][0] * grid["shape"][1])) * dz
+        if order == "ECLIPSE"
+        else e[4] + ((index % nz) + 1) * dz
+    )
+    parts, counts = [], []
+    for case in cases:
+        selected = active & np.isin(data["zones"], case["zone_ids"])
+        counts.append(int(selected.sum()))
+        fraction = np.clip((top[selected] - case["contact_z_m"]) / dz, 0, 1)
+        overrides = case.get("overrides", {})
+        phi, ntg, sw = [overrides.get(k, data[k][selected]) for k in ("phi", "ntg", "sw")]
+        net, pore = fraction * ntg, fraction * ntg * phi
+        parts.append(
+            (
+                np.array(
+                    [
+                        selected.sum(),
+                        fraction.sum(dtype=np.float64),
+                        net.sum(dtype=np.float64),
+                        pore.sum(dtype=np.float64),
+                        (pore * (1 - sw)).sum(dtype=np.float64),
+                    ]
+                )
+                * cell_volume
+            ).tolist()
+        )
+    return parts, counts
+
+
 def evaluate(obj, cases):
     """One sequential pass for all contacts/realizations; only a bounded block lives in RAM."""
     if obj["summary"].get("storage") == "cornerpoint-zarr-v1":
         from opensubsurface.adapters.cornerpoint import evaluate as evaluate_cornerpoint
 
         return evaluate_cornerpoint(obj, cases)
-    grid = obj["summary"]["grid"]
-    nz, e = grid["shape"][2], grid["extent"]
-    spacing = [(e[2 * i + 1] - e[2 * i]) / grid["shape"][i] for i in range(3)]
-    cell_volume, dz = math.prod(spacing), spacing[2]
-    sums = [np.zeros(5, dtype=np.float64) for _ in cases]
-    compensation = [np.zeros(5, dtype=np.float64) for _ in cases]
+    from opensubsurface.execution.blocks import mapped
+
+    totals = [[[] for _ in range(5)] for _ in cases]
     selected_counts = [0] * len(cases)
-    with open_grid(obj) as group:
-        for start, data in blocks(group):
-            active = qc_block(data)
-            index = np.arange(start, start + len(active), dtype=np.int64)
-            top = (
-                e[5] - (index // (grid["shape"][0] * grid["shape"][1])) * dz
-                if group.attrs["order"] == "ECLIPSE"
-                else e[4] + ((index % nz) + 1) * dz
-            )
-            for i, case in enumerate(cases):
-                selected = active & np.isin(data["zones"], case["zone_ids"])
-                selected_counts[i] += int(selected.sum())
-                fraction = np.clip((top[selected] - case["contact_z_m"]) / dz, 0, 1)
-                overrides = case.get("overrides", {})
-                phi, ntg, sw = [overrides.get(k, data[k][selected]) for k in ("phi", "ntg", "sw")]
-                net = fraction * ntg
-                pore = net * phi
-                part = (
-                    np.array(
-                        [
-                            selected.sum(),
-                            fraction.sum(dtype=np.float64),
-                            net.sum(dtype=np.float64),
-                            pore.sum(dtype=np.float64),
-                            (pore * (1 - sw)).sum(dtype=np.float64),
-                        ]
-                    )
-                    * cell_volume
-                )
-                # Kahan accumulation avoids error growth with number of chunks.
-                delta = part - compensation[i]
-                updated = sums[i] + delta
-                compensation[i] = (updated - sums[i]) - delta
-                sums[i] = updated
+    for partials, counts in mapped(
+        obj, _cartesian_volume_block, obj["summary"]["grid"], cases, include_corners=False
+    ):
+        for i in range(len(cases)):
+            selected_counts[i] += counts[i]
+            for target, value in zip(totals[i], partials[i]):
+                target.append(value)
+    sums = [[math.fsum(part) for part in row] for row in totals]
     results = []
     for case, values, selected in zip(cases, sums, selected_counts):
         require(selected > 0, "QC_FAILED", "Selected zones contain no active cells")

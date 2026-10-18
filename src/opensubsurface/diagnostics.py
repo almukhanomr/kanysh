@@ -34,6 +34,15 @@ def _versions():
     return versions
 
 
+def _simulator(home):
+    try:
+        from opensubsurface.simulation.runtime import status
+
+        return status(home)
+    except Exception as error:  # Diagnostics must answer even if WSL probing fails.
+        return dict(available=False, reason="status probe failed: " + type(error).__name__)
+
+
 def diagnostics(target, p):
     """target is a DesktopRuntime (stdio extension) or a Service (CLI/REST)."""
     runtime = target if hasattr(target, "require_ready") else None
@@ -80,7 +89,10 @@ def diagnostics(target, p):
             viewer["url_error"] = type(error).__name__
     if viewer["url"]:
         viewer["port"] = int(viewer["url"].rsplit(":", 1)[1])
+    from opensubsurface.execution.resources import inventory
+
     return dict(
+        resources=inventory(home),
         home=str(home),
         startup=startup,
         startup_log=str(home / "startup.log"),
@@ -88,5 +100,6 @@ def diagnostics(target, p):
         versions=_versions(),
         cuda=cuda if cuda is not None else dict(status="NOT PROBED YET", note="probed during cuda_warmup"),
         viewer=viewer,
+        simulator=_simulator(home),
         secrets="none returned; environment variables and tokens are never included",
     )

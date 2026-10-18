@@ -1,0 +1,149 @@
+{
+  "phase": "after",
+  "cells": 50000000,
+  "status": "INCOMPLETE",
+  "rss_sampling_interval_seconds": 0.1,
+  "profiler_scope": "coordinator process; process worker wall includes children",
+  "hardware": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "logical_cores": 16,
+    "ram_bytes": 67927195648
+  },
+  "stages": {
+    "generate": {
+      "status": "PASS",
+      "seconds": 12.482652999999118,
+      "peak_process_tree_rss_bytes": 163889152
+    },
+    "import": {
+      "status": "PASS",
+      "seconds": 545.4093033999998,
+      "peak_process_tree_rss_bytes": 3377623040
+    },
+    "model_qc": {
+      "status": "PASS",
+      "result_status": "ISSUES",
+      "validation_status": "PASS",
+      "seconds": 144.70116659999985,
+      "peak_process_tree_rss_bytes": 1669775360
+    },
+    "regional_volumes_1": {
+      "status": "PASS",
+      "result_status": "PASS_WITH_EXCLUSIONS",
+      "validation_status": "PASS_WITH_EXCLUSIONS",
+      "seconds": 192.0033113999998,
+      "peak_process_tree_rss_bytes": 1634140160
+    },
+    "regional_volumes_5": {
+      "status": "PASS",
+      "result_status": "PASS_WITH_EXCLUSIONS",
+      "validation_status": "PASS_WITH_EXCLUSIONS",
+      "seconds": 234.55084759999954,
+      "peak_process_tree_rss_bytes": 1632677888
+    },
+    "tornado_4": {
+      "status": "PASS",
+      "result_status": "PASS",
+      "validation_status": "PASS",
+      "seconds": 238.4456449999998,
+      "peak_process_tree_rss_bytes": 1632665600
+    },
+    "calculation_run": {
+      "status": "FAIL",
+      "error": {
+        "type": "RuntimeError",
+        "message": "{'code': 'VALIDATION_FAILED', 'message': '\u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u043e\u0442\u0447\u0451\u0442 \u0432\u0430\u043b\u0438\u0434\u0430\u0446\u0438\u0438'}"
+      },
+      "seconds": 286.5669103,
+      "peak_process_tree_rss_bytes": 2861465600
+    },
+    "scene_export": {
+      "status": "PASS",
+      "seconds": 164.45385149999856,
+      "peak_process_tree_rss_bytes": 430772224
+    }
+  },
+  "analytic": {
+    "shape": [
+      2500,
+      2000,
+      10
+    ],
+    "cells": 50000000,
+    "contact_z_m": -22.5,
+    "bo": 1.2,
+    "geometry_policy": "exclude_flagged",
+    "parameters_confirmed": true,
+    "explicit_excluded_cell_ids": [
+      2,
+      3,
+      4
+    ],
+    "pinched_cell_ids": [
+      0,
+      5000000,
+      10000000,
+      15000000,
+      20000000,
+      25000000,
+      30000000,
+      35000000,
+      40000000,
+      45000000
+    ],
+    "ordinary_intersected_cell_fraction": 0.1,
+    "expected_regions": [
+      {
+        "region_id": 1,
+        "GRV": 9999993666.666666,
+        "GRV_oil_interval": 4499996696.25,
+        "STOIIP": 449999669.625,
+        "GRV_exact": "29999981000/3",
+        "STOIIP_exact": "3599997357/8"
+      },
+      {
+        "region_id": 2,
+        "GRV": 10000000000.0,
+        "GRV_oil_interval": 4500000000.0,
+        "STOIIP": 450000000.0,
+        "GRV_exact": "10000000000",
+        "STOIIP_exact": "450000000"
+      },
+      {
+        "region_id": 3,
+        "GRV": 10006000000.0,
+        "GRV_oil_interval": 4502700000.0,
+        "STOIIP": 450270000.0,
+        "GRV_exact": "10006000000",
+        "STOIIP_exact": "450270000"
+      },
+      {
+        "region_id": 4,
+        "GRV": 10000000000.0,
+        "GRV_oil_interval": 4500000000.0,
+        "STOIIP": 450000000.0,
+        "GRV_exact": "10000000000",
+        "STOIIP_exact": "450000000"
+      },
+      {
+        "region_id": 5,
+        "GRV": 10000000000.0,
+        "GRV_oil_interval": 4500000000.0,
+        "STOIIP": 450000000.0,
+        "GRV_exact": "10000000000",
+        "STOIIP_exact": "450000000"
+      }
+    ],
+    "scope": "Synthetic fault-like shifted pillars, one collapsed pillar, three deliberately twisted active cells"
+  },
+  "scene_selection": {
+    "cell_range": [
+      100,
+      1000
+    ],
+    "stride": 1,
+    "note": "Explicit preview range; calculations always use full selected model"
+  },
+  "rss_limit_bytes": 33963597824,
+  "memory_status": "PASS"
+}

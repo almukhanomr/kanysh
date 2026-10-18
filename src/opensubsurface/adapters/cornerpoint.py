@@ -391,7 +391,7 @@ def open_grid(obj):
             count = math.ceil(cells / a.chunks[0])
             suffix = ".0.0" if geometry else ""
             require(
-                count <= 10000 and all(f"{name}/{i}{suffix}" in store for i in range(count)),
+                all(f"{name}/{i}{suffix}" in store for i in range(count)),
                 "INTEGRITY_ERROR",
                 "Missing geometry/property chunk",
             )
@@ -400,8 +400,9 @@ def open_grid(obj):
 
 def blocks(group):
     cells, step = group["active"].shape[0], group["active"].chunks[0]
+    arrays = {name: group[name] for name in group.array_keys()}
     for start in range(0, cells, step):
-        yield start, {name: np.asarray(group[name][start : start + step]) for name in group.array_keys()}
+        yield start, {name: np.asarray(array[start : start + step]) for name, array in arrays.items()}
 
 
 def scan_properties(obj):
@@ -417,31 +418,54 @@ def scan_properties(obj):
     return dict(active_cells=count, zone_ids=sorted(zones), qc_status="PASS")
 
 
+def _volumes_block(start, data, order, cases, device):
+    volumes = cell_volumes
+    if device == "cuda":
+        from opensubsurface.execution.cornerpoint_gpu import cell_volumes as volumes
+    active = qc_block(data)
+    from opensubsurface.adapters.model_qc import geometry_flags
+
+    valid = geometry_flags(data["corners"], STORAGE)["valid"]
+    parts, counts = [], []
+    for case in cases:
+        mask = active & np.isin(data["zones"], case["zone_ids"])
+        require(
+            not (mask & ~valid).any(),
+            "INVALID_GEOMETRY",
+            "Selected imported cells fail strict geometry checks",
+            "zone_ids",
+            "Run model_qc; select valid zones or use regional_volumes with explicit confirmed exclusions",
+        )
+        counts.append(int(mask.sum()))
+        corners = data["corners"][mask]
+        bulk, oil = volumes(corners), volumes(corners, case["contact_z_m"])
+        override = case.get("overrides", {})
+        phi, ntg, sw = [override.get(k, data[k][mask]) for k in ("phi", "ntg", "sw")]
+        net, pore = oil * ntg, oil * ntg * phi
+        parts.append([float(np.sum(v, dtype=np.float64)) for v in (bulk, oil, net, pore, pore * (1 - sw))])
+    return parts, counts
+
+
 def evaluate(obj, cases):
-    names = ("GRV", "GRV_oil_interval", "NetRockVolume", "PV", "HCPV")
-    sums = [np.zeros(5) for _ in cases]
-    corrections = [np.zeros(5) for _ in cases]
+    from opensubsurface.execution.blocks import mapped, settings
+
+    sums = [[[] for _ in range(5)] for _ in cases]
     counts = [0] * len(cases)
-    with open_grid(obj) as group:
-        for _, data in blocks(group):
-            active = qc_block(data)
-            for i, case in enumerate(cases):
-                mask = active & np.isin(data["zones"], case["zone_ids"])
-                counts[i] += int(mask.sum())
-                corners = data["corners"][mask]
-                bulk, oil = cell_volumes(corners), cell_volumes(corners, case["contact_z_m"])
-                override = case.get("overrides", {})
-                phi, ntg, sw = [override.get(k, data[k][mask]) for k in ("phi", "ntg", "sw")]
-                net, pore = oil * ntg, oil * ntg * phi
-                part = np.array([bulk.sum(), oil.sum(), net.sum(), pore.sum(), (pore * (1 - sw)).sum()])
-                delta = part - corrections[i]
-                updated = sums[i] + delta
-                corrections[i] = (updated - sums[i]) - delta
-                sums[i] = updated
+    device = settings.get().get("resolved_device", "cpu")
+    for partials, nums in mapped(obj, _volumes_block, cases, device):
+        for i in range(len(cases)):
+            counts[i] += nums[i]
+            for target, value in zip(sums[i], partials[i]):
+                target.append(value)
     result = []
     for i, case in enumerate(cases):
         require(counts[i] > 0, "QC_FAILED", "No active selected cells")
-        values = dict(zip(names, map(float, sums[i])))
+        values = dict(
+            zip(
+                ("GRV", "GRV_oil_interval", "NetRockVolume", "PV", "HCPV"),
+                [math.fsum(values) for values in sums[i]],
+            )
+        )
         values["STOIIP"] = values["HCPV"] / case["bo"]
         result.append(values)
     return result

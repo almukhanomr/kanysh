@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "workload": "synthetic",
+  "seconds": 0.3613977999993949,
+  "peak_process_tree_rss_bytes": 185417728,
+  "workers": 1,
+  "hardware": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "logical_cores": 16,
+    "ram_bytes": 67927195648
+  },
+  "cells": 113000,
+  "total_m3": 5606000.000000004
+}

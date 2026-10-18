@@ -1,0 +1,641 @@
+{
+  "phase": "after",
+  "cells": 100000,
+  "status": "PASS",
+  "hardware": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "logical_cores": 16,
+    "ram_bytes": 67927195648
+  },
+  "stages": {
+    "generate": {
+      "status": "PASS",
+      "profile_top_cumulative": [
+        {
+          "function": "benchmark_scaling.py:102:<lambda>",
+          "calls": 2,
+          "cumulative_seconds": 0.1188014
+        },
+        {
+          "function": "generate_scaling_model.py:46:generate",
+          "calls": 1,
+          "cumulative_seconds": 0.08692480000000001
+        },
+        {
+          "function": "_npyio_impl.py:1398:savetxt",
+          "calls": 101,
+          "cumulative_seconds": 0.0515706
+        },
+        {
+          "function": "benchmark_scaling.py:32:peak_rss",
+          "calls": 2,
+          "cumulative_seconds": 0.026767000000000003
+        },
+        {
+          "function": "__init__.py:951:children",
+          "calls": 2,
+          "cumulative_seconds": 0.0264975
+        },
+        {
+          "function": "~:0:<built-in method psutil_windows.ppid_map>",
+          "calls": 2,
+          "cumulative_seconds": 0.0259338
+        },
+        {
+          "function": "_npyio_impl.py:1532:write_normal",
+          "calls": 10201,
+          "cumulative_seconds": 0.0158235
+        },
+        {
+          "function": "generate_scaling_model.py:22:exact_cell",
+          "calls": 20,
+          "cumulative_seconds": 0.015717000000000002
+        },
+        {
+          "function": "~:0:<method 'join' of 'str' objects>",
+          "calls": 2113,
+          "cumulative_seconds": 0.010496700000000001
+        },
+        {
+          "function": "fractions.py:613:forward",
+          "calls": 3963,
+          "cumulative_seconds": 0.0095151
+        },
+        {
+          "function": "generate_scaling_model.py:98:<genexpr>",
+          "calls": 12000,
+          "cumulative_seconds": 0.008326700000000001
+        },
+        {
+          "function": "_conversions.py:9:asunicode",
+          "calls": 10201,
+          "cumulative_seconds": 0.006148000000000001
+        }
+      ],
+      "seconds": 0.12272719999964465,
+      "peak_process_tree_rss_bytes": 163196928
+    },
+    "import": {
+      "status": "PASS",
+      "profile_top_cumulative": [
+        {
+          "function": "threading.py:637:wait",
+          "calls": 31,
+          "cumulative_seconds": 2.9402573000000003
+        },
+        {
+          "function": "threading.py:323:wait",
+          "calls": 30,
+          "cumulative_seconds": 1.4529232
+        },
+        {
+          "function": "benchmark_scaling.py:32:peak_rss",
+          "calls": 31,
+          "cumulative_seconds": 0.41697500000000004
+        },
+        {
+          "function": "__init__.py:951:children",
+          "calls": 31,
+          "cumulative_seconds": 0.41191930000000004
+        },
+        {
+          "function": "~:0:<built-in method psutil_windows.ppid_map>",
+          "calls": 31,
+          "cumulative_seconds": 0.3992163
+        },
+        {
+          "function": "eclipse_deck.py:72:events",
+          "calls": 20283,
+          "cumulative_seconds": 0.36657730000000005
+        },
+        {
+          "function": "~:0:<method 'acquire' of '_thread.lock' objects>",
+          "calls": 123,
+          "cumulative_seconds": 0.3280661
+        },
+        {
+          "function": "eclipse_deck.py:43:discard_pages",
+          "calls": 173,
+          "cumulative_seconds": 0.14293930000000002
+        },
+        {
+          "function": "<frozen importlib._bootstrap>:1349:_find_and_load",
+          "calls": 25,
+          "cumulative_seconds": 0.1257354
+        },
+        {
+          "function": "hierarchy.py:1401:group",
+          "calls": 1,
+          "cumulative_seconds": 0.12399030000000001
+        },
+        {
+          "function": "memmap.py:215:__new__",
+          "calls": 183,
+          "cumulative_seconds": 0.12114720000000001
+        },
+        {
+          "function": "<frozen importlib._bootstrap>:1304:_find_and_load_unlocked",
+          "calls": 25,
+          "cumulative_seconds": 0.10909410000000001
+        }
+      ],
+      "seconds": 1.473380499999621,
+      "peak_process_tree_rss_bytes": 196222976
+    },
+    "model_qc": {
+      "status": "PASS",
+      "result_status": "ISSUES",
+      "validation_status": "PASS",
+      "profile_top_cumulative": [
+        {
+          "function": "threading.py:637:wait",
+          "calls": 37,
+          "cumulative_seconds": 2.6169083
+        },
+        {
+          "function": "benchmark_scaling.py:125:<lambda>",
+          "calls": 2,
+          "cumulative_seconds": 1.7475226000000001
+        },
+        {
+          "function": "model_qc.py:95:run",
+          "calls": 1,
+          "cumulative_seconds": 1.744842
+        },
+        {
+          "function": "blocks.py:58:mapped",
+          "calls": 8,
+          "cumulative_seconds": 1.0093176000000001
+        },
+        {
+          "function": "threading.py:323:wait",
+          "calls": 37,
+          "cumulative_seconds": 0.8094468
+        },
+        {
+          "function": "model_qc.py:44:geometry_flags",
+          "calls": 7,
+          "cumulative_seconds": 0.6257794
+        },
+        {
+          "function": "einsumfunc.py:1242:einsum",
+          "calls": 154,
+          "cumulative_seconds": 0.5021856
+        },
+        {
+          "function": "~:0:<built-in method numpy._core._multiarray_umath.c_einsum>",
+          "calls": 154,
+          "cumulative_seconds": 0.5015277
+        },
+        {
+          "function": "benchmark_scaling.py:32:peak_rss",
+          "calls": 38,
+          "cumulative_seconds": 0.4857616
+        },
+        {
+          "function": "~:0:<built-in method psutil_windows.ppid_map>",
+          "calls": 38,
+          "cumulative_seconds": 0.4684918
+        },
+        {
+          "function": "__init__.py:951:children",
+          "calls": 38,
+          "cumulative_seconds": 0.4625534
+        },
+        {
+          "function": "_linalg.py:2372:det",
+          "calls": 154,
+          "cumulative_seconds": 0.3647731
+        }
+      ],
+      "seconds": 1.7531229999985953,
+      "peak_process_tree_rss_bytes": 217276416
+    },
+    "regional_volumes_1": {
+      "status": "PASS",
+      "result_status": "PASS_WITH_EXCLUSIONS",
+      "validation_status": "PASS_WITH_EXCLUSIONS",
+      "profile_top_cumulative": [
+        {
+          "function": "threading.py:637:wait",
+          "calls": 50,
+          "cumulative_seconds": 4.0813761
+        },
+        {
+          "function": "benchmark_scaling.py:139:<lambda>",
+          "calls": 2,
+          "cumulative_seconds": 2.3966437000000003
+        },
+        {
+          "function": "benchmark_scaling.py:131:regional",
+          "calls": 1,
+          "cumulative_seconds": 2.3966406
+        },
+        {
+          "function": "regional_volumes.py:313:evaluate",
+          "calls": 1,
+          "cumulative_seconds": 1.7081284
+        },
+        {
+          "function": "blocks.py:58:mapped",
+          "calls": 8,
+          "cumulative_seconds": 0.9881742000000001
+        },
+        {
+          "function": "benchmark_scaling.py:32:peak_rss",
+          "calls": 51,
+          "cumulative_seconds": 0.9179968000000001
+        },
+        {
+          "function": "threading.py:323:wait",
+          "calls": 50,
+          "cumulative_seconds": 0.8846679000000001
+        },
+        {
+          "function": "model_qc.py:44:geometry_flags",
+          "calls": 7,
+          "cumulative_seconds": 0.8311233
+        },
+        {
+          "function": "~:0:<built-in method psutil_windows.ppid_map>",
+          "calls": 51,
+          "cumulative_seconds": 0.6703948000000001
+        },
+        {
+          "function": "einsumfunc.py:1242:einsum",
+          "calls": 730,
+          "cumulative_seconds": 0.6143334
+        },
+        {
+          "function": "~:0:<built-in method numpy._core._multiarray_umath.c_einsum>",
+          "calls": 730,
+          "cumulative_seconds": 0.6128429000000001
+        },
+        {
+          "function": "__init__.py:951:children",
+          "calls": 51,
+          "cumulative_seconds": 0.5841142
+        }
+      ],
+      "seconds": 2.416972999999416,
+      "peak_process_tree_rss_bytes": 206688256
+    },
+    "regional_volumes_5": {
+      "status": "PASS",
+      "result_status": "PASS_WITH_EXCLUSIONS",
+      "validation_status": "PASS_WITH_EXCLUSIONS",
+      "profile_top_cumulative": [
+        {
+          "function": "threading.py:637:wait",
+          "calls": 119,
+          "cumulative_seconds": 11.497908200000001
+        },
+        {
+          "function": "benchmark_scaling.py:142:<lambda>",
+          "calls": 2,
+          "cumulative_seconds": 5.4512077
+        },
+        {
+          "function": "benchmark_scaling.py:131:regional",
+          "calls": 1,
+          "cumulative_seconds": 5.4512054
+        },
+        {
+          "function": "threading.py:323:wait",
+          "calls": 119,
+          "cumulative_seconds": 2.6506398
+        },
+        {
+          "function": "benchmark_scaling.py:32:peak_rss",
+          "calls": 120,
+          "cumulative_seconds": 2.4694211000000004
+        },
+        {
+          "function": "cornerpoint_reference.py:43:integral",
+          "calls": 350,
+          "cumulative_seconds": 1.5875201
+        },
+        {
+          "function": "__init__.py:951:children",
+          "calls": 120,
+          "cumulative_seconds": 1.5030373000000001
+        },
+        {
+          "function": "~:0:<built-in method psutil_windows.ppid_map>",
+          "calls": 120,
+          "cumulative_seconds": 1.5024133000000002
+        },
+        {
+          "function": "_linalg.py:2372:det",
+          "calls": 2212,
+          "cumulative_seconds": 1.3604914000000001
+        },
+        {
+          "function": "cornerpoint.py:212:cell_volumes",
+          "calls": 357,
+          "cumulative_seconds": 0.9057271
+        },
+        {
+          "function": "blocks.py:58:mapped",
+          "calls": 8,
+          "cumulative_seconds": 0.7240206
+        },
+        {
+          "function": "einsumfunc.py:1242:einsum",
+          "calls": 3034,
+          "cumulative_seconds": 0.5922559000000001
+        }
+      ],
+      "seconds": 5.470219399998314,
+      "peak_process_tree_rss_bytes": 207015936
+    },
+    "tornado_4": {
+      "status": "PASS",
+      "result_status": "PASS",
+      "validation_status": "PASS",
+      "profile_top_cumulative": [
+        {
+          "function": "threading.py:637:wait",
+          "calls": 212,
+          "cumulative_seconds": 12.179268
+        },
+        {
+          "function": "regional_volumes.py:333:evaluate_many",
+          "calls": 1,
+          "cumulative_seconds": 8.600156
+        },
+        {
+          "function": "threading.py:323:wait",
+          "calls": 212,
+          "cumulative_seconds": 5.011047700000001
+        },
+        {
+          "function": "benchmark_scaling.py:32:peak_rss",
+          "calls": 215,
+          "cumulative_seconds": 3.6055763
+        },
+        {
+          "function": "blocks.py:58:mapped",
+          "calls": 8,
+          "cumulative_seconds": 3.1444951000000003
+        },
+        {
+          "function": "cornerpoint_reference.py:43:integral",
+          "calls": 630,
+          "cumulative_seconds": 2.8885755
+        },
+        {
+          "function": "__init__.py:951:children",
+          "calls": 215,
+          "cumulative_seconds": 2.8717907
+        },
+        {
+          "function": "~:0:<built-in method psutil_windows.ppid_map>",
+          "calls": 216,
+          "cumulative_seconds": 2.7005698000000002
+        },
+        {
+          "function": "_linalg.py:2372:det",
+          "calls": 3892,
+          "cumulative_seconds": 2.1714536
+        },
+        {
+          "function": "regional_volumes.py:96:_block",
+          "calls": 63,
+          "cumulative_seconds": 1.9044126000000001
+        },
+        {
+          "function": "cornerpoint.py:212:cell_volumes",
+          "calls": 637,
+          "cumulative_seconds": 1.5728031
+        },
+        {
+          "function": "<frozen importlib._bootstrap>:1349:_find_and_load",
+          "calls": 175,
+          "cumulative_seconds": 1.1657581000000001
+        }
+      ],
+      "seconds": 10.114604300000792,
+      "peak_process_tree_rss_bytes": 228859904
+    },
+    "calculation_run": {
+      "status": "PASS",
+      "result_status": "succeeded",
+      "validation_status": null,
+      "profile_top_cumulative": [
+        {
+          "function": "base_events.py:1922:_run_once",
+          "calls": 2266,
+          "cumulative_seconds": 83.7882507
+        },
+        {
+          "function": "selectors.py:319:select",
+          "calls": 2264,
+          "cumulative_seconds": 46.978470400000006
+        },
+        {
+          "function": "selectors.py:313:_select",
+          "calls": 2264,
+          "cumulative_seconds": 45.9508701
+        },
+        {
+          "function": "~:0:<built-in method select.select>",
+          "calls": 2264,
+          "cumulative_seconds": 33.2601139
+        },
+        {
+          "function": "utils.py:464:wrapper",
+          "calls": 1,
+          "cumulative_seconds": 16.025948500000002
+        },
+        {
+          "function": "runners.py:86:run",
+          "calls": 1,
+          "cumulative_seconds": 16.0112342
+        },
+        {
+          "function": "base_events.py:655:run_until_complete",
+          "calls": 1,
+          "cumulative_seconds": 16.0111803
+        },
+        {
+          "function": "threading.py:637:wait",
+          "calls": 357,
+          "cumulative_seconds": 15.1744535
+        },
+        {
+          "function": "~:0:<built-in method time.sleep>",
+          "calls": 1330,
+          "cumulative_seconds": 14.8881113
+        },
+        {
+          "function": "utils.py:367:sync",
+          "calls": 7,
+          "cumulative_seconds": 14.8672996
+        },
+        {
+          "function": "utils.py:396:sync",
+          "calls": 7,
+          "cumulative_seconds": 14.421717000000001
+        },
+        {
+          "function": "service.py:746:execute",
+          "calls": 4,
+          "cumulative_seconds": 14.202183300000002
+        }
+      ],
+      "seconds": 17.256118799999967,
+      "peak_process_tree_rss_bytes": 1419833344
+    },
+    "scene_export": {
+      "status": "PASS",
+      "profile_top_cumulative": [
+        {
+          "function": "base_events.py:1922:_run_once",
+          "calls": 414,
+          "cumulative_seconds": 5.931680200000001
+        },
+        {
+          "function": "<frozen importlib._bootstrap>:1349:_find_and_load",
+          "calls": 760,
+          "cumulative_seconds": 2.519092
+        },
+        {
+          "function": "<frozen importlib._bootstrap>:1304:_find_and_load_unlocked",
+          "calls": 518,
+          "cumulative_seconds": 2.5176437000000003
+        },
+        {
+          "function": "<frozen importlib._bootstrap>:911:_load_unlocked",
+          "calls": 497,
+          "cumulative_seconds": 2.2584826000000002
+        },
+        {
+          "function": "<frozen importlib._bootstrap>:480:_call_with_frames_removed",
+          "calls": 1125,
+          "cumulative_seconds": 2.2577116
+        },
+        {
+          "function": "<frozen importlib._bootstrap_external>:993:exec_module",
+          "calls": 445,
+          "cumulative_seconds": 2.2144052000000003
+        },
+        {
+          "function": "~:0:<built-in method builtins.exec>",
+          "calls": 480,
+          "cumulative_seconds": 2.2068334000000003
+        },
+        {
+          "function": "selectors.py:319:select",
+          "calls": 412,
+          "cumulative_seconds": 1.7841449
+        },
+        {
+          "function": "__init__.py:73:import_module",
+          "calls": 265,
+          "cumulative_seconds": 1.4940006000000001
+        },
+        {
+          "function": "<frozen importlib._bootstrap>:1375:_gcd_import",
+          "calls": 268,
+          "cumulative_seconds": 1.4935936
+        },
+        {
+          "function": "~:0:<built-in method builtins.__import__>",
+          "calls": 98,
+          "cumulative_seconds": 1.3680954
+        },
+        {
+          "function": "threading.py:637:wait",
+          "calls": 62,
+          "cumulative_seconds": 1.3204392
+        }
+      ],
+      "seconds": 4.085876799999824,
+      "peak_process_tree_rss_bytes": 468590592
+    }
+  },
+  "analytic": {
+    "shape": [
+      100,
+      100,
+      10
+    ],
+    "cells": 100000,
+    "contact_z_m": -22.5,
+    "bo": 1.2,
+    "geometry_policy": "exclude_flagged",
+    "parameters_confirmed": true,
+    "explicit_excluded_cell_ids": [
+      2,
+      3,
+      4
+    ],
+    "pinched_cell_ids": [
+      0,
+      10000,
+      20000,
+      30000,
+      40000,
+      50000,
+      60000,
+      70000,
+      80000,
+      90000
+    ],
+    "ordinary_intersected_cell_fraction": 0.1,
+    "expected_regions": [
+      {
+        "region_id": 1,
+        "GRV": 19993666.666666668,
+        "GRV_oil_interval": 8996696.25,
+        "STOIIP": 899669.625,
+        "GRV_exact": "59981000/3",
+        "STOIIP_exact": "7197357/8"
+      },
+      {
+        "region_id": 2,
+        "GRV": 20000000.0,
+        "GRV_oil_interval": 9000000.0,
+        "STOIIP": 900000.0,
+        "GRV_exact": "20000000",
+        "STOIIP_exact": "900000"
+      },
+      {
+        "region_id": 3,
+        "GRV": 20300000.0,
+        "GRV_oil_interval": 9135000.0,
+        "STOIIP": 913500.0,
+        "GRV_exact": "20300000",
+        "STOIIP_exact": "913500"
+      },
+      {
+        "region_id": 4,
+        "GRV": 20000000.0,
+        "GRV_oil_interval": 9000000.0,
+        "STOIIP": 900000.0,
+        "GRV_exact": "20000000",
+        "STOIIP_exact": "900000"
+      },
+      {
+        "region_id": 5,
+        "GRV": 20000000.0,
+        "GRV_oil_interval": 9000000.0,
+        "STOIIP": 900000.0,
+        "GRV_exact": "20000000",
+        "STOIIP_exact": "900000"
+      }
+    ],
+    "scope": "Synthetic fault-like shifted pillars, one collapsed pillar, three deliberately twisted active cells"
+  },
+  "scene_selection": {
+    "cell_range": [
+      100,
+      1000
+    ],
+    "stride": 1,
+    "note": "Explicit preview range; calculations always use full selected model"
+  },
+  "rss_limit_bytes": 33963597824,
+  "memory_status": "PASS"
+}

@@ -2,6 +2,7 @@
 * text=auto eol=lf
 examples/reference/** -text
 src/opensubsurface/data/norne/** -text
+src/opensubsurface/data/opm/** -text
 *.zip binary
 *.npz binary
 *.npy binary

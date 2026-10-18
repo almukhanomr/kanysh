@@ -130,7 +130,9 @@ def table_proposals(path, lines, number, keyword):
                 candidate = dict(region_id=region + 1, owc_z_m=-values["owc_depth"])
                 goc = values.get("goc_depth")
                 datum = values.get("datum_depth")
-                if isinstance(goc, float) and goc < values["owc_depth"]:
+                # A GOC far above the datum (e.g. 500 m vs 3060 m) is the usual "no gas cap" placeholder.
+                placeholder = isinstance(goc, float) and isinstance(datum, float) and goc < datum - 500
+                if isinstance(goc, float) and goc < values["owc_depth"] and not placeholder:
                     candidate["goc_z_m"] = -goc
                 proposal["regional_volumes_candidate"] = dict(
                     candidate,
@@ -141,7 +143,13 @@ def table_proposals(path, lines, number, keyword):
                         "Bo/Bg and saturations are NOT in EQUIL; ask the user",
                     ],
                     note="GOC equal to/below OWC or defaulted is omitted"
-                    + ("; GOC equals the datum depth" if goc is not None and goc == datum else ""),
+                    + ("; GOC equals the datum depth" if goc is not None and goc == datum else "")
+                    + (
+                        f"; GOC {goc:g} m is more than 500 m above the datum: treated as a 'no gas cap' "
+                        "placeholder and omitted — confirm with the user"
+                        if placeholder
+                        else ""
+                    ),
                 )
             proposals.append(proposal)
         return proposals or [dict(base, evidence=[], interpretation="Keyword found without readable records")]

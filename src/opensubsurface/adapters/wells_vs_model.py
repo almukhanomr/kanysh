@@ -7,7 +7,7 @@ import numpy as np
 import pyarrow.parquet as pq
 
 from opensubsurface.adapters.cornerpoint import TETS
-from opensubsurface.adapters.model_arrays import ijk, iterate, provenance, region
+from opensubsurface.adapters.model_arrays import ijk, provenance, region
 from opensubsurface.errors import require
 
 
@@ -37,6 +37,45 @@ def inside(corners, point, reference=False):
         valid = (bary >= -1e-10).all(axis=1) & (bary.sum(axis=1) <= 1 + 1e-10)
         found[np.flatnonzero(good)[valid]] = True
     return found
+
+
+def _locate_block(start, data, order, positions, shape, region_field):
+    keys = np.full(len(positions), np.iinfo(np.int64).max, np.int64)
+    matches = np.zeros(len(positions), np.int32)
+    assignments = [None] * len(positions)
+    independent = True
+    active = data["active"].astype(bool)
+    c = data["corners"]
+    valid = active & np.isfinite(c).all(axis=(1, 2))
+    if not valid.any():
+        return keys, matches, assignments, independent
+    rids = region(data, region_field)
+    low, high = c.min(axis=1), c.max(axis=1)
+    coarse_low, coarse_high = low[valid].min(axis=0), high[valid].max(axis=0)
+    candidate_points = np.flatnonzero(((positions >= coarse_low) & (positions <= coarse_high)).all(axis=1))
+    for index in candidate_points:
+        point = positions[index]
+        candidates = np.flatnonzero(valid & ((point >= low) & (point <= high)).all(axis=1))
+        if not len(candidates):
+            continue
+        located = candidates[inside(c[candidates], point)]
+        if not len(located):
+            continue
+        independent &= bool(inside(c[located], point, reference=True).all())
+        matches[index] += len(located)
+        physical = ijk(start + located, shape, order)
+        physical_keys = np.ravel_multi_index(physical.T, shape, order="C")
+        best = int(np.argmin(physical_keys))
+        local = int(located[best])
+        if physical_keys[best] < keys[index]:
+            keys[index] = physical_keys[best]
+            assignments[index] = dict(
+                cell_id=int(start + local),
+                ijk=(physical[best] + 1).tolist(),
+                region_id=int(rids[local]),
+                values={field: float(data[field][local]) for field in ("phi", "ntg")},
+            )
+    return keys, matches, assignments, independent
 
 
 def run(obj, trajectory, logs, p, out):
@@ -113,40 +152,16 @@ def run(obj, trajectory, logs, p, out):
     assignments = [None] * len(samples)
     shape = obj["summary"]["grid"]["shape"]
     independent = True
-    for start, data, order in iterate(obj):
-        active = data["active"].astype(bool)
-        c = data["corners"]
-        valid = active & np.isfinite(c).all(axis=(1, 2))
-        if not valid.any():
-            continue
-        rids = region(data, p["region_field"])
-        low, high = c.min(axis=1), c.max(axis=1)
-        coarse_low, coarse_high = low[valid].min(axis=0), high[valid].max(axis=0)
-        candidate_points = np.flatnonzero(
-            ((positions >= coarse_low) & (positions <= coarse_high)).all(axis=1)
-        )
-        for index in candidate_points:
-            point = positions[index]
-            candidates = np.flatnonzero(valid & ((point >= low) & (point <= high)).all(axis=1))
-            if not len(candidates):
-                continue
-            located = candidates[inside(c[candidates], point)]
-            if not len(located):
-                continue
-            independent &= bool(inside(c[located], point, reference=True).all())
-            matches[index] += len(located)
-            physical = ijk(start + located, shape, order)
-            physical_keys = np.ravel_multi_index(physical.T, shape, order="C")
-            best = int(np.argmin(physical_keys))
-            local = int(located[best])
-            if physical_keys[best] < keys[index]:
-                keys[index] = physical_keys[best]
-                assignments[index] = dict(
-                    cell_id=int(start + local),
-                    ijk=(physical[best] + 1).tolist(),
-                    region_id=int(rids[local]),
-                    values={field: float(data[field][local]) for field in ("phi", "ntg")},
-                )
+    from opensubsurface.execution.blocks import mapped
+
+    for block_keys, block_matches, block_assignments, ok in mapped(
+        obj, _locate_block, positions, shape, p["region_field"], execution=p.get("execution")
+    ):
+        independent &= ok
+        matches += block_matches
+        for index in np.flatnonzero(block_keys < keys):
+            assignments[index] = block_assignments[index]
+        keys = np.minimum(keys, block_keys)
     groups, excluded, examples = {}, {}, []
     with (out / "well_samples.csv").open("w", newline="") as stream:
         writer = csv.DictWriter(

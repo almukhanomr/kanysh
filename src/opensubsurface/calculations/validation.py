@@ -14,59 +14,60 @@ PROFILE = "static-qc-v1"
 RTOL, ATOL = 1e-8, 1e-7
 
 
+def _interval_reference_block(start, data, order, grid, cases):
+    nx, ny, nz = grid["shape"]
+    xmin, xmax, ymin, ymax, zmin, zmax = grid["extent"]
+    area, dz = (xmax - xmin) * (ymax - ymin) / (nx * ny), (zmax - zmin) / nz
+    indices = np.arange(start, start + len(data["active"]), dtype=np.int64)
+    layer = nz - 1 - indices // (nx * ny) if order == "ECLIPSE" else indices % nz
+    bottom = zmin + layer * dz
+    parts, counts = [], []
+    for case in cases:
+        mask = (data["active"] != 0) & np.isin(data["zones"], case["zone_ids"])
+        count = int(mask.sum())
+        counts.append(count)
+        thickness = np.maximum(
+            0, np.minimum(dz, bottom[mask] + dz - np.maximum(bottom[mask], case["contact_z_m"]))
+        )
+        override = case.get("overrides", {})
+        phi, ntg, sw = [override.get(k, data[k][mask]) for k in ("phi", "ntg", "sw")]
+        net = area * thickness * ntg
+        pore = net * phi
+        parts.append(
+            [
+                count * area * dz,
+                float(np.sum(area * thickness, dtype=np.float64)),
+                float(np.sum(net, dtype=np.float64)),
+                float(np.sum(pore, dtype=np.float64)),
+                float(np.sum(pore * (1 - sw), dtype=np.float64)),
+            ]
+        )
+    return parts, counts
+
+
 def reference_chunked(obj, cases):
-    """Independent interval-overlap integral + Neumaier sums; shared storage reader only."""
+    """Independent interval-overlap integral + ordered math.fsum; shared storage reader only."""
     if obj["summary"].get("storage") == "cornerpoint-zarr-v1":
         from opensubsurface.calculations.cornerpoint_reference import reference
 
         return reference(obj, cases)
-    from opensubsurface.adapters.large_grid import blocks, open_grid
+    from opensubsurface.execution.blocks import mapped
 
-    grid = obj["summary"]["grid"]
-    nx, ny, nz = grid["shape"]
-    xmin, xmax, ymin, ymax, zmin, zmax = grid["extent"]
-    area, dz = (xmax - xmin) * (ymax - ymin) / (nx * ny), (zmax - zmin) / nz
     names = ("GRV", "GRV_oil_interval", "NetRockVolume", "PV", "HCPV")
-    totals = [[0.0] * 5 for _ in cases]
-    corrections = [[0.0] * 5 for _ in cases]
+    totals = [[[] for _ in range(5)] for _ in cases]
     counts = [0] * len(cases)
-    with open_grid(obj) as group:
-        for start, data in blocks(group):
-            indices = np.arange(start, start + len(data["active"]), dtype=np.int64)
-            layer = nz - 1 - indices // (nx * ny) if group.attrs["order"] == "ECLIPSE" else indices % nz
-            bottom = zmin + layer * dz
-            for i, case in enumerate(cases):
-                mask = (data["active"] != 0) & np.isin(data["zones"], case["zone_ids"])
-                count = int(mask.sum())
-                counts[i] += count
-                thickness = np.maximum(
-                    0, np.minimum(dz, bottom[mask] + dz - np.maximum(bottom[mask], case["contact_z_m"]))
-                )
-                override = case.get("overrides", {})
-                phi, ntg, sw = [override.get(k, data[k][mask]) for k in ("phi", "ntg", "sw")]
-                net = area * thickness * ntg
-                pore = net * phi
-                values = [
-                    count * area * dz,
-                    float(np.sum(area * thickness, dtype=np.float64)),
-                    float(np.sum(net, dtype=np.float64)),
-                    float(np.sum(pore, dtype=np.float64)),
-                    float(np.sum(pore * (1 - sw), dtype=np.float64)),
-                ]
-                for j, value in enumerate(values):
-                    previous = totals[i][j]
-                    updated = previous + value
-                    corrections[i][j] += (
-                        (previous - updated) + value
-                        if abs(previous) >= abs(value)
-                        else (value - updated) + previous
-                    )
-                    totals[i][j] = updated
+    for parts, nums in mapped(
+        obj, _interval_reference_block, obj["summary"]["grid"], cases, include_corners=False
+    ):
+        for i in range(len(cases)):
+            counts[i] += nums[i]
+            for target, value in zip(totals[i], parts[i]):
+                target.append(value)
     result = []
     for i, case in enumerate(cases):
         if not counts[i]:
             raise ValueError("No active selected cells")
-        values = dict(zip(names, [math.fsum([a, b]) for a, b in zip(totals[i], corrections[i])]))
+        values = dict(zip(names, [math.fsum(part) for part in totals[i]]))
         values["STOIIP"] = values["HCPV"] / case["bo"]
         result.append(values)
     return result
@@ -248,7 +249,8 @@ def check_artifact(obj, related):
                 "chunked.input_hashes",
                 (
                     bool(obj["summary"]["source_sha256"])
-                    if obj["summary"].get("source_format") == "opensubsurface.eclipse.static.v1"
+                    if obj["summary"].get("source_format")
+                    in {"opensubsurface.eclipse.static.v1", "opensubsurface.eclipse.binary.v1"}
                     else set(obj["summary"]["source_sha256"])
                     == (
                         (set(UNITS) - {"active"}) | {"geometry"}
@@ -418,7 +420,12 @@ def check_artifact(obj, related):
         ZeroDivisionError,
         zipfile.BadZipFile,
     ) as error:
-        check("validation.execution", False, note="Malformed/unsupported input: " + type(error).__name__)
+        check(
+            "validation.execution",
+            False,
+            observed=error.as_dict() if isinstance(error, DomainError) else None,
+            note="Malformed/unsupported input: " + type(error).__name__,
+        )
     skipped(
         "geological_fitness", "Requires specialist assessment of assumptions and observations", required=False
     )

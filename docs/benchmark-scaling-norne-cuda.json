@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "workload": "norne",
+  "seconds": 11.575313800000004,
+  "peak_process_tree_rss_bytes": 1073164288,
+  "workers": 1,
+  "device": "cuda",
+  "hardware": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "logical_cores": 16,
+    "ram_bytes": 67927195648
+  },
+  "cells": 113344,
+  "active_cells": 44927,
+  "result_status": "PASS_WITH_EXCLUSIONS",
+  "validation_status": "PASS_WITH_EXCLUSIONS",
+  "exclusions": {
+    "policy": "exclude_flagged",
+    "excluded_cells": 1,
+    "note": "Flagged cells (twisted/inverted/degenerate trilinear geometry) are removed from every metric and from the independent check; bbox values are upper-bound estimates of what was removed. This is not a clean PASS."
+  },
+  "totals": [
+    {
+      "scenario": "OWC-2693.3",
+      "GRV": 3375130612.34459,
+      "GRV_oil_interval": 1667436549.9621353,
+      "NetRockVolume": 1467873614.6072454,
+      "PV": 375855414.7441991,
+      "HCPV": 281891561.05814934,
+      "STOIIP": 234909634.21512446,
+      "TotalPV": 673243557.3114886,
+      "GasGRV": null,
+      "GasPV": null,
+      "GasHCPV": null,
+      "GIIP": null
+    }
+  ]
+}

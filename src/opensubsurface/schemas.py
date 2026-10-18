@@ -25,6 +25,7 @@ class Execution(Strict):
     precision: Literal["float64", "float32"] = "float64"
     timeout_seconds: int = Field(default=3600, ge=1, le=86400)
     max_retries: int = Field(default=0, ge=0, le=1)
+    max_workers: int | None = Field(default=None, ge=1, le=256)
 
 
 class Command(Strict):
@@ -123,7 +124,25 @@ class GridImport(Command):
     block_cells: int = Field(default=262144, ge=1024, le=1048576)
 
 
+class EclipsePropertyFile(Strict):
+    path: str = Field(min_length=1, max_length=1024)
+    file_revision: str = Field(pattern=r"^[a-f0-9]{64}$")
+    format: Literal["init", "grdecl"]
+    keyword: (
+        Literal["PORO", "NTG", "PERMX", "PERMY", "PERMZ", "SWAT", "FIPNUM", "SATNUM", "EQLNUM", "PVTNUM"]
+        | None
+    ) = None
+
+    @model_validator(mode="after")
+    def declared_keyword(self):
+        if (self.format == "grdecl") != (self.keyword is not None):
+            raise ValueError("keyword is required only for a single-property GRDECL file")
+        return self
+
+
 class EclipseImport(Command):
+    format: Literal["auto", "ascii", "egrid"] = "auto"
+    property_files: list[EclipsePropertyFile] = Field(default_factory=list, max_length=32)
     source_id: str
     path: str = Field(min_length=1, max_length=1024)
     file_revision: str = Field(pattern=r"^[a-f0-9]{64}$")
@@ -675,6 +694,38 @@ class SimulationSubmit(Command):
     case: Ref
 
 
+class SimulationReference(Strict):
+    """User-supplied reference summary (e.g. ECLIPSE results) in the same source folder."""
+
+    smspec_path: str = Field(min_length=1, max_length=1024)
+    smspec_revision: str = Field(pattern=r"^[a-f0-9]{64}$")
+    data_path: str = Field(min_length=1, max_length=1024)
+    data_revision: str = Field(pattern=r"^[a-f0-9]{64}$")
+    vectors: list[str] = Field(min_length=1, max_length=200)
+    relative_tolerance: float = Field(gt=0, le=1)
+
+
+class SimulationDeckRun(Command):
+    source_id: str
+    path: str = Field(min_length=1, max_length=1024)
+    file_revision: str = Field(pattern=r"^[a-f0-9]{64}$")
+    threads: int = Field(default=1, ge=1, le=256)
+    keep_restart: bool = False
+    # low: OPM continues past unsupported keywords (it ignores them). Explicit, reported, never default.
+    parsing_strictness: Literal["normal", "low"] = "normal"
+    reference: SimulationReference | None = None
+    parameters_confirmed: Literal[True]
+    assumptions: list[str] = Field(min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def deck_only(self):
+        if not self.path.upper().endswith(".DATA"):
+            raise ValueError("path: the main ECLIPSE-format deck must be a .DATA file")
+        if self.reference and not self.reference.smspec_path.upper().endswith(".SMSPEC"):
+            raise ValueError("reference: smspec_path must name an unformatted .SMSPEC file")
+        return self
+
+
 class SimulationSnapshot(Command):
     result: Ref
     report_index: int = Field(ge=0)
@@ -732,6 +783,29 @@ class JobStatus(JobRequest):
 
 class Diagnostics(Strict):
     lines: int = Field(default=60, ge=1, le=500)
+
+
+class ComputeTargets(Strict):
+    project_id: str | None = None
+    properties: Ref | None = None
+    operation: Literal[
+        "model_qc",
+        "model_diff",
+        "regional_volumes",
+        "volumes_reconcile",
+        "sensitivity_tornado",
+        "uncertainty_monte_carlo",
+        "wells_vs_model",
+        "volumetrics_calculate",
+        "result_validate",
+    ] = "regional_volumes"
+    execution: Execution = Field(default_factory=Execution)
+
+    @model_validator(mode="after")
+    def project_required(self):
+        if self.properties is not None and self.project_id is None:
+            raise ValueError("project_id is required with properties")
+        return self
 
 
 class ProjectRequest(Strict):
@@ -888,6 +962,7 @@ OPERATION_SCHEMAS = {
     "properties_simulate": Geostat,
     "simulation_case_create": SimulationCaseCreate,
     "simulation_submit": SimulationSubmit,
+    "simulation_deck_run": SimulationDeckRun,
     "simulation_snapshot": SimulationSnapshot,
     "workflow_save": WorkflowSave,
     "workflow_run": WorkflowRun,

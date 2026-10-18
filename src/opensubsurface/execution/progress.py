@@ -35,5 +35,13 @@ def report(fraction, message=None, force=False):
     record = dict(progress=round(fraction, 4), eta_s=eta, elapsed_s=round(elapsed, 2), message=message)
     temp = directory / "progress.json.tmp"
     temp.write_text(json.dumps(record), encoding="utf-8")
-    os.replace(temp, directory / "progress.json")
+    for attempt in range(6):
+        try:
+            os.replace(temp, directory / "progress.json")
+            break
+        except PermissionError:
+            # A Windows client may briefly hold the old JSON open while polling.
+            if os.name != "nt" or attempt == 5:
+                raise
+            time.sleep(0.01 * 2**attempt)
     log(f"progress {fraction:.0%}" + (f" {message}" if message else ""))

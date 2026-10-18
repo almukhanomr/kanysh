@@ -37,6 +37,11 @@ def reconstruct(coord, zcorn, shape, start, end, scale, z_direction, mapaxes=Non
         )
         result[:, corner, :2] = pillars[:, :2] + ratio[:, None] * (pillars[:, 3:5] - pillars[:, :2])
         result[:, corner, 2] = z
+    return to_world(result, scale, z_direction, mapaxes)
+
+
+def to_world(result, scale, z_direction, mapaxes=None):
+    """Grid-local corners -> map coordinates (MAPAXES), metres, Z positive upward."""
     if mapaxes is not None:
         axes = np.asarray(mapaxes).reshape(3, 2)
         origin = axes[1]
@@ -58,13 +63,24 @@ def reconstruct(coord, zcorn, shape, start, end, scale, z_direction, mapaxes=Non
 def import_deck(context, p, out):
     work = out / "deck-work"
     work.mkdir()
-    deck = Interpreter(context["source"], p["path"], work, p["file_revision"]).parse()
-    cells, step = math.prod(deck.shape), min(p["block_cells"], 16384)
-    require(
-        shutil.disk_usage(out).free > cells * 500,
-        "INSUFFICIENT_DISK",
-        "Need room for geometry, properties and immutable publication",
+    binary = p.get("format") == "egrid" or (
+        p.get("format", "auto") == "auto" and p["path"].lower().endswith((".egrid", ".grid"))
     )
+    if binary:
+        from opensubsurface.adapters.eclipse_binary import parse
+
+        deck = parse(context["source"], p, work)
+    else:
+        require(
+            not p.get("property_files"),
+            "UNSUPPORTED_PROFILE",
+            "property_files is supported for EGRID imports",
+        )
+        deck = Interpreter(context["source"], p["path"], work, p["file_revision"]).parse()
+    cells, step = math.prod(deck.shape), min(p["block_cells"], 16384)
+    from opensubsurface.execution.resources import disk_check
+
+    disk_check(out, cells * 500)
     require(
         {"COORD", "ZCORN"} <= deck.arrays.keys(),
         "MISSING_GEOMETRY",
@@ -95,7 +111,11 @@ def import_deck(context, p, out):
         a = deck.array(name)
         for start in range(0, len(a), 65536):
             a[start : start + 65536] = value
-            a = deck.arrays[name] = discard_pages(a)
+            a = deck.arrays[name] = discard_pages(a, dirty=(start, min(start + 65536, len(a))))
+    # Parsed scratch arrays are immutable from this point. Read-only remaps release
+    # resident pages without repeatedly flushing multi-GB mappings on Windows.
+    for name, array in list(deck.arrays.items()):
+        deck.arrays[name] = discard_pages(array, readonly=True, dirty=(0, 0))
     require(
         "ACTNUM" in deck.arrays, "MISSING_PROPERTY", "ACTNUM missing; provide explicit user-confirmed default"
     )
@@ -121,18 +141,34 @@ def import_deck(context, p, out):
                 if name in ("zones", "FIPNUM", "SATNUM", "EQLNUM", "PVTNUM")
                 else "f8",
             )
+        targets = {name: group[name] for name in group.array_keys()}
         for start in range(0, cells, step):
             progress.report(0.5 * start / cells, "eclipse_import: geometry/property blocks")
             end = min(cells, start + step)
-            corners = reconstruct(
-                deck.arrays["COORD"],
-                deck.arrays["ZCORN"],
-                deck.shape,
-                start,
-                end,
-                0.3048 if p["length_unit"] == "ft" else 1.0,
-                p["z_direction"],
-                deck.mapaxes,
+            corners = (
+                # Legacy .GRID: the simulator's own corners, not a pillar reconstruction.
+                to_world(
+                    np.asarray(deck.grid_corners[start:end], dtype=np.float64),
+                    0.3048 if p["length_unit"] == "ft" else 1.0,
+                    p["z_direction"],
+                    deck.mapaxes,
+                )
+                if getattr(deck, "grid_corners", None) is not None
+                else None
+            )
+            corners = (
+                corners
+                if corners is not None
+                else reconstruct(
+                    deck.arrays["COORD"],
+                    deck.arrays["ZCORN"],
+                    deck.shape,
+                    start,
+                    end,
+                    0.3048 if p["length_unit"] == "ft" else 1.0,
+                    p["z_direction"],
+                    deck.mapaxes,
+                )
             )
             active = np.asarray(deck.arrays["ACTNUM"][start:end])
             require(np.isin(active, [0, 1]).all(), "INVALID_PROPERTY", "ACTNUM requires 0/1")
@@ -142,7 +178,7 @@ def import_deck(context, p, out):
                 low = np.minimum(low, corners[mask].min(axis=(0, 1)))
                 high = np.maximum(high, corners[mask].max(axis=(0, 1)))
             active_count += int(mask.sum())
-            group["corners"][start:end] = corners
+            targets["corners"][start:end] = corners
             for name, source in mapping.items():
                 values = (
                     np.asarray(deck.arrays[source][start:end])
@@ -159,7 +195,7 @@ def import_deck(context, p, out):
                         "Integer region values required",
                     )
                     regions.update(map(int, np.unique(values[mask])))
-                group[name][start:end] = values
+                targets[name][start:end] = values
             for name in extra:
                 values = np.asarray(deck.arrays[name][start:end])
                 if name.endswith("NUM"):
@@ -171,16 +207,16 @@ def import_deck(context, p, out):
                         "INVALID_PROPERTY",
                         "Invalid region ID",
                     )
-                group[name][start:end] = values
+                targets[name][start:end] = values
                 if name.endswith("NUM"):
                     region_values.setdefault(name, set()).update(map(int, np.unique(values[mask])))
-            kx = np.asarray(group["permeability_md"][start:end])
+            kx = np.asarray(targets["permeability_md"][start:end])
             kz = (
                 np.asarray(deck.arrays["PERMZ"][start:end])
                 if "PERMZ" in deck.arrays
                 else np.full(end - start, np.nan)
             )
-            group["kz_ratio"][start:end] = np.divide(kz, kx, out=np.full_like(kz, np.nan), where=kx > 0)
+            targets["kz_ratio"][start:end] = np.divide(kz, kx, out=np.full_like(kz, np.nan), where=kx > 0)
             for name, a in list(deck.arrays.items()):
                 deck.arrays[name] = discard_pages(a)
     require(active_count > 0 and np.isfinite(low).all(), "INVALID_GEOMETRY", "No active finite cells")
@@ -188,14 +224,35 @@ def import_deck(context, p, out):
     preserved = True
     with zarr.ZipStore(str(out / "grid.zip"), mode="r") as store:
         group = zarr.open_group(store=store)
-        for name, source in mapping.items():
+        targets = {name: group[name] for name in group.array_keys()}
+        for name, source in {**mapping, **{name: name for name in extra}}.items():
             if source not in deck.arrays:
                 continue
             for start in range(0, cells, step):
-                actual = np.asarray(group[name][start : start + step])
+                actual = np.asarray(targets[name][start : start + step])
                 expected = np.array(deck.arrays[source][start : start + step])
                 preserved &= bool(np.array_equal(actual, expected, equal_nan=True))
                 deck.arrays[source] = discard_pages(deck.arrays[source])
+        for start in range(0, cells, step):
+            kx = (
+                np.array(deck.arrays["PERMX"][start : start + step])
+                if "PERMX" in deck.arrays
+                else np.full(min(step, cells - start), np.nan)
+            )
+            kz = (
+                np.array(deck.arrays["PERMZ"][start : start + step])
+                if "PERMZ" in deck.arrays
+                else np.full(len(kx), np.nan)
+            )
+            expected = np.divide(kz, kx, out=np.full_like(kx, np.nan), where=kx > 0)
+            preserved &= bool(
+                np.array_equal(
+                    np.asarray(targets["kz_ratio"][start : start + step]), expected, equal_nan=True
+                )
+            )
+            for key in ("PERMX", "PERMZ"):
+                if key in deck.arrays:
+                    deck.arrays[key] = discard_pages(deck.arrays[key])
     require(preserved, "VALIDATION_FAILED", "Imported property differs from parsed source")
     region_values["zones"] = regions
     region_ids = {name: sorted(values) for name, values in region_values.items()}
@@ -226,6 +283,7 @@ def import_deck(context, p, out):
         applied_edits=deck.applied,
         missing_properties=missing,
         suggestions=deck.suggestions,
+        grid_reconstruction=getattr(deck, "grid_reconstruction", None),
         assumptions=p["assumptions"],
         explicit_defaults=p["defaults"],
         checks=[
@@ -247,7 +305,7 @@ def import_deck(context, p, out):
     report_files = write_report(out, "ECLIPSE static import", report)
     summary = dict(
         storage=STORAGE,
-        source_format="opensubsurface.eclipse.static.v1",
+        source_format="opensubsurface.eclipse.binary.v1" if binary else "opensubsurface.eclipse.static.v1",
         grid=dict(shape=list(deck.shape), extent=[float(v) for pair in zip(low, high) for v in pair]),
         cells=cells,
         active_cells=active_count,
@@ -288,6 +346,8 @@ def import_deck(context, p, out):
             )
     for a in deck.arrays.values():
         a._mmap.close()
+    if getattr(deck, "grid_corners", None) is not None:
+        deck.grid_corners._mmap.close()
     shutil.rmtree(work)
     return (
         "properties",

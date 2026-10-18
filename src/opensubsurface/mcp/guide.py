@@ -65,6 +65,7 @@ Do not claim Windows/CUDA/real-client/large-model acceptance from CPU SDK fixtur
 
 AGENT_TOOLS = {
     "diagnostics",
+    "simulation_deck_run",
     "results_export",
     "folder_assess",
     "start",

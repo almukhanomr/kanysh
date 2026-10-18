@@ -51,7 +51,10 @@ def grid_of(obj):
 
 def run(request, out):
     operation, p = request["operation"], request["payload"]
+    from opensubsurface.execution.blocks import settings
+
     device = request["device"]
+    settings.set(dict(p.get("execution", {}), resolved_device=device))
     out = Path(out)
     out.mkdir(exist_ok=True, parents=True)
     if operation == "results_export":
@@ -293,7 +296,7 @@ def run(request, out):
                 units={k: "standard_m3" if k == "STOIIP" else "m3" for k in values},
                 bo=p["bo"],
                 contact_z_m=p["contact_z_m"],
-                backend="chunked-cpu",
+                backend="cornerpoint-tetra6-cuda" if device == "cuda" else "chunked-cpu",
                 precision="float64",
                 storage=props["summary"]["storage"],
                 block_cells=props["summary"]["block_cells"],
@@ -570,6 +573,10 @@ def run(request, out):
         np.save(out / "slice.npy", section, allow_pickle=False)
         summary["grid"] = result["summary"]["grid"]
         return "simulation_snapshot", summary, {"slice.npy": out / "slice.npy"}
+    if operation == "simulation_deck_run":
+        from opensubsurface.simulation.run import run_deck
+
+        return run_deck(request, out)
     if operation == "simulation_submit":
         case = input_obj(request, "case")
         return opm.run_case(case["paths"], dict(p, _case_summary=case["summary"]), out)

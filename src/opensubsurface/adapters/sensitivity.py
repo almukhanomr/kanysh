@@ -8,7 +8,7 @@ import numpy as np
 from pydantic import ValidationError
 from scipy import stats
 
-from opensubsurface.adapters.regional_volumes import evaluate
+from opensubsurface.adapters.regional_volumes import evaluate_many
 from opensubsurface.errors import DomainError, require
 from opensubsurface.schemas import RegionCase
 
@@ -64,10 +64,22 @@ def budget(obj, p, runs):
 
 def tornado(obj, p, out, polygon=None):
     work = budget(obj, p, 1 + 2 * len(p["parameters"]))
-    base = evaluate(obj, p, polygon)
+    requests, locations, variant_results = [p], [], {}
+    for index, parameter in enumerate(p["parameters"]):
+        for side in ("low", "high"):
+            try:
+                requests.append(variant(p, [parameter], [parameter[side]]))
+                locations.append((index, side))
+            except DomainError as error:
+                variant_results[index, side] = error
+    computed = evaluate_many(obj, requests, polygon)
+    base = computed[0]
+    if isinstance(base, DomainError):
+        raise base
+    variant_results.update(zip(locations, computed[1:]))
     baseline = metric(base, p["metric"])
     rows, failures = [], []
-    for parameter in p["parameters"]:
+    for index, parameter in enumerate(p["parameters"]):
         values = {}
         row = dict(
             parameter=f"{parameter['region_id']}.{parameter['field']}",
@@ -78,7 +90,9 @@ def tornado(obj, p, out, polygon=None):
         )
         for side in ("low", "high"):
             try:
-                result = evaluate(obj, variant(p, [parameter], [parameter[side]]), polygon)
+                result = variant_results[index, side]
+                if isinstance(result, DomainError):
+                    raise result
                 values[side] = metric(result, p["metric"])
             except DomainError as error:
                 values[side] = None
@@ -119,11 +133,15 @@ def tornado(obj, p, out, polygon=None):
         if any(f["error"]["code"] == "VALIDATION_FAILED" for f in failures)
         else "PARTIAL"
         if failures
+        else "PASS_WITH_EXCLUSIONS"
+        if base.get("geometry_exclusions", {}).get("excluded_cells")
         else "PASS",
         validation_status="FAIL"
         if any(f["error"]["code"] == "VALIDATION_FAILED" for f in failures)
         else "INCOMPLETE"
         if failures
+        else "PASS_WITH_EXCLUSIONS"
+        if base.get("geometry_exclusions", {}).get("excluded_cells")
         else "PASS",
         failures=failures,
         cell_scenario_evaluations=work,
@@ -185,7 +203,18 @@ def draws(p):
 def monte_carlo(obj, p, out, polygon=None):
     work = budget(obj, p, 1 + p["samples"])
     values = draws(p)
-    base = evaluate(obj, p, polygon)
+    requests, locations, variant_results = [p], [], {}
+    for index, row in enumerate(values):
+        try:
+            requests.append(variant(p, p["parameters"], row))
+            locations.append(index)
+        except DomainError as error:
+            variant_results[index] = error
+    computed = evaluate_many(obj, requests, polygon)
+    base = computed[0]
+    if isinstance(base, DomainError):
+        raise base
+    variant_results.update(zip(locations, computed[1:]))
     baseline = metric(base, p["metric"])
     results, failures = [], []
     names = [f"{r['region_id']}.{r['field']}" for r in p["parameters"]]
@@ -195,7 +224,9 @@ def monte_carlo(obj, p, out, polygon=None):
         for index, row in enumerate(values):
             record = dict(sample=index, **dict(zip(names, map(float, row))))
             try:
-                result = evaluate(obj, variant(p, p["parameters"], row), polygon)
+                result = variant_results[index]
+                if isinstance(result, DomainError):
+                    raise result
                 number = metric(result, p["metric"])
                 results.append(number)
                 record.update(status="PASS", **{p["metric"]: number})
@@ -258,11 +289,15 @@ def monte_carlo(obj, p, out, polygon=None):
         if any(f["error"]["code"] == "VALIDATION_FAILED" for f in failures)
         else "PARTIAL"
         if failures
+        else "PASS_WITH_EXCLUSIONS"
+        if base.get("geometry_exclusions", {}).get("excluded_cells")
         else "PASS",
         validation_status="FAIL"
         if any(f["error"]["code"] == "VALIDATION_FAILED" for f in failures)
         else "INCOMPLETE"
         if failures
+        else "PASS_WITH_EXCLUSIONS"
+        if base.get("geometry_exclusions", {}).get("excluded_cells")
         else "PASS",
         parameters=p,
         metric=p["metric"],
@@ -280,7 +315,11 @@ def monte_carlo(obj, p, out, polygon=None):
     base["tables"]["percentiles"] = stats_rows
     base["independent_checks"].extend(
         [
-            dict(name="all_valid_realizations_independent_hull_integrals", status="PASS", count=len(results)),
+            dict(
+                name="all_valid_realizations_independent_barycentric_integrals",
+                status="PASS",
+                count=len(results),
+            ),
             dict(name="numpy_quantiles_vs_scalar_rank_interpolation", status="PASS"),
         ]
     )

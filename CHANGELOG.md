@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased — OPM Flow deck runs (optional)
+
+- New `simulation_deck_run`: runs the user's own ECLIPSE-format `.DATA` deck and its INCLUDE
+  closure in OPM Flow exactly as supplied (byte-for-byte snapshot, revision-checked; no deck
+  generation or defaults). Decks referencing files outside the closure (RESTART, IMPORT, GDFILE,
+  PATHS, ...) are refused explicitly.
+- Executors: native Linux, or Windows via a dedicated WSL2 distribution `kanysh-opm` (the user's
+  own distributions are untouched). Docker Desktop is not used. `kanysh-basic setup-opm` creates
+  the distribution, installs OPM Flow from the OPM PPA, holds the packages, records the binary
+  sha256/version in `opm-runtime.json` and self-tests on SPE1. Runs refuse a changed binary
+  (`STALE_SOLVER`).
+- Simulation is optional: without a set-up executor the request is refused synchronously with
+  `SIMULATOR_UNAVAILABLE` and install steps; `diagnostics`/`capabilities` report the state.
+- Portable SMSPEC/UNSMRY reader (no resdata on Windows); summary published as Parquet with
+  PRT/DBG/flow logs in `job_logs`. Optional comparison with a user reference SMSPEC at an explicit
+  tolerance. Cancellation also stops the simulator inside WSL.
+- Real-data (Volve) fixes: deck parser applies `MAXVALUE`/`MINVALUE` and unquoted edit records,
+  reports region edits (`MULTIREG`, ...) per record, and refuses `ADDZCORN` instead of silently
+  importing a grid without those faults. New reader for the simulator's legacy `.GRID` output
+  (corners used as written); `simulation_deck_run` gets an explicit `parsing_strictness=low`
+  (ignored keywords listed, status `PASS_WITH_IGNORED_KEYWORDS`) and OPM's fatal input message in
+  errors. `folder_assess` flags far-above-datum GOC placeholders. See docs/VOLVE_REAL_DATA_TEST.md.
+
 ## Unreleased — MCP smoke-test fixes (2026-10-18)
 
 - MCP tools publish self-contained input schemas: every `$ref` inlined, every field

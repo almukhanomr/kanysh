@@ -58,6 +58,14 @@ def terminate_group(process):
     process.wait(timeout=5)
 
 
+def stop_external(directory):
+    """A simulator inside WSL is not in the Windows process tree; stop it explicitly."""
+    if (Path(directory) / "flow-process.json").is_file():
+        from opensubsurface.simulation.runtime import kill_external
+
+        kill_external(directory)
+
+
 def missing_result_error(log_text):
     """Explain a worker that exited without result.json from its log."""
     # VTK aborts the process (no Python exception) when no OpenGL context exists,
@@ -134,6 +142,7 @@ def run_isolated(directory, timeout):
             cancelled = (directory / "cancel").exists()
             if cancelled or time.monotonic() - started > timeout:
                 terminate_group(process)
+                stop_external(directory)
                 return dict(
                     ok=False,
                     error=dict(
@@ -174,6 +183,7 @@ def stop_orphan(directory):
         ):
             return False
         terminate_tree(process)
+        stop_external(directory)
         return True
     except (psutil.NoSuchProcess, ProcessLookupError):
         return False

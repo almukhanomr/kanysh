@@ -1,6 +1,7 @@
 import importlib.metadata
 import json
 import os
+import shutil
 import threading
 import time
 from pathlib import Path
@@ -25,13 +26,20 @@ from opensubsurface.schemas import (
 )
 from opensubsurface.workflows import engine
 
-GPU_OPERATIONS = {"model_build", "volumetrics_calculate", "scenarios_run", "seismic_attribute"}
+GPU_OPERATIONS = {
+    "model_build",
+    "volumetrics_calculate",
+    "scenarios_run",
+    "seismic_attribute",
+    "regional_volumes",
+}
 # Single source for device messages and compute_targets_list. CPU remains the reference path.
 DEVICE_MATRIX = {
     "model_build": dict(devices=["cpu", "cuda"], condition="method=gempy only; horizontal_explicit is CPU"),
+    "simulation_deck_run": dict(devices=["cpu"], condition="OPM Flow CPU (Linux or Windows via WSL2)"),
     "volumetrics_calculate": dict(
         devices=["cpu", "cuda"],
-        condition="in-memory regular grid (<=4M cells); imported/corner-point grids CPU",
+        condition="regular grids and imported corner-point tetra6; float64 CPU comparison on every CUDA block",
     ),
     "scenarios_run": dict(devices=["cpu", "cuda"], condition="in-memory regular grid only"),
     "seismic_attribute": dict(devices=["cpu", "cuda"], condition="in-memory seismic cube"),
@@ -57,8 +65,11 @@ DEVICE_MATRIX = {
             "seismic_source_import",
         )
     },
+    "regional_volumes": dict(
+        devices=["cpu", "cuda"], condition="bounded float64 tetra6 with mandatory CPU comparison"
+    ),
     "calculation_run[properties: imported corner-point/large grid]": dict(
-        devices=["cpu"], condition="chunked tetra6 / interval volumes on CPU"
+        devices=["cpu", "cuda"], condition="CUDA tetra6 on corner-point imports; Cartesian imports CPU"
     ),
     "calculation_run[GemPy plan]": dict(
         devices=["cpu", "cuda"], condition="model_build and in-memory volumetrics follow device_policy"
@@ -266,15 +277,15 @@ class Service:
 
     def capabilities(self):
         import platform
-        import shutil
-        import sys
 
         import psutil
         import torch
 
         from opensubsurface.execution.device import cuda_runtime
+        from opensubsurface.simulation.runtime import status as simulator_status
 
         cuda = cuda_runtime()["cuda_available"]
+        simulator = simulator_status(self.store.root)
         memory = psutil.virtual_memory()
         devices = (
             [
@@ -296,9 +307,9 @@ class Service:
             cuda_devices=devices,
             host=dict(system=platform.system(), machine=platform.machine(), logical_cpus=psutil.cpu_count()),
             memory=dict(total_bytes=memory.total, available_bytes=memory.available),
-            opm_available=sys.platform == "linux"
-            and shutil.which(os.environ.get("OPENSUBSURFACE_FLOW_EXECUTABLE", "flow")) is not None,
-            simulation_requirement="OPM Flow requires Linux/WSL; native Windows simulation is unavailable",
+            opm_available=simulator["available"],
+            simulator=simulator,
+            simulation_requirement="Optional: OPM Flow on Linux, or Windows via WSL2 after `kanysh-basic setup-opm`",
             remote_execution="not configured",
             large_models=dict(
                 storage="cartesian-zarr-flat-v1",
@@ -311,16 +322,16 @@ class Service:
             ),
             cornerpoint=dict(
                 import_formats=["DATA", "GRDECL", "EGRID", "ROFF"],
-                limit_scope="max_cells applies only to legacy XTGeo geometry; static DATA uses static_deck below",
+                limit_scope="max_cells applies only to legacy XTGeo imports; DATA/GRDECL/EGRID streaming uses static_deck below",
                 max_cells=2000000,
-                import_geometry="full RAM with preflight",
-                calculations="chunked CPU tetra6",
+                import_geometry="streaming disk-backed EGRID/ASCII; legacy XTGeo/ROFF uses full RAM with preflight",
+                calculations="CPU process blocks or validated float64 CUDA tetra6",
                 native_petrel_project=False,
             ),
             static_deck=dict(
                 operation="eclipse_import",
                 storage="cornerpoint-zarr-v1",
-                geometry="Bounded COORD/ZCORN blocks; ASCII DATA/GRDECL only",
+                geometry="Bounded ASCII DATA/GRDECL and binary EGRID; revision-pinned INIT/GRDECL properties",
                 parser_limit_cells=500_000_000,
                 max_block_cells=16384,
                 demonstrated_cells=20_000_000,
@@ -328,7 +339,7 @@ class Service:
                 demonstrated_scope="Synthetic regular corner-point grid, complete geometry/property comparison; not large field EGRID acceptance",
                 norne_full_data="Static import PASS; equilibrium SWAT and OPM NOT RUN",
                 unsupported_keywords="Explicit file/line report; never silently applied",
-                device="CPU",
+                device="CPU process blocks; CUDA tetra6 on regional_volumes/volumetrics_calculate",
             ),
             copilot=dict(
                 operations=[
@@ -406,6 +417,14 @@ class Service:
         device, warnings = select_device(
             execution["device_policy"], compatible, available, execution["allow_cpu_fallback"]
         )
+        if device == "cuda" and operation == "regional_volumes":
+            require(
+                execution.get("max_workers") in (None, 1),
+                "INVALID_ARGUMENTS",
+                "CUDA blocks use one coordinator per device",
+                "execution.max_workers",
+                "Set execution.max_workers=1 or omit it for CUDA",
+            )
         # Conservative estimate for base arrays + scientific working buffers; never downsample automatically.
         import psutil
 
@@ -529,12 +548,43 @@ class Service:
             p = Inspect.model_validate(arguments)
             return self.invoke("result_validate", dict(project_id=p.project_id, artifact=p.ref.model_dump()))
         if operation == "compute_targets_list":
+            import math
+
+            from opensubsurface.execution.resources import inventory, plan
+            from opensubsurface.schemas import ComputeTargets
+
+            query = ComputeTargets.model_validate(arguments).model_dump(mode="json")
+            estimate = None
+            if query["properties"] is not None:
+                obj = self.store.object(query["project_id"], query["properties"])
+                cells = math.prod(obj["summary"]["grid"]["shape"])
+                estimate = plan(
+                    cells,
+                    obj["summary"].get("block_cells", 16384),
+                    query["execution"].get("max_workers"),
+                    fixed_bytes=cells * 80 if query["operation"] == "model_qc" else 0,
+                )
+                calibration = self.store.get_state(
+                    "performance:" + query["operation"] + ":" + obj["content_hash"], None
+                )
+                estimate.update(
+                    operation=query["operation"],
+                    cells=cells,
+                    estimated_seconds=calibration["seconds"] if calibration else None,
+                    time_estimate_status="APPROXIMATE_PREVIOUS_RUN" if calibration else "NOT RUN",
+                    time_estimate_note="Previous run on this exact model; scenarios, selection, device, worker count and contention affect runtime"
+                    if calibration
+                    else "No measured throughput for this operation/model; no timing constant inferred",
+                    calibration=calibration,
+                )
             return [
                 dict(
                     id="local-cpu",
                     location="local",
                     health="ready",
                     capabilities=self.capabilities(),
+                    resources=inventory(self.store.root),
+                    model_estimate=estimate,
                     device_matrix=DEVICE_MATRIX,
                     gpu_capable_operations=GPU_CAPABLE,
                     note="CPU is the reference path for every operation; GPU results are checked against it",
@@ -635,7 +685,10 @@ class Service:
                     "UNSUPPORTED_LARGE_OPERATION",
                     "Для этой операции нет блочного backend",
                 )
-                if device != "cpu":
+                if device != "cpu" and not (
+                    operation in {"regional_volumes", "volumetrics_calculate"}
+                    and obj["summary"].get("storage") == "cornerpoint-zarr-v1"
+                ):
                     if not (
                         p["execution"]["device_policy"] != "require_gpu"
                         and p["execution"]["allow_cpu_fallback"]
@@ -643,6 +696,29 @@ class Service:
                         raise no_gpu_error(operation, "imported/large-grid inputs use the CPU block backend")
                     device = "cpu"
                     warnings.append("CPU fallback: large-grid backend")
+        for obj in resolved.values():
+            if obj["summary"].get("grid") and operation in {
+                "model_qc",
+                "model_diff",
+                "regional_volumes",
+                "volumes_reconcile",
+                "wells_vs_model",
+                "sensitivity_tornado",
+                "uncertainty_monte_carlo",
+                "volumetrics_calculate",
+                "result_validate",
+            }:
+                import math
+
+                from opensubsurface.execution.resources import plan
+
+                cells = math.prod(obj["summary"]["grid"]["shape"])
+                plan(
+                    cells,
+                    obj["summary"].get("block_cells", 16384),
+                    p["execution"].get("max_workers"),
+                    fixed_bytes=cells * 80 if operation == "model_qc" else 0,
+                )
         source_context = None
         if operation == "volumes_reconcile":
             from opensubsurface.adapters.source_files import prepare_file
@@ -658,6 +734,8 @@ class Service:
                 "INVALID_CRS",
                 "CRS/datum импорта должны совпадать с проектом",
             )
+        if operation == "simulation_deck_run":
+            source_context = self.prepare_simulation(p)
         if operation in ("seismic_source_import", "eclipse_import", "geodata_import"):
             from opensubsurface.adapters.source_files import prepare_file
 
@@ -722,6 +800,7 @@ class Service:
                 report_context=report_context,
                 source_context=source_context,
                 scene_context=scene_context,
+                home=str(self.store.root),
             )
             thread = threading.Thread(target=self.execute, args=(job, request, warnings), daemon=True)
             self.threads.append(thread)
@@ -815,6 +894,18 @@ class Service:
                         sources,
                         object_id=previous["id"] if previous else None,
                     )
+                    properties = request["resolved"].get("properties")
+                    if properties and properties["summary"].get("grid"):
+                        self.store.set_state(
+                            "performance:" + request["operation"] + ":" + properties["content_hash"],
+                            dict(
+                                seconds=result["elapsed_seconds"],
+                                device=request["device"],
+                                max_workers=request["payload"]["execution"].get("max_workers"),
+                                scenarios=len(request["payload"].get("scenarios", [])) or 1,
+                                measured_at=now(),
+                            ),
+                        )
                     self.store.update_job(
                         job["id"],
                         status="succeeded",
@@ -880,6 +971,57 @@ class Service:
                 completed_at=now(),
             )
 
+    def prepare_simulation(self, p):
+        """Synchronous preflight: simulator set up, deck closure resolvable, reference files pinned."""
+        import psutil
+
+        from opensubsurface.adapters.local_sources import LocalSources, opened_source, revision
+        from opensubsurface.simulation import deck, runtime
+
+        runtime.require_available(self.store.root)
+        require(
+            p["threads"] <= (psutil.cpu_count() or 1),
+            "INVALID_ARGUMENTS",
+            "threads exceeds logical CPUs",
+            "threads",
+            f"Use at most {psutil.cpu_count()} threads",
+        )
+        source = LocalSources(self.store).get(p["source_id"])
+        files = deck.closure(source, p["path"], p["file_revision"])
+        references = []
+        if p.get("reference"):
+            r = p["reference"]
+            for name in ("smspec", "data"):
+                path, expected = r[name + "_path"], r[name + "_revision"]
+                with opened_source(source, path) as (fd, _):
+                    info = os.fstat(fd)
+                    require(
+                        revision(info) == expected,
+                        "SOURCE_CHANGED",
+                        path + " changed since discovery",
+                        f"reference.{name}_revision",
+                    )
+                references.append(dict(path=path, file_revision=expected, size_bytes=info.st_size))
+        free = shutil.disk_usage(self.store.root).free
+        need = 4 * sum(f["size_bytes"] for f in files) + 2 * 1024**3
+        require(
+            free > need,
+            "INSUFFICIENT_DISK",
+            "Not enough free disk for the deck snapshot and simulator output",
+            "",
+            f"Free at least {need // 2**30 + 1} GiB in {self.store.root}",
+        )
+        headers = {f"closure:{i}": f for i, f in enumerate(files + references)}
+        return dict(
+            source=source,
+            manifest_path=p["path"],
+            manifest_revision=p["file_revision"],
+            headers=headers,
+            closure=files,
+            reference_files=references,
+            input_bytes=sum(f["size_bytes"] for f in files),
+        )
+
     def progress(self, job):
         """Worker-reported progress for one job, or node completion for a workflow parent."""
         if job["status"] == "succeeded":
@@ -932,6 +1074,11 @@ class Service:
             ("worker", directory / "worker.log"),
             ("workflow", directory / "workflow.log"),
             ("solver", directory / "output" / "solver.log"),
+            ("flow", directory / "output" / "flow.log"),
+        ] + [
+            (path.suffix.lstrip(".").lower(), path)
+            for path in sorted((directory / "output" / "deck").rglob("results/*"))
+            if path.suffix in (".PRT", ".DBG")
         ]:
             text = read_tail(path, tail)
             if text is not None:

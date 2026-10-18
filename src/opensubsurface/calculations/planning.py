@@ -165,7 +165,10 @@ def plan(service, arguments):
             "INVALID_PLAN",
             "Selected zones are absent from imported properties",
         )
-        if spec["execution"]["device_policy"] != "cpu":
+        if (
+            spec["execution"]["device_policy"] != "cpu"
+            and props["summary"].get("storage") != "cornerpoint-zarr-v1"
+        ):
             from opensubsurface.service import no_gpu_error
 
             raise no_gpu_error(
@@ -383,7 +386,12 @@ def compile_nodes(plan):
         )
     artifacts = [entry["id"] for entry in nodes]
     for name in artifacts:
-        node("check_" + name, "result_validate", artifact=n(name))
+        node(
+            "check_" + name,
+            "result_validate",
+            artifact=n(name),
+            execution=dict(spec["execution"], device_policy="cpu"),
+        )
     nodes.append(
         dict(
             id="report",

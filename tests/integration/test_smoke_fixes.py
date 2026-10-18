@@ -380,23 +380,13 @@ def test_missing_property_is_not_a_range_violation(tmp_path):
 def test_device_matrix_and_gpu_refusal_messages(service, tmp_path):
     targets = service.invoke("compute_targets_list", {})[0]
     matrix = targets["device_matrix"]
-    assert matrix["model_build"]["devices"] == ["cpu", "cuda"] and matrix["regional_volumes"]["devices"] == [
-        "cpu"
-    ]
-    pid, props = _import(service, tmp_path, swat=True)
+    assert matrix["model_build"]["devices"] == ["cpu", "cuda"]
+    assert matrix["regional_volumes"]["devices"] == ["cpu", "cuda"]
+    assert matrix["model_qc"]["devices"] == ["cpu"]
+    from opensubsurface.schemas import Execution
+
     with pytest.raises(DomainError) as raised:
-        service.invoke(
-            "calculation_plan",
-            dict(
-                project_id=pid,
-                properties=dict(id=props["id"], revision=props["revision"]),
-                zone_ids=[1],
-                bo=1.2,
-                contacts=[dict(name="c", z_m=-1010)],
-                assumptions=["synthetic"],
-                execution=dict(device_policy="require_gpu"),
-            ),
-        )
+        service.preflight("model_qc", dict(execution=Execution(device_policy="require_gpu").model_dump()))
     error = raised.value.as_dict()
     assert error["code"] == "NO_COMPATIBLE_GPU" and error["field"] == "execution.device_policy"
     assert "model_build" in error["message"] and "prefer_gpu" in error["remediation"]

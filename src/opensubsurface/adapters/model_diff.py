@@ -6,22 +6,49 @@ import math
 import numpy as np
 
 from opensubsurface.adapters.cornerpoint import cell_volumes
-from opensubsurface.adapters.model_arrays import cartesian_corners, ijk, iterate, opened, provenance, region
+from opensubsurface.adapters.model_arrays import cartesian_corners, ijk, provenance, region
 from opensubsurface.calculations.cornerpoint_reference import integral
 from opensubsurface.errors import require
 
 
-def read_other(obj, group, order, shape, start, count, source_order):
+def read_other(obj, group, order, shape, start, count, source_order, arrays=None):
     ids = ijk(np.arange(start, start + count), shape, source_order)
     indices = np.ravel_multi_index(ids.T, shape, order="F" if order == "ECLIPSE" else "C")
-    names = list(group.array_keys()) if hasattr(group, "array_keys") else list(group)
+    if arrays is None:
+        names = group.array_keys() if hasattr(group, "array_keys") else group
+        arrays = {name: group[name] for name in names}
     data = {}
-    for name in names:
-        array = group[name]
+    for name, array in arrays.items():
         data[name] = np.asarray(array.oindex[indices] if hasattr(array, "oindex") else array[indices])
     if "corners" not in data:
         data["corners"] = cartesian_corners(obj, indices, order)
     return data
+
+
+def _geometry_block(start, data, order, storage):
+    from opensubsurface.adapters.model_qc import jacobians
+
+    c = np.where(np.isfinite(data["corners"]), data["corners"], 0)
+    bulk = cell_volumes(c)
+    expected = integral(c)
+    validation = bool(np.allclose(bulk, expected, rtol=1e-10, atol=1e-8))
+    finite_geometry = np.isfinite(data["corners"]).all(axis=(1, 2))
+    det = jacobians(c) * (-1 if storage == "cornerpoint-zarr-v1" else 1)
+    scale = np.max(np.ptp(c, axis=1), axis=1) ** 3
+    valid = finite_geometry & (
+        det.min(axis=1) > np.finfo(float).eps * 256 * np.maximum(scale, np.finfo(float).tiny)
+    )
+    return start, data, order, np.where(valid, bulk, np.nan), validation
+
+
+def _paired_block(start, data, order, left, right, shape):
+    from opensubsurface.execution.blocks import model_layout
+
+    group, other_order, arrays = model_layout(right)
+    b = read_other(right, group, other_order, shape, start, len(data["active"]), order, arrays)
+    a_result = _geometry_block(start, data, order, left["summary"].get("storage"))
+    b_result = _geometry_block(start, b, other_order, right["summary"].get("storage"))
+    return start, data, order, b, a_result[3], b_result[3], a_result[4] and b_result[4]
 
 
 def run(left, right, p, out):
@@ -40,7 +67,9 @@ def run(left, right, p, out):
     counts, examples, impact = {}, [], {}
     changed_total = 0
     validation = True
-    with (out / "changed_cells.csv").open("w", newline="") as stream, opened(right) as (other, other_order):
+    from opensubsurface.execution.blocks import mapped
+
+    with (out / "changed_cells.csv").open("w", newline="") as stream:
         writer = csv.DictWriter(
             stream,
             fieldnames=[
@@ -56,8 +85,10 @@ def run(left, right, p, out):
             ],
         )
         writer.writeheader()
-        for start, a, order in iterate(left):
-            b = read_other(right, other, other_order, shape, start, len(a["active"]), order)
+        for start, a, order, b, bulk_a, bulk_b, block_ok in mapped(
+            left, _paired_block, left, right, shape, execution=p.get("execution")
+        ):
+            validation &= block_ok
             ia = ijk(np.arange(start, start + len(a["active"])), shape, order)
             regions = [region(a, p["region_field"]), region(b, p["region_field"])]
             changed = np.zeros(len(a["active"]), bool)
@@ -102,25 +133,7 @@ def run(left, right, p, out):
             changed_total += int(changed.sum())
             for revision, data, rids in (("before", a, regions[0]), ("after", b, regions[1])):
                 active = data["active"].astype(bool)
-                c = np.where(np.isfinite(data["corners"]), data["corners"], 0)
-                bulk = cell_volumes(c)
-                expected = integral(c)
-                validation &= bool(np.allclose(bulk, expected, rtol=1e-10, atol=1e-8))
-                from opensubsurface.adapters.model_qc import jacobians
-
-                finite_geometry = np.isfinite(data["corners"]).all(axis=(1, 2))
-                sign = (
-                    -1
-                    if (left if revision == "before" else right)["summary"].get("storage")
-                    == "cornerpoint-zarr-v1"
-                    else 1
-                )
-                det = jacobians(c) * sign
-                scale = np.max(np.ptp(c, axis=1), axis=1) ** 3
-                geometry_valid = finite_geometry & (
-                    det.min(axis=1) > np.finfo(float).eps * 256 * np.maximum(scale, np.finfo(float).tiny)
-                )
-                bulk = np.where(geometry_valid, bulk, np.nan)
+                bulk = bulk_a if revision == "before" else bulk_b
                 phi, ntg, sw = [data.get(k, np.full(len(active), np.nan)) for k in ("phi", "ntg", "sw")]
                 phi = np.where((phi >= 0) & (phi <= 1), phi, np.nan)
                 ntg = np.where((ntg >= 0) & (ntg <= 1), ntg, np.nan)

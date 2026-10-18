@@ -1,0 +1,162 @@
+{
+  "phase": "after",
+  "cells": 200000000,
+  "status": "PASS",
+  "code_sha256": "9b8828cd3c891b4f48c9104c4d5052793011a903e687832091af4bc318d6fa99",
+  "requested_max_workers": 8,
+  "stage_selection": [
+    "generate",
+    "import",
+    "model_qc",
+    "regional_volumes_1",
+    "regional_volumes_5",
+    "tornado_4",
+    "calculation_run",
+    "scene_export"
+  ],
+  "source_generator_sha256": "2e9cdd540dd203de89391b65b6e0377ebe7ffd4d0a419f8529d57a8d09308cf4",
+  "rss_sampling_interval_seconds": 0.1,
+  "profiler_scope": "coordinator process; process worker wall includes children",
+  "hardware": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "logical_cores": 16,
+    "ram_bytes": 67927195648
+  },
+  "stages": {
+    "generate": {
+      "status": "PASS",
+      "seconds": 73.61765849999938,
+      "peak_process_tree_rss_bytes": 164282368
+    },
+    "import": {
+      "status": "PASS",
+      "seconds": 1059.8431759999985,
+      "peak_process_tree_rss_bytes": 12978843648
+    },
+    "model_qc": {
+      "status": "PASS",
+      "result_status": "ISSUES",
+      "validation_status": "PASS",
+      "seconds": 739.397659899998,
+      "peak_process_tree_rss_bytes": 2821439488
+    },
+    "regional_volumes_1": {
+      "status": "PASS",
+      "result_status": "PASS_WITH_EXCLUSIONS",
+      "validation_status": "PASS_WITH_EXCLUSIONS",
+      "seconds": 873.3364589999983,
+      "peak_process_tree_rss_bytes": 2209923072
+    },
+    "regional_volumes_5": {
+      "status": "PASS",
+      "result_status": "PASS_WITH_EXCLUSIONS",
+      "validation_status": "PASS_WITH_EXCLUSIONS",
+      "seconds": 813.5027372000004,
+      "peak_process_tree_rss_bytes": 2215178240
+    },
+    "tornado_4": {
+      "status": "PASS",
+      "result_status": "PASS_WITH_EXCLUSIONS",
+      "validation_status": "PASS_WITH_EXCLUSIONS",
+      "seconds": 827.2806885999998,
+      "peak_process_tree_rss_bytes": 2213998592
+    },
+    "calculation_run": {
+      "status": "PASS",
+      "result_status": "succeeded",
+      "validation_status": null,
+      "seconds": 756.0247567999977,
+      "peak_process_tree_rss_bytes": 2652151808
+    },
+    "scene_export": {
+      "status": "PASS",
+      "seconds": 54.51912490000177,
+      "peak_process_tree_rss_bytes": 504664064
+    }
+  },
+  "input_bytes": 568610203,
+  "materialized_corner_bytes": 38400000000,
+  "analytic": {
+    "shape": [
+      5000,
+      4000,
+      10
+    ],
+    "cells": 200000000,
+    "contact_z_m": -22.5,
+    "bo": 1.2,
+    "geometry_policy": "exclude_flagged",
+    "parameters_confirmed": true,
+    "explicit_excluded_cell_ids": [
+      2,
+      3,
+      4
+    ],
+    "pinched_cell_ids": [
+      0,
+      20000000,
+      40000000,
+      60000000,
+      80000000,
+      100000000,
+      120000000,
+      140000000,
+      160000000,
+      180000000
+    ],
+    "ordinary_intersected_cell_fraction": 0.1,
+    "expected_regions": [
+      {
+        "region_id": 1,
+        "GRV": 39999993666.666664,
+        "GRV_oil_interval": 17999996696.25,
+        "STOIIP": 1799999669.625,
+        "GRV_exact": "119999981000/3",
+        "STOIIP_exact": "14399997357/8"
+      },
+      {
+        "region_id": 2,
+        "GRV": 40000000000.0,
+        "GRV_oil_interval": 18000000000.0,
+        "STOIIP": 1800000000.0,
+        "GRV_exact": "40000000000",
+        "STOIIP_exact": "1800000000"
+      },
+      {
+        "region_id": 3,
+        "GRV": 40012000000.0,
+        "GRV_oil_interval": 18005400000.0,
+        "STOIIP": 1800540000.0,
+        "GRV_exact": "40012000000",
+        "STOIIP_exact": "1800540000"
+      },
+      {
+        "region_id": 4,
+        "GRV": 40000000000.0,
+        "GRV_oil_interval": 18000000000.0,
+        "STOIIP": 1800000000.0,
+        "GRV_exact": "40000000000",
+        "STOIIP_exact": "1800000000"
+      },
+      {
+        "region_id": 5,
+        "GRV": 40000000000.0,
+        "GRV_oil_interval": 18000000000.0,
+        "STOIIP": 1800000000.0,
+        "GRV_exact": "40000000000",
+        "STOIIP_exact": "1800000000"
+      }
+    ],
+    "scope": "Synthetic fault-like shifted pillars, one collapsed pillar, three deliberately twisted active cells"
+  },
+  "scene_selection": {
+    "cell_range": [
+      100,
+      1000
+    ],
+    "stride": 1,
+    "note": "Explicit preview range; calculations always use full selected model"
+  },
+  "rss_limit_bytes": 33963597824,
+  "memory_status": "PASS"
+}
