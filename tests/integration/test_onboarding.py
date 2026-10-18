@@ -33,10 +33,11 @@ def test_folder_assessment_proposals_are_line_bound_not_parameters(service, tmp_
     assert result["compute_started"] is False and result["confirmation_required"] is True
     assert len(result["files"]) == 4
     equil = next(r for r in result["proposals"] if r["parameter"] == "EQUIL")
-    assert equil["evidence"] == [
-        dict(file="MODEL.DATA", line=10, text="EQUIL"),
-        dict(file="MODEL.DATA", line=11, text="2500 200 2600 0 2400 0 /"),
-    ]
+    assert equil["keyword_line"] == 10 and equil["region"] == 1 and equil["lines"] == [11, 11]
+    assert equil["evidence"] == [dict(file="MODEL.DATA", line=11, text="2500 200 2600 0 2400 0 /")]
+    assert equil["values"]["owc_depth"] == 2600 and equil["values"]["goc_depth"] == 2400
+    candidate = equil["regional_volumes_candidate"]
+    assert candidate["owc_z_m"] == -2600 and candidate["goc_z_m"] == -2400
     assert "bo" not in equil and equil["status"] == "PROPOSAL_REQUIRES_USER_CONFIRMATION"
     assert {"volume_report", "trajectory", "logs"} <= {r for f in result["files"] for r in f["roles"]}
     assert result["export_guide"] == "opensubsurface://docs/petrel-export"
