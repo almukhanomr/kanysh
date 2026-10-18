@@ -52,6 +52,33 @@ uv run --no-sync kanysh-basic --home "$HOME/.kanysh-basic" setup
 Расширение содержит исходный код; Python и зависимости устанавливает клиент.
 Реальная приёмка внешних чат-клиентов остаётся **NOT RUN**.
 
+## CPU или NVIDIA
+
+Доступны два расширения: `kanysh-basic-0.2.0-dev3.mcpb` (CPU) и
+`kanysh-basic-gpu-0.2.0-dev3.mcpb` (GPU). Их можно установить рядом; оставьте разные
+папки результатов: `%LOCALAPPDATA%\kanysh-basic` и `%LOCALAPPDATA%\kanysh-basic-gpu`.
+GPU-вариант загружает около **2,5 ГБ** при первой установке, выбирает CUDA 12.6 на
+Windows/Linux и CPU на macOS. Без доступной CUDA он работает на CPU с предупреждением.
+Расчёты сохраняют прежний CPU по умолчанию: для поддерживаемых операций агент должен
+явно выбрать `prefer_gpu` с разрешённым CPU fallback либо `require_gpu`. MPS не реализован.
+
+Зависимости устанавливает Claude **до запуска Python**. Быстрая инициализация MCP не
+устраняет таймаут хоста во время загрузки; фактическая установка через Claude Desktop
+остаётся NOT RUN. После запуска Python список инструментов доступен сразу; `STARTING`
+указывает время повтора, `FAILED` — путь к журналу. Реальный путь результатов, включая
+виртуализацию LocalAppData в MSIX, виден в просмотрщике и `startup-status.json`.
+[Устройство запуска и результаты проверок](docs/DESKTOP_STARTUP.md).
+
+Сборка из подготовленного окружения исходного проекта (нужны Node/npm и `uv`):
+
+```bash
+uv run --no-sync python scripts/build_mcpb.py --variant cpu
+uv run --no-sync python scripts/build_mcpb.py --variant gpu
+```
+
+Команды используют официальный `mcpb validate` / `mcpb pack` и отдельные UV lock-файлы.
+`--refresh-lock` нужен только для намеренного обновления разрешения зависимостей.
+
 ## Пять задач для чата
 
 | Задача | Пример фразы |
@@ -108,7 +135,7 @@ CI рассчитан на Windows/Ubuntu/macOS, ruff и CPU pytest без gpu/o
 
 Python namespace, идентификаторы форматов, MCP URI и `OPENSUBSURFACE_*` сохранены
 для совместимости. Пакет и основная команда — `kanysh-basic`; `opensubsurface` остаётся
-CLI-псевдонимом. Development-релиз `0.2.0.dev2`; [внешняя приёмка](docs/ACCEPTANCE.md) ведётся отдельно.
+CLI-псевдонимом. Development-релиз `0.2.0.dev3`; [внешняя приёмка](docs/ACCEPTANCE.md) ведётся отдельно.
 
 Код — Apache-2.0; данные Norne — ODbL/DbCL с исходными уведомлениями.
 У зависимостей свои лицензии: [THIRD_PARTY](THIRD_PARTY.md).

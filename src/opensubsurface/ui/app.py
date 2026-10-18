@@ -135,6 +135,7 @@ def create_ui(service):
         gr.Markdown(
             "Run calculations in your connected MCP client, through CLI or REST. View data, revisions and results here."
         )
+        gr.HTML("<p>Results folder: <code>" + html.escape(str(service.store.root.resolve())) + "</code></p>")
         with gr.Row():
             with gr.Column(scale=1, min_width=280):
                 project = gr.Dropdown(choices=[], label="Project")

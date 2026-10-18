@@ -13,6 +13,9 @@ from opensubsurface.persistence.store import now
 def benchmark(output):
     output = Path(output)
     output.mkdir(exist_ok=True, parents=True)
+    from opensubsurface.execution.device import select_device
+
+    device, _ = select_device("cpu")
     rows = []
     for shape in [(50, 50, 30), (100, 100, 100)]:
         start = time.perf_counter()
@@ -25,7 +28,9 @@ def benchmark(output):
             permeability_md=np.full(shape, 100.0),
         )
         prepared = time.perf_counter()
-        result = volumes(arrays, dict(shape=shape, extent=[0, 1000, 0, 1000, -1020, -1000]), [1], -1020, 1.2)
+        result = volumes(
+            arrays, dict(shape=shape, extent=[0, 1000, 0, 1000, -1020, -1000]), [1], -1020, 1.2, device=device
+        )
         end = time.perf_counter()
         error = abs(result["values"]["STOIIP"] - 2e6) / 2e6
         rows.append(

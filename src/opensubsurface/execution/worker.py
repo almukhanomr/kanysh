@@ -15,6 +15,9 @@ def main():
     start = time.monotonic()
     request = json.loads((directory / "request.json").read_text(encoding="utf-8"))
     try:
+        from opensubsurface.execution.device import select_device
+
+        request["device"], _ = select_device(request["device"])
         kind, summary, files = run(request, directory / "output")
         versions = {}
         for package in ("numpy", "scipy", "gempy", "gstools", "torch", "segyio", "matplotlib", "xtgeo"):

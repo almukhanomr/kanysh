@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "source_archive": "dist/kanysh-basic-gpu-0.2.0-dev3.mcpb",
+  "archive_sha256": "2b9c52ca365d2e8f5cccf0f33383a9d4fde25106c45cacf0d4d4d3df64c4bf9a",
+  "sdk_stdio": "PASS",
+  "variant": "gpu",
+  "initialize_and_list_seconds": 0.44815725000808015,
+  "installer_selected_folder": "PASS",
+  "startup_log": "PASS",
+  "shared_local_viewer_controller": "PASS",
+  "isolated_eclipse_import": "PASS",
+  "cells": 1,
+  "scientific_scope": "Synthetic geometry import only, no field estimates",
+  "claude_desktop_install": "NOT RUN",
+  "windows_native": "NOT RUN",
+  "windows_claude_uv_install": "NOT RUN",
+  "last_client_cleanup": "PASS"
+}

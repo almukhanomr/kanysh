@@ -9,6 +9,8 @@ import stat
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 
+import portalocker
+
 from opensubsurface.errors import DomainError, require
 from opensubsurface.persistence.store import digest, now, uid
 from opensubsurface.platform_io import is_reparse, normalized_path, scan_descriptor, windows_opened
@@ -142,6 +144,10 @@ class LocalSources:
         return list(self.store.get_state(STATE, {}).values())
 
     def register(self, name, directory):
+        with portalocker.Lock(self.store.root / "sources.lock", mode="a", timeout=120):
+            return self._register(name, directory)
+
+    def _register(self, name, directory):
         require(bool(name.strip()) and len(name) <= 120, "INVALID_ARGUMENTS", "Укажите короткое имя source")
         root = normalized_path(directory)
         if os.name == "nt":
@@ -177,6 +183,10 @@ class LocalSources:
         return source
 
     def remove(self, source_id):
+        with portalocker.Lock(self.store.root / "sources.lock", mode="a", timeout=120):
+            return self._remove(source_id)
+
+    def _remove(self, source_id):
         sources = self.store.get_state(STATE, {})
         require(source_id in sources, "NOT_FOUND", "Source не зарегистрирован")
         del sources[source_id]

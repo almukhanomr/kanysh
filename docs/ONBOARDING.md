@@ -71,10 +71,11 @@ be visible in the bounded assessment; inspect/import explicitly.
 ## Desktop extension package
 
 ```bash
-uv run --no-sync python scripts/build_mcpb.py
+uv run --no-sync python scripts/build_mcpb.py --variant cpu
+uv run --no-sync python scripts/build_mcpb.py --variant gpu
 ```
 
-Output: `dist/kanysh-basic-0.2.0-dev2.mcpb`, a source-only ZIP using MCPB v0.4 `uv`
+Output: `dist/kanysh-basic-0.2.0-dev3.mcpb`, a source-only ZIP using MCPB v0.4 `uv`
 runtime. It contains the package, public demo/licences, dependency declarations and
 an agent-profile launcher. No virtual environment, local state, secrets or experimental
 Runpod code are included. The host resolves Python/dependencies; initial installation
@@ -88,3 +89,7 @@ is included. The viewer opens on first startup and startup.log records MCP_READY
 failure. UV installation failures happen before the launcher and belong to host logs.
 Archive inspection and SDK launches are separate from actual Claude Desktop extension
 installation, which remains **NOT RUN**. See [Windows acceptance](INSTALL_WINDOWS.md).
+
+The GPU extension is `dist/kanysh-basic-gpu-0.2.0-dev3.mcpb`, with its own home and
+checked-in lock. Official validation/packing and startup concurrency details:
+[Desktop startup](DESKTOP_STARTUP.md). Both variants expose identical MCP schemas.

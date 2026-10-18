@@ -5,6 +5,7 @@ import hashlib
 import json
 import sys
 import tempfile
+import time
 import zipfile
 from pathlib import Path
 
@@ -12,12 +13,11 @@ import psutil
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from opensubsurface.execution.runner import terminate_tree
 from opensubsurface.service import Service
 from opensubsurface.viewer_links import STATE
 
 
-async def check(bundle):
+async def check(bundle, variant="cpu"):
     with tempfile.TemporaryDirectory(prefix="opensubsurface-mcpb-") as temporary:
         root = Path(temporary)
         package, home, folder = root / "package", root / "home", root / "source"
@@ -32,6 +32,7 @@ async def check(bundle):
         )
         service = Service(home)
         record = None
+        result = {}
         try:
             params = StdioServerParameters(
                 command=sys.executable,
@@ -42,23 +43,32 @@ async def check(bundle):
                     KANYSH_OPEN_BROWSER="0",
                     KANYSH_SOURCE_FOLDER=str(folder),
                     PYTHONUTF8="1",
+                    KANYSH_VARIANT=variant,
                 ),
             )
             async with stdio_client(params) as (read, write):
                 async with ClientSession(read, write) as session:
+                    started = time.perf_counter()
                     await session.initialize()
+                    await session.list_tools()
+                    initialize_seconds = time.perf_counter() - started
 
                     async def call(operation, **request):
-                        result = await session.call_tool(operation, arguments=dict(request=request))
-                        assert not result.isError, result.content
-                        payload = json.loads(result.content[0].text)
-                        assert "error" not in payload, payload
-                        return payload["result"]
+                        for _ in range(300):
+                            result = await session.call_tool(operation, arguments=dict(request=request))
+                            assert not result.isError, result.content
+                            payload = json.loads(result.content[0].text)
+                            if payload.get("error", {}).get("code") == "STARTING":
+                                await asyncio.sleep(0.2)
+                                continue
+                            assert "error" not in payload, payload
+                            return payload["result"]
+                        raise TimeoutError("Desktop did not become ready")
 
+                    greeting = await call("start")
                     capability_resource = await session.read_resource("opensubsurface://capabilities")
                     capabilities = json.loads(capability_resource.contents[0].text)
                     assert capabilities["static_deck"]["demonstrated_cells"] == 20_000_000
-                    greeting = await call("start")
                     assert greeting["first_connection"]
                     startup = json.loads((home / "startup-status.json").read_text(encoding="utf-8"))
                     assert startup["stage"] == "MCP_READY" and (home / "startup.log").is_file()
@@ -97,6 +107,8 @@ async def check(bundle):
                         source_archive=str(bundle),
                         archive_sha256=hashlib.sha256(Path(bundle).read_bytes()).hexdigest(),
                         sdk_stdio="PASS",
+                        variant=variant,
+                        initialize_and_list_seconds=initialize_seconds,
                         installer_selected_folder="PASS",
                         startup_log="PASS",
                         shared_local_viewer_controller="PASS",
@@ -111,15 +123,30 @@ async def check(bundle):
             record = service.store.get_state(STATE, {})
             service.close()
             if record:
-                process = psutil.Process(record["pid"])
-                assert process.create_time() == record["process_created"] and any(
-                    Path(arg).resolve() == home.resolve() for arg in process.cmdline()
-                )
-                terminate_tree(process, timeout=15)
+                for _ in range(150):
+                    try:
+                        process = psutil.Process(record["pid"])
+                        if (
+                            process.create_time() != record["process_created"]
+                            or process.status() == psutil.STATUS_ZOMBIE
+                        ):
+                            break
+                    except psutil.NoSuchProcess:
+                        break
+                    await asyncio.sleep(0.1)
+                else:
+                    raise AssertionError("Viewer remained alive after last Desktop lease")
+                result["last_client_cleanup"] = "PASS"
         return result
 
 
 if __name__ == "__main__":
-    result = asyncio.run(check(Path("dist/kanysh-basic-0.2.0-dev2.mcpb").resolve()))
-    Path("docs/mcpb-check.json").write_text(json.dumps(result, indent=2))
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--variant", choices=["cpu", "gpu"], default="cpu")
+    args = parser.parse_args()
+    suffix = "-gpu" if args.variant == "gpu" else ""
+    result = asyncio.run(check(Path(f"dist/kanysh-basic{suffix}-0.2.0-dev3.mcpb").resolve(), args.variant))
+    Path(f"docs/mcpb{suffix}-check.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))

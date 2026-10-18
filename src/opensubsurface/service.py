@@ -219,7 +219,9 @@ class Service:
         import psutil
         import torch
 
-        cuda = torch.cuda.is_available()
+        from opensubsurface.execution.device import cuda_runtime
+
+        cuda = cuda_runtime()["cuda_available"]
         memory = psutil.virtual_memory()
         devices = (
             [
@@ -328,22 +330,15 @@ class Service:
             "TARGET_UNREACHABLE",
             "Удалённый target не настроен; передача данных не разрешена",
         )
-        device = "cpu"
-        warnings = []
-        if execution["device_policy"] != "cpu":
-            caps = self.capabilities()
-            compatible = operation in GPU_OPERATIONS and (
-                operation != "model_build" or payload["method"] == "gempy"
-            )
-            if compatible and caps["cuda_available"]:
-                device = "cuda"
-            else:
-                require(
-                    execution["device_policy"] != "require_gpu" and execution["allow_cpu_fallback"],
-                    "NO_COMPATIBLE_GPU",
-                    "Нет совместимого CUDA path для операции",
-                )
-                warnings.append("CPU fallback: CUDA недоступна или операция поддерживает только CPU")
+        from opensubsurface.execution.device import select_device
+
+        compatible = operation in GPU_OPERATIONS and (
+            operation != "model_build" or payload["method"] == "gempy"
+        )
+        available = self.capabilities()["cuda_available"] if execution["device_policy"] != "cpu" else False
+        device, warnings = select_device(
+            execution["device_policy"], compatible, available, execution["allow_cpu_fallback"]
+        )
         # Conservative estimate for base arrays + scientific working buffers; never downsample automatically.
         import psutil
 
@@ -907,7 +902,7 @@ class Service:
                                 operation=node["operation"],
                                 args=typed,
                                 inputs={k: v["content_hash"] for k, v in resolved.items()},
-                                app="0.2.0.dev2",
+                                app="0.2.0.dev3",
                                 runtime=runtime,
                             )
                         )

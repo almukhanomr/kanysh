@@ -121,7 +121,13 @@ def create_app(root=None, service=None, with_ui=False, with_mcp=True, mcp_profil
 
     @app.get("/health")
     def health():
-        return {"status": "ok", "profile": "local", "version": "0.2.0.dev2"}
+        return {
+            "status": "ok",
+            "profile": "local",
+            "version": "0.2.0.dev3",
+            "service": "kanysh-basic",
+            "home": str(service.store.root.resolve()),
+        }
 
     @app.get("/")
     def index():

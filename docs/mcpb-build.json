@@ -1,8 +1,37 @@
 {
-  "path": "dist/kanysh-basic-0.2.0-dev1.mcpb",
-  "sha256": "e6e281d66ae5586dda75cd28ae87c3b0229e046aba4ca2534ebbe2e6b2881d83",
-  "archive_check": "PASS",
-  "host_installation": "NOT RUN",
-  "windows_acceptance": "NOT RUN",
-  "dependency_installation": "Host UV runtime; requires network and compatible packages"
+  "version": "0.2.0.dev3",
+  "variants": {
+    "cpu": {
+      "path": "dist/kanysh-basic-0.2.0-dev3.mcpb",
+      "variant": "cpu",
+      "sha256": "386a543838296802e928c1f02a1ad08620ee2ed741a435cd2f942cc07a83ddfd",
+      "archive_check": "PASS",
+      "mcpb_validate": "PASS",
+      "packager": "mcpb pack 2.1.2",
+      "lock_file": "deploy/mcpb/cpu/uv.lock",
+      "host_installation": "NOT RUN",
+      "windows_acceptance": "NOT RUN",
+      "dependency_installation": "Host UV runtime, before Python entry point; network required"
+    },
+    "gpu": {
+      "path": "dist/kanysh-basic-gpu-0.2.0-dev3.mcpb",
+      "variant": "gpu",
+      "sha256": "2b9c52ca365d2e8f5cccf0f33383a9d4fde25106c45cacf0d4d4d3df64c4bf9a",
+      "archive_check": "PASS",
+      "mcpb_validate": "PASS",
+      "packager": "mcpb pack 2.1.2",
+      "lock_file": "deploy/mcpb/gpu/uv.lock",
+      "host_installation": "NOT RUN",
+      "windows_acceptance": "NOT RUN",
+      "dependency_installation": "Host UV runtime, before Python entry point; network required"
+    }
+  },
+  "importtime": {
+    "before_seconds": 4.269,
+    "after_seconds": 0.8809413749986561,
+    "after_returncode": 0,
+    "method": "python -X importtime server.py with stdin EOF; warm macOS environment; exit time includes lifespan cleanup, not MCP protocol latency"
+  },
+  "windows_claude_desktop": "NOT RUN",
+  "real_nvidia": "NOT RUN"
 }

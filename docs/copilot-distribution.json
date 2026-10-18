@@ -2,20 +2,21 @@
   "status": "PASS",
   "product": "Kanysh Basic",
   "future_development": "Kanysh Advanced",
+  "version": "0.2.0.dev3",
   "archive_hashes": {
-    "kanysh_basic-0.2.0.dev1-py3-none-any.whl": "60e8d5f24de33b4a1e028ddb3566b5be50dc4fd4339323736e2479568d02f2a9",
-    "kanysh_basic-0.2.0.dev1.tar.gz": "e6188fa3e26fc23c7649c9df08cac800724ad8da385f244e5971664777e76822",
-    "kanysh-basic-0.2.0-dev1.mcpb": "e6e281d66ae5586dda75cd28ae87c3b0229e046aba4ca2534ebbe2e6b2881d83"
+    "kanysh-basic-0.2.0-dev3.mcpb": "386a543838296802e928c1f02a1ad08620ee2ed741a435cd2f942cc07a83ddfd",
+    "kanysh-basic-gpu-0.2.0-dev3.mcpb": "2b9c52ca365d2e8f5cccf0f33383a9d4fde25106c45cacf0d4d4d3df64c4bf9a",
+    "kanysh_basic-0.2.0.dev3-py3-none-any.whl": "7abbf624c84dd6cd4367f126bb47d81779a54470bebb00d4ab66b06c3c320a7c",
+    "kanysh_basic-0.2.0.dev3.tar.gz": "fe0f5390455ad18b14ba8b681ebcdcd0f5c78c28ed831d15f2a8d05c58b0d741"
   },
   "archive_files": {
-    "kanysh_basic-0.2.0.dev1-py3-none-any.whl": 75,
-    "kanysh_basic-0.2.0.dev1.tar.gz": 294,
-    "kanysh-basic-0.2.0-dev1.mcpb": 75
+    "kanysh-basic-0.2.0-dev3.mcpb": 79,
+    "kanysh-basic-gpu-0.2.0-dev3.mcpb": 79,
+    "kanysh_basic-0.2.0.dev3-py3-none-any.whl": 78,
+    "kanysh_basic-0.2.0.dev3.tar.gz": 306
   },
-  "runtime_source_hash": "a42cad7ba79f2a35b722454cc404322283f97835a397a2236c0935c1239bfba8",
-  "source_identity": "Current production source/data bytes match wheel, sdist and MCPB",
-  "cleanup": "Unused production modules absent; full LICENSE/NOTICE and English third-party inventory present",
+  "source_identity": "Current production source/data bytes match wheel, sdist and both MCPB variants",
   "excluded_experimental": "PASS",
-  "scope": "macOS CPU regression and MCP SDK PASS; Windows dependency resolution PASS; native Windows/Claude Desktop UV install/NVIDIA and hosted Windows CI NOT RUN",
-  "windows_evidence": "docs/windows-native-check.json"
+  "scope": "macOS CPU regression and real stdio SDK checks PASS; official CPU/GPU MCPB validate/pack PASS; actual Windows Claude Desktop UV installation and NVIDIA acceptance NOT RUN",
+  "startup_evidence": "docs/DESKTOP_STARTUP.md"
 }

@@ -58,7 +58,6 @@ def terminate_group(process):
     process.wait(timeout=5)
 
 
-
 def missing_result_error(log_text):
     """Explain a worker that exited without result.json from its log."""
     # VTK aborts the process (no Python exception) when no OpenGL context exists,
@@ -77,6 +76,7 @@ def missing_result_error(log_text):
         field="",
         remediation="Проверьте worker.log",
     )
+
 
 def run_isolated(directory, timeout):
     directory = Path(directory)

@@ -1,8 +1,10 @@
 {
   "status": "PASS",
-  "source_archive": "dist/kanysh-basic-0.2.0-dev2.mcpb",
-  "archive_sha256": "ffafb6cf8138cf4654d0eb6a8dfa5f5c91bc9e5287f3c5cc97a23a7f9aee2507",
+  "source_archive": "dist/kanysh-basic-0.2.0-dev3.mcpb",
+  "archive_sha256": "386a543838296802e928c1f02a1ad08620ee2ed741a435cd2f942cc07a83ddfd",
   "sdk_stdio": "PASS",
+  "variant": "cpu",
+  "initialize_and_list_seconds": 0.4247526670078514,
   "installer_selected_folder": "PASS",
   "startup_log": "PASS",
   "shared_local_viewer_controller": "PASS",
@@ -11,5 +13,6 @@
   "scientific_scope": "Synthetic geometry import only, no field estimates",
   "claude_desktop_install": "NOT RUN",
   "windows_native": "NOT RUN",
-  "windows_claude_uv_install": "NOT RUN"
+  "windows_claude_uv_install": "NOT RUN",
+  "last_client_cleanup": "PASS"
 }

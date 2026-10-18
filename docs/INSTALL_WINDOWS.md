@@ -17,7 +17,7 @@ release until the acceptance checklist at the end has been completed.
 
 Install/update [Claude Desktop](https://claude.ai/download). From this project's
 [releases](https://github.com/almukhanomr/kanysh/releases), download
-`kanysh-basic-0.2.0-dev2.mcpb` **if the release provides it**. The GitHub source ZIP
+`kanysh-basic-0.2.0-dev3.mcpb` **if the release provides it**. The GitHub source ZIP
 is not the extension. Double-click the `.mcpb` file to open its installation dialog.
 If Windows does not associate it with Claude, use Claude's local extension installation
 option in its settings. UI names depend on the client version.
@@ -37,7 +37,9 @@ Click **Install** and allow Claude's UV runtime to finish downloading dependenci
 Do not close Claude while it installs. The extension cannot display its own progress
 before Python is installed: dependency progress/errors belong to Claude's extension
 installation UI/log. Once Python starts, `startup.log` and `startup-status.json` appear
-in the results folder. `MCP_READY` means the server awaits a client; it does not prove
+in the results folder. `STARTING` asks the agent to retry in two seconds; `SERVICE_READY` means database
+migrations are complete. `FAILED` preserves the MCP connection and points to logs.
+`MCP_READY` means the server awaits a client; it does not prove
 that Claude has connected. `viewer.log` contains local viewer errors.
 
 ![Installation folder choices — guide illustration](images/windows-2-install.svg)
@@ -66,9 +68,10 @@ selection require your confirmation. [Prepare Petrel/RMS exports](PETREL_EXPORT.
   0.4 `server.type=uv`. An unsupported host cannot install this package automatically.
   [MCPB UV specification](https://github.com/modelcontextprotocol/mcpb/blob/main/MANIFEST.md#uv-runtime-v04).
 - **Download, proxy or certificate error:** give IT the Claude extension installation
-  log. Python packages come from PyPI and PyTorch's official CPU index. Python, UV,
+  log. Python packages come from PyPI and PyTorch's official CPU or CUDA 12.6 index. Python, UV,
   the viewer and package downloads must be allowed by workstation policy.
-- **Startup fails:** read `%LOCALAPPDATA%\kanysh-basic\startup.log` and `viewer.log`, or
+- **Startup fails:** use the actual home shown in the viewer or `startup-status.json`
+  (MSIX Claude may virtualize LocalAppData). Read `startup.log` and `viewer.log`, or
   the corresponding files in your chosen results folder. Never send confidential models
   or access credentials with a support request.
 - **Folder rejected:** choose the real folder on NTFS, not a symbolic link, junction
@@ -80,14 +83,22 @@ selection require your confirmation. [Prepare Petrel/RMS exports](PETREL_EXPORT.
 
 ## GPU NVIDIA (optional, for IT)
 
-The extension installs **CPU PyTorch by default**. Static block imports and copilot
-analyses are CPU operations; adding CUDA does not accelerate every calculation. GPU
-operation/hardware acceptance remains **NOT RUN**. A compatible NVIDIA driver is
-required for the selected CUDA 12.8 build. See [PyTorch installation guidance](https://pytorch.org/get-started/locally/).
+For NVIDIA, download **`kanysh-basic-gpu-0.2.0-dev3.mcpb`** instead of the CPU edition
+and follow the same three steps. It appears as **Kanysh Basic (GPU)** and uses a separate
+home, `%LOCALAPPDATA%\kanysh-basic-gpu`. Both editions can be installed alongside each
+other; keep separate homes. The first GPU installation downloads approximately **2.5 GB**
+and requires additional disk space. PyTorch uses the explicit official CUDA 12.6 index
+on Windows/Linux. A compatible NVIDIA driver is required. Drivers are not installed by
+the extension. Actual NVIDIA/Claude Desktop acceptance remains **NOT RUN**.
 
-Use a separate source environment for GPU work; the CPU extension does not change the
-workstation's drivers or silently switch accelerators. In PowerShell, from the source
-folder with `uv` installed:
+Startup status records GPU name, PyTorch/CUDA version and availability. Without available
+CUDA, the GPU edition starts on CPU and reports a warning. Supported calculations need
+an explicit `prefer_gpu` (with CPU fallback allowed) or `require_gpu` execution policy;
+installing GPU PyTorch does not change scientific defaults or accelerate block imports.
+An explicit GPU requirement still fails honestly if unsupported. macOS uses CPU; MPS
+calculation acceleration is not implemented.
+
+For IT source installation, from PowerShell in the source folder with `uv` installed:
 
 ```powershell
 uv python install 3.12
@@ -95,13 +106,8 @@ uv sync --frozen --no-group cpu --extra gpu --extra ui --extra viewer --python 3
 uv run --no-sync kanysh-basic --home "$env:LOCALAPPDATA\kanysh-basic-gpu" doctor
 ```
 
-`cuda_available=true` reports detection, not scientific acceptance. The CPU group and
-GPU extra are exclusive. Keep `--no-group cpu --extra gpu` on future sync commands;
-plain sync restores the default CPU profile. To register this environment instead of
-the extension, disable the extension first and run setup with a separate results home;
-review configuration conflicts rather than replacing another registration silently.
-Use `uv`, not plain `pip`, for these accelerator index selections.
-[uv's PyTorch configuration](https://docs.astral.sh/uv/guides/integration/pytorch/).
+Keep `--no-group cpu --extra gpu` on future sync commands. Plain sync restores CPU.
+[Startup/build details](DESKTOP_STARTUP.md).
 
 ## OPM Flow through WSL (optional)
 

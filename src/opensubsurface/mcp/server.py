@@ -9,11 +9,10 @@ from pydantic import ValidationError
 from opensubsurface.contracts import CONTRACTS, DESCRIPTIONS, READ_ONLY
 from opensubsurface.errors import DomainError
 from opensubsurface.mcp.guide import AGENT_TOOLS, GUIDE
-from opensubsurface.service import Service
 from opensubsurface.viewer_links import present
 
 
-def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profile="full"):
+def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profile="full", lifespan=None):
     if profile not in ("full", "agent"):
         raise ValueError("Unknown MCP profile")
     server = FastMCP(
@@ -24,7 +23,12 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
         streamable_http_path=streamable_http_path,
         stateless_http=stateless_http,
         instructions=GUIDE,
+        **({"lifespan": lifespan} if lifespan else {}),
     )
+
+    def ready_service():
+        return service.require_ready() if hasattr(service, "require_ready") else service
+
     for name, schema in CONTRACTS.items():
         if profile == "agent" and name not in AGENT_TOOLS:
             continue
@@ -32,10 +36,11 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
         def make_tool(operation, input_schema):
             def tool(request):
                 try:
+                    active = ready_service()
                     args = input_schema.model_validate(request).model_dump(mode="json")
                     from opensubsurface.viewer_links import base_url
 
-                    origin = base_url(service) if not service.owns_controller else None
+                    origin = base_url(active) if not active.owns_controller else None
                     if origin:
                         import os
 
@@ -63,15 +68,15 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
                                 error.get("message", "Local controller rejected request"),
                             )
                     else:
-                        result = service.invoke(operation, args)
-                    result = present(service, result, args)
+                        result = active.invoke(operation, args)
+                    result = present(active, result, args)
                     if operation == "result_preview":
-                        report = service.store.object(args["project_id"], args["report"])
+                        report = active.store.object(args["project_id"], args["report"])
                         content = [
                             TextContent(type="text", text=json.dumps(dict(result=result), ensure_ascii=False))
                         ]
                         if result.get("mime_type") == "image/png":
-                            path = service.store.path(report, result["filename"])
+                            path = active.store.path(report, result["filename"])
                             if path.stat().st_size > 4 * 1024**2:
                                 raise DomainError("PREVIEW_TOO_LARGE", "PNG preview exceeds 4 MiB")
                             content.append(
@@ -123,7 +128,7 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
     def capabilities() -> str:
         import json
 
-        return json.dumps(service.capabilities(), ensure_ascii=False)
+        return json.dumps(ready_service().capabilities(), ensure_ascii=False)
 
     @server.resource("opensubsurface://guide")
     def guide() -> str:
@@ -141,7 +146,11 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
     def begin() -> str:
         from opensubsurface.onboarding import welcome
 
-        return GUIDE + "\n" + json.dumps(welcome(service), ensure_ascii=False)
+        try:
+            result = welcome(ready_service())
+        except DomainError as error:
+            result = {"error": error.as_dict()}
+        return GUIDE + "\n" + json.dumps(result, ensure_ascii=False)
 
     for prompt_name, (title, steps) in SCENARIOS.items():
 
@@ -164,7 +173,8 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
     def artifact_resource(project_id: str, object_id: str, revision: str, filename: str) -> bytes:
         from opensubsurface.errors import require
 
-        obj = service.store.object(project_id, dict(id=object_id, revision=int(revision)))
+        active = ready_service()
+        obj = active.store.object(project_id, dict(id=object_id, revision=int(revision)))
         require(
             obj["kind"] in ("calculation_report", "analysis_report", "validation")
             and filename
@@ -183,7 +193,7 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
             "PERMISSION_DENIED",
             "Только bounded report/validation resources",
         )
-        path = service.store.path(obj, filename)
+        path = active.store.path(obj, filename)
         require(path.stat().st_size <= 4 * 1024**2, "RESOURCE_TOO_LARGE", "Resource превышает 4 MiB")
         return path.read_bytes()
 
@@ -191,6 +201,8 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
 
 
 def main(transport="stdio"):
+    from opensubsurface.service import Service
+
     service = Service()
     try:
         create_mcp(service).run(transport=transport)

@@ -42,6 +42,9 @@ def volumes(arrays, grid, zone_ids, contact_z_m, bo, device="cpu", precision="fl
     cell_volume = float(np.prod(spacing))
     # Cell top minus OWC, clipped to cell thickness; center membership only for zone IDs.
     fraction = np.clip((centers[..., 2] + spacing[2] / 2 - contact_z_m) / spacing[2], 0, 1)
+    from opensubsurface.execution.device import select_device
+
+    device, _ = select_device(device)
     if device == "cuda":
         import torch
 
@@ -120,6 +123,9 @@ def seismic_attribute(cube, kind, window=9, device="cpu"):
     # A trace with any missing samples is masked in full for both CPU and GPU.
     valid = np.isfinite(cube).all(axis=-1, keepdims=True)
     clean = np.where(valid, cube, 0)
+    from opensubsurface.execution.device import select_device
+
+    device, _ = select_device(device)
     if device == "cuda":
         import torch
         import torch.nn.functional as f

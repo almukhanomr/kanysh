@@ -53,6 +53,38 @@ The default install uses **CPU PyTorch**; NVIDIA is an explicit [GPU option](doc
 The source-only extension includes no Python environment; its host installs dependencies.
 Real external chat-client acceptance remains **NOT RUN**.
 
+## CPU or NVIDIA edition
+
+| Extension | Default results home on Windows | Runtime |
+|---|---|---|
+| `kanysh-basic-0.2.0-dev3.mcpb` | `%LOCALAPPDATA%\kanysh-basic` | CPU |
+| `kanysh-basic-gpu-0.2.0-dev3.mcpb` | `%LOCALAPPDATA%\kanysh-basic-gpu` | CUDA 12.6 on Windows/Linux; CPU on macOS |
+
+Both extensions can be installed alongside each other. Keep their separate default
+homes. The GPU edition's first installation downloads approximately **2.5 GB**; allow
+additional disk space for dependencies. It reports the detected GPU/CUDA version or
+falls back to CPU with a warning. Calculations retain their existing CPU default:
+request `prefer_gpu` with explicit CPU fallback, or `require_gpu`, for supported
+operations. MPS acceleration is not implemented.
+
+The host installs Python and dependencies **before** running the MCP entry point.
+Fast MCP initialization cannot prevent a timeout during that host-controlled download;
+actual Claude Desktop installation remains NOT RUN. After Python starts, tool discovery
+is immediate while local services initialize. A `STARTING` response includes a retry
+interval; `FAILED` includes the log path and keeps the MCP connection available.
+The viewer and `startup-status.json` show the actual results folder, including any
+Windows MSIX LocalAppData virtualization. [Startup and build evidence](docs/DESKTOP_STARTUP.md).
+
+Build either extension from a prepared source environment (Node/npm and `uv` required):
+
+```bash
+uv run --no-sync python scripts/build_mcpb.py --variant cpu
+uv run --no-sync python scripts/build_mcpb.py --variant gpu
+```
+
+Both commands use the official `mcpb validate` / `mcpb pack` CLI and a separate checked-in
+UV lock. Add `--refresh-lock` only when intentionally updating dependency resolution.
+
 ## Five things to ask
 
 | Task | Example message |
@@ -110,7 +142,7 @@ CI targets Windows/Ubuntu/macOS with ruff and CPU pytest, excluding gpu/opm/exte
 The Python namespace, data-format IDs, MCP resource URIs and `OPENSUBSURFACE_*`
 environment names retain their existing identifiers for compatibility. The package
 and public CLI are `kanysh-basic`; `opensubsurface` remains a CLI compatibility alias.
-This is a development release (`0.2.0.dev2`); [external acceptance](docs/ACCEPTANCE.md) is separate.
+This is a development release (`0.2.0.dev3`); [external acceptance](docs/ACCEPTANCE.md) is separate.
 
 Application source: Apache-2.0. Norne data: ODbL/DbCL with upstream notices retained.
 Dependencies have separate licences: [THIRD_PARTY](THIRD_PARTY.md).

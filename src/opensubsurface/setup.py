@@ -12,6 +12,8 @@ import webbrowser
 from datetime import datetime, timezone
 from pathlib import Path
 
+import portalocker
+
 from opensubsurface.errors import require
 
 
@@ -82,12 +84,43 @@ def config_paths(user_home=None, platform=None):
     return desktop, root / ".claude.json"
 
 
-def ensure_viewer(service, port=8765, open_browser=True):
+def ensure_viewer(service, port=8765, open_browser=True, managed=False, first_run=False):
+    # One spawn/check sequence per home, independent of the control-plane lock.
+    with portalocker.Lock(service.store.root / "viewer-start.lock", mode="a", timeout=120):
+        marker = service.store.root / "desktop-first-run"
+        show = open_browser and (not first_run or not marker.exists())
+        result = _ensure_viewer(service, port, show, managed)
+        if first_run and result["status"] in ("RUNNING", "ALREADY_RUNNING"):
+            marker.touch(exist_ok=True)
+        return result
+
+
+def _ensure_viewer(service, port, open_browser, managed):
     import httpx
 
+    from opensubsurface.desktop_lifecycle import alive, identity, write_json
     from opensubsurface.viewer_links import base_url
 
+    process_record = service.store.root / "viewer-process.json"
+    if process_record.exists():
+        record = json.loads(process_record.read_text(encoding="utf-8"))
+        if record.get("stopping"):
+            deadline = time.monotonic() + 30
+            while alive(record) and time.monotonic() < deadline:
+                time.sleep(0.1)
+            require(not alive(record), "VIEWER_STOPPING", "Previous viewer is stopping; retry shortly")
     origin = base_url(service)
+    if origin:
+        try:
+            with httpx.Client(trust_env=False, timeout=2) as client:
+                health = client.get(origin + "/health").json()
+            if health.get("status") != "ok" or health.get("home") not in (
+                None,
+                str(service.store.root.resolve()),
+            ):
+                origin = None
+        except (httpx.HTTPError, ValueError):
+            origin = None
     if origin:
         if open_browser:
             webbrowser.open(origin + "/app/")
@@ -110,7 +143,9 @@ def ensure_viewer(service, port=8765, open_browser=True):
     kwargs = process_options()
     with log.open("ab") as stream:
         process = subprocess.Popen(
-            [
+            [sys.executable, "-m", "opensubsurface.desktop_viewer", str(service.store.root), str(port)]
+            if managed
+            else [
                 sys.executable,
                 "-m",
                 "opensubsurface.cli",
@@ -128,20 +163,27 @@ def ensure_viewer(service, port=8765, open_browser=True):
             stdin=subprocess.DEVNULL,
             **kwargs,
         )
-    for _ in range(100):
+    write_json(process_record, dict(identity(process.pid), managed=managed, stopping=False))
+    for _ in range(300):
         if process.poll() is not None:
             return dict(status="FAILED", log=str(log), returncode=process.returncode)
         try:
             with httpx.Client(trust_env=False, timeout=1) as client:
                 response = client.get(url + "/health")
-                if response.is_success and response.json().get("status") == "ok":
+                if (
+                    response.is_success
+                    and response.json().get("status") == "ok"
+                    and response.json().get("home") == str(service.store.root.resolve())
+                ):
                     if open_browser:
                         webbrowser.open(url + "/app/")
                     return dict(status="RUNNING", pid=process.pid, url=url + "/app/", log=str(log))
         except (httpx.HTTPError, ValueError):
             pass
         time.sleep(0.2)
-    return dict(status="STARTING", pid=process.pid, url=url + "/app/", log=str(log))
+    return dict(
+        status="FAILED", pid=process.pid, url=url + "/app/", log=str(log), reason="Viewer startup timed out"
+    )
 
 
 def setup(service, desktop_path=None, code_path=None, start_viewer=True, open_browser=True):

@@ -13,6 +13,7 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
+import portalocker
 from sqlalchemy import Column, Integer, MetaData, String, Table, UniqueConstraint, create_engine, select
 
 from opensubsurface.errors import require
@@ -83,19 +84,26 @@ class Store:
         self.engine = create_engine(
             f"sqlite:///{self.root / 'metadata.db'}", connect_args={"check_same_thread": False, "timeout": 30}
         )
-        with self.engine.connect() as c:
-            c.exec_driver_sql("PRAGMA journal_mode=WAL")
-            c.commit()
-        from alembic import command
-        from alembic.config import Config
-
-        config = Config()
-        config.set_main_option("script_location", str(Path(__file__).parent / "migrations"))
-        with self.engine.begin() as connection:
-            config.attributes["connection"] = connection
-            command.upgrade(config, "head")
         self.lock = threading.RLock()
-        self.set_state("schema_version", {"version": 1})
+        # Serialize WAL setup, Alembic's version-table creation and schema marker.
+        # This lock is distinct from the executor ownership lock.
+        try:
+            with portalocker.Lock(self.root / "migrate.lock", mode="a", timeout=120):
+                with self.engine.connect() as c:
+                    c.exec_driver_sql("PRAGMA journal_mode=WAL")
+                    c.commit()
+                from alembic import command
+                from alembic.config import Config
+
+                config = Config()
+                config.set_main_option("script_location", str(Path(__file__).parent / "migrations"))
+                with self.engine.begin() as connection:
+                    config.attributes["connection"] = connection
+                    command.upgrade(config, "head")
+                self.set_state("schema_version", {"version": 1})
+        except BaseException:
+            self.engine.dispose()
+            raise
 
     def set_state(self, key, value):
         with self.lock, self.engine.begin() as c:
