@@ -4,7 +4,7 @@ import math
 from datetime import date
 from typing import Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AliasChoices, AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 
 class Strict(BaseModel):
@@ -242,13 +242,25 @@ class SaturationHeight(Strict):
 
 
 class RegionCase(Strict):
+    """One region's explicit contacts, PVT and residual phase saturations (Z positive upward).
+
+    Saturation semantics used by regional_volumes.evaluate:
+    oil interval (OWC < Z < GOC) oil fraction = 1 - Sw - sg_in_oil_zone;
+    gas cap (Z > GOC) gas fraction = 1 - Sw - so_in_gas_zone.
+    Old names oil_gas_saturation / gas_oil_saturation remain accepted as deprecated aliases.
+    """
+
     region_id: int
     owc_z_m: float
     bo: float = Field(gt=0)
-    oil_gas_saturation: float = Field(ge=0, le=1)
+    sg_in_oil_zone: float = Field(
+        ge=0, le=1, validation_alias=AliasChoices("sg_in_oil_zone", "oil_gas_saturation")
+    )
     goc_z_m: float | None = None
     bg: float | None = Field(default=None, gt=0)
-    gas_oil_saturation: float | None = Field(default=None, ge=0, le=1)
+    so_in_gas_zone: float | None = Field(
+        default=None, ge=0, le=1, validation_alias=AliasChoices("so_in_gas_zone", "gas_oil_saturation")
+    )
     phi_override: float | None = Field(default=None, ge=0, le=1)
     ntg_override: float | None = Field(default=None, ge=0, le=1)
     sw_override: float | None = Field(default=None, ge=0, le=1)
@@ -257,15 +269,39 @@ class RegionCase(Strict):
     sw_multiplier: float | None = Field(default=None, ge=0)
     sw_height: SaturationHeight | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def single_name(cls, data):
+        if isinstance(data, dict):
+            for new, old in (
+                ("sg_in_oil_zone", "oil_gas_saturation"),
+                ("so_in_gas_zone", "gas_oil_saturation"),
+            ):
+                if new in data and old in data:
+                    raise ValueError(f"{old}: deprecated alias of {new}; send only {new}")
+        return data
+
+    # Messages start with "<field>: " so the MCP layer reports the exact JSON path.
     @model_validator(mode="after")
     def phases(self):
         if self.goc_z_m is not None:
-            if self.goc_z_m < self.owc_z_m or self.bg is None or self.gas_oil_saturation is None:
-                raise ValueError("Z-up: GOC>=OWC, explicit Bg and oil saturation in gas zone required")
-        elif self.bg is not None or self.gas_oil_saturation is not None:
-            raise ValueError("Gas parameters require GOC")
+            if self.goc_z_m < self.owc_z_m:
+                raise ValueError(
+                    f"goc_z_m: Z is positive upward, so GOC ({self.goc_z_m}) must be >= OWC ({self.owc_z_m});"
+                    " depth 2582 m -> -2582"
+                )
+            if self.bg is None:
+                raise ValueError("bg: gas formation volume factor is required when goc_z_m is set")
+            if self.so_in_gas_zone is None:
+                raise ValueError(
+                    "so_in_gas_zone: residual oil saturation in the gas cap is required when goc_z_m is set"
+                )
+        elif self.bg is not None:
+            raise ValueError("goc_z_m: bg was given without a gas-oil contact")
+        elif self.so_in_gas_zone is not None:
+            raise ValueError("goc_z_m: so_in_gas_zone was given without a gas-oil contact")
         if self.sw_override is not None and self.sw_height is not None:
-            raise ValueError("Choose Sw override or height function")
+            raise ValueError("sw_height: choose either sw_override or sw_height, not both")
         return self
 
 
@@ -276,7 +312,7 @@ class RegionScenario(Strict):
     @model_validator(mode="after")
     def unique_regions(self):
         if len({r.region_id for r in self.regions}) != len(self.regions):
-            raise ValueError("Unique region IDs required within a scenario")
+            raise ValueError("regions: unique region_id values required within a scenario")
         return self
 
 
@@ -289,17 +325,21 @@ class RegionalVolumes(Command):
     polygon_hole_ids: list[str] = Field(default_factory=list, max_length=1000)
     polygon_selection: Literal["corner_mean_whole_cell"] | None = None
     polygon_boundary: Literal["include", "exclude"] | None = None
+    # strict keeps the established behaviour; exclude_flagged is an explicit, reported relaxation.
+    geometry_policy: Literal["strict", "exclude_flagged"] = "strict"
     parameters_confirmed: Literal[True]
     assumptions: list[str] = Field(min_length=1, max_length=100)
 
     @model_validator(mode="after")
     def explicit_polygon(self):
-        if self.polygon is not None and (
-            not self.polygon_ids or self.polygon_selection is None or self.polygon_boundary is None
-        ):
-            raise ValueError("Confirm polygon rings, whole-cell corner-mean selection and boundary policy")
+        if self.polygon is not None:
+            for name in ("polygon_ids", "polygon_selection", "polygon_boundary"):
+                if not getattr(self, name):
+                    raise ValueError(
+                        f"{name}: confirm polygon rings, whole-cell corner-mean selection and boundary policy"
+                    )
         if self.polygon_hole_ids and set(self.polygon_ids) & set(self.polygon_hole_ids):
-            raise ValueError("Polygon exterior/hole IDs overlap")
+            raise ValueError("polygon_hole_ids: polygon exterior/hole IDs overlap")
         return self
 
 
@@ -684,6 +724,14 @@ class Inspect(Strict):
 
 class JobRequest(Strict):
     job_id: str
+
+
+class JobStatus(JobRequest):
+    verbose: bool = False
+
+
+class Diagnostics(Strict):
+    lines: int = Field(default=60, ge=1, le=500)
 
 
 class ProjectRequest(Strict):

@@ -89,9 +89,10 @@ async def tool(session, name="project_list"):
 
 
 async def wait_ready(session, seconds=90):
+    """Full readiness: compute_targets_list needs the controller (project_list answers earlier)."""
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
-        response = await tool(session)
+        response = await tool(session, "compute_targets_list")
         if "result" in response:
             return response
         assert response["error"]["code"] == "STARTING", response

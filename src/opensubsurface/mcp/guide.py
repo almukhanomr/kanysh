@@ -1,6 +1,8 @@
 GUIDE = """Kanysh Basic static calculation workflow
 
 At first connection use start / begin. Use source_list → folder_assess for owner-authorized data discovery.
+While tools return STARTING, discovery tools already work from SERVICE_READY; diagnostics shows startup state.
+All *_z_m values are Z positive upward: depth 2692 m is -2692. Every inputSchema field is documented.
 Every file-derived contact/PVT/region/unit/CRS value is a PROPOSAL, with file/line evidence.
 Ask the user to explicitly confirm selected proposals BEFORE calculation_plan or scientific operations.
 Never set parameters_confirmed without that confirmation. Discovery does not initialize equilibrium.
@@ -26,6 +28,7 @@ and mapped Petrel ASCII trajectories/tops/polygons; scene_show/scene_export disp
 After import use model_qc; wells_vs_model compares explicit LAS mappings without automatic log upscaling.
 model_diff compares equal-IJK revisions. regional_volumes supports explicit regional OWC/GOC, Bo/Bg,
 residual phase saturations, optional whole-cell polygon selection and declared Sw-height functions.
+Invalid cell geometry is refused unless the user confirms geometry_policy=exclude_flagged (reported exclusions).
 volumes_reconcile compares explicitly mapped CSV metrics/units and distinguishes possible causes from evidence.
 sensitivity_tornado and uncertainty_monte_carlo require explicit bounds/distributions/seed/correlation;
 Gaussian-copula latent correlations differ from marginal correlations. Failed draws are never resampled.
@@ -61,6 +64,7 @@ Do not claim Windows/CUDA/real-client/large-model acceptance from CPU SDK fixtur
 """
 
 AGENT_TOOLS = {
+    "diagnostics",
     "results_export",
     "folder_assess",
     "start",

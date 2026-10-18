@@ -17,6 +17,7 @@ from opensubsurface.schemas import (
     OPERATION_SCHEMAS,
     Inspect,
     JobRequest,
+    JobStatus,
     ProjectCreate,
     ProjectRequest,
     SourceScan,
@@ -25,6 +26,58 @@ from opensubsurface.schemas import (
 from opensubsurface.workflows import engine
 
 GPU_OPERATIONS = {"model_build", "volumetrics_calculate", "scenarios_run", "seismic_attribute"}
+# Single source for device messages and compute_targets_list. CPU remains the reference path.
+DEVICE_MATRIX = {
+    "model_build": dict(devices=["cpu", "cuda"], condition="method=gempy only; horizontal_explicit is CPU"),
+    "volumetrics_calculate": dict(
+        devices=["cpu", "cuda"],
+        condition="in-memory regular grid (<=4M cells); imported/corner-point grids CPU",
+    ),
+    "scenarios_run": dict(devices=["cpu", "cuda"], condition="in-memory regular grid only"),
+    "seismic_attribute": dict(devices=["cpu", "cuda"], condition="in-memory seismic cube"),
+    **{
+        name: dict(devices=["cpu"], condition="bounded CPU blocks; no GPU kernel")
+        for name in (
+            "eclipse_import",
+            "grid_import",
+            "geodata_import",
+            "dataset_import",
+            "model_qc",
+            "model_diff",
+            "regional_volumes",
+            "volumes_reconcile",
+            "sensitivity_tornado",
+            "uncertainty_monte_carlo",
+            "wells_vs_model",
+            "properties_assign",
+            "result_validate",
+            "report_export",
+            "results_export",
+            "scene_export",
+            "seismic_source_import",
+        )
+    },
+    "calculation_run[properties: imported corner-point/large grid]": dict(
+        devices=["cpu"], condition="chunked tetra6 / interval volumes on CPU"
+    ),
+    "calculation_run[GemPy plan]": dict(
+        devices=["cpu", "cuda"], condition="model_build and in-memory volumetrics follow device_policy"
+    ),
+}
+GPU_CAPABLE = sorted(k for k, v in DEVICE_MATRIX.items() if "cuda" in v["devices"])
+
+
+def no_gpu_error(operation, reason):
+    return DomainError(
+        "NO_COMPATIBLE_GPU",
+        f"{operation}: {reason}. GPU (CUDA) paths exist only for: "
+        + "; ".join(f"{k} ({DEVICE_MATRIX[k]['condition']})" for k in GPU_CAPABLE),
+        "execution.device_policy",
+        "Use execution.device_policy='cpu' (the reference path), or 'prefer_gpu' with "
+        "allow_cpu_fallback=true to use CUDA only where supported. See compute_targets_list.device_matrix.",
+    )
+
+
 HEAVY = set(OPERATION_SCHEMAS) - {
     "workflow_save",
     "workflow_run",
@@ -336,6 +389,20 @@ class Service:
             operation != "model_build" or payload["method"] == "gempy"
         )
         available = self.capabilities()["cuda_available"] if execution["device_policy"] != "cpu" else False
+        policy = execution["device_policy"]
+        if policy == "require_gpu" and not compatible:
+            raise no_gpu_error(operation, "this operation has no CUDA kernel")
+        if policy == "require_gpu" and not available:
+            raise DomainError(
+                "NO_COMPATIBLE_GPU",
+                f"{operation}: CUDA is not available on this host",
+                "execution.device_policy",
+                "Use device_policy='cpu', or prefer_gpu with allow_cpu_fallback=true. diagnostics shows CUDA state.",
+            )
+        if policy == "prefer_gpu" and not (compatible and available) and not execution["allow_cpu_fallback"]:
+            raise no_gpu_error(
+                operation, "prefer_gpu without allow_cpu_fallback and no usable CUDA path for this request"
+            )
         device, warnings = select_device(
             execution["device_policy"], compatible, available, execution["allow_cpu_fallback"]
         )
@@ -408,6 +475,11 @@ class Service:
 
             Strict.model_validate(arguments)
             return welcome(self)
+        if operation == "diagnostics":
+            from opensubsurface.diagnostics import diagnostics
+            from opensubsurface.schemas import Diagnostics
+
+            return diagnostics(self, Diagnostics.model_validate(arguments).model_dump())
         if operation == "folder_assess":
             from opensubsurface.adapters.folder_assess import assess
             from opensubsurface.schemas import FolderAssess
@@ -457,24 +529,26 @@ class Service:
             p = Inspect.model_validate(arguments)
             return self.invoke("result_validate", dict(project_id=p.project_id, artifact=p.ref.model_dump()))
         if operation == "compute_targets_list":
-            return [dict(id="local-cpu", location="local", health="ready", capabilities=self.capabilities())]
+            return [
+                dict(
+                    id="local-cpu",
+                    location="local",
+                    health="ready",
+                    capabilities=self.capabilities(),
+                    device_matrix=DEVICE_MATRIX,
+                    gpu_capable_operations=GPU_CAPABLE,
+                    note="CPU is the reference path for every operation; GPU results are checked against it",
+                )
+            ]
         if operation == "job_logs":
             job_id = JobRequest.model_validate(arguments).job_id
-            job = self.store.job(job_id)
-            directory = self.store.root / "attempts" / job["attempt_id"]
-            logs = {}
-            for name, path in [
-                ("worker", directory / "worker.log"),
-                ("solver", directory / "output" / "solver.log"),
-            ]:
-                if path.is_file():
-                    with path.open("rb") as stream:
-                        stream.seek(max(0, path.stat().st_size - 65536))
-                        logs[name] = stream.read().decode("utf-8", errors="replace")
-            return dict(job_id=job_id, attempt_id=job["attempt_id"], tail_bytes_per_log=65536, logs=logs)
-        if operation in ("job_status", "job_cancel"):
-            job_id = JobRequest.model_validate(arguments).job_id
-            return self.store.job(job_id) if operation == "job_status" else self.cancel(job_id)
+            return self.job_logs(self.store.job(job_id))
+        if operation == "job_status":
+            p = JobStatus.model_validate(arguments)
+            job = self.store.job(p.job_id)
+            return job if p.verbose else self.compact_job(job)
+        if operation == "job_cancel":
+            return self.cancel(JobRequest.model_validate(arguments).job_id)
         if operation in ("workflow_status", "workflow_cancel"):
             job_id = JobRequest.model_validate(arguments).job_id
             return self.store.job(job_id) if operation == "workflow_status" else self.cancel(job_id)
@@ -519,6 +593,16 @@ class Service:
         self.start()
         device, warnings = self.preflight(operation, p)
         resolved = self.resolve_inputs(operation, p)
+        if operation in (
+            "regional_volumes",
+            "volumes_reconcile",
+            "sensitivity_tornado",
+            "uncertainty_monte_carlo",
+        ):
+            from opensubsurface.adapters.regional_volumes import preflight
+
+            # Synchronous refusal before any job is queued: region ids, absent properties, contact sign.
+            preflight(resolved["properties"], p)
         scene_context = None
         if operation == "scene_export":
             scene_context = self.store.get_state("scene:" + p["project_id"], {})
@@ -552,12 +636,11 @@ class Service:
                     "Для этой операции нет блочного backend",
                 )
                 if device != "cpu":
-                    require(
+                    if not (
                         p["execution"]["device_policy"] != "require_gpu"
-                        and p["execution"]["allow_cpu_fallback"],
-                        "NO_COMPATIBLE_GPU",
-                        "Large-grid backend currently CPU only",
-                    )
+                        and p["execution"]["allow_cpu_fallback"]
+                    ):
+                        raise no_gpu_error(operation, "imported/large-grid inputs use the CPU block backend")
                     device = "cpu"
                     warnings.append("CPU fallback: large-grid backend")
         source_context = None
@@ -758,11 +841,31 @@ class Service:
                         sources=[ref(o) for o in request["resolved"].values()],
                     )
                     diagnostics = ref(diagnostic)
+                error = result["error"]
+                properties = request["resolved"].get("properties")
+                if error.get("code") == "INVALID_GEOMETRY" and properties:
+                    reports = [
+                        ref(o)
+                        for o in self.store.list_objects(job["project_id"])
+                        if o["kind"] == "analysis_report"
+                        and o["summary"].get("operation") == "model_qc"
+                        and o["parameters"].get("properties") == ref(properties)
+                    ]
+                    error = dict(
+                        error,
+                        details=dict(error.get("details") or {}, model_qc_reports=reports),
+                        remediation=(error.get("remediation") or "")
+                        + (
+                            f" model_qc report(s): {', '.join(r['id'] for r in reports)}."
+                            if reports
+                            else " No model_qc report exists for these properties yet; run model_qc first."
+                        ),
+                    )
                 self.store.update_job(
                     job["id"],
                     status="failed",
                     stage="Ошибка",
-                    error=result["error"],
+                    error=error,
                     result=diagnostics,
                     completed_at=now(),
                 )
@@ -776,6 +879,91 @@ class Service:
                 else dict(code="EXECUTOR_FAILED", message="Ошибка исполнения: " + type(e).__name__),
                 completed_at=now(),
             )
+
+    def progress(self, job):
+        """Worker-reported progress for one job, or node completion for a workflow parent."""
+        if job["status"] == "succeeded":
+            return dict(progress=1.0, eta_s=0.0, message=None)
+        if job["operation"] in ("workflow_run", "ensemble_run"):
+            from opensubsurface.calculations.planning import workflow_progress
+
+            return workflow_progress(self, job)
+        path = self.store.root / "attempts" / job["attempt_id"] / "progress.json"
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return dict(progress=None, eta_s=None, message=None)
+        return dict(progress=value.get("progress"), eta_s=value.get("eta_s"), message=value.get("message"))
+
+    def compact_job(self, job):
+        """Small status record for agents; verbose=true returns the full stored job."""
+        progress = self.progress(job)
+        return dict(
+            id=job["id"],
+            operation=job["operation"],
+            status=job["status"],
+            stage=job.get("stage"),
+            progress=progress["progress"],
+            eta_s=progress["eta_s"],
+            progress_message=progress["message"],
+            error=job.get("error"),
+            result=job.get("result"),
+            payload_hash=job.get("payload_hash"),
+            warnings=job.get("warnings") or [],
+            created_at=job.get("created_at"),
+            started_at=job.get("started_at"),
+            completed_at=job.get("completed_at"),
+            elapsed_seconds=job.get("elapsed_seconds"),
+            child_jobs=len(job.get("child_jobs") or []),
+            verbose_hint="job_status with verbose=true returns payload, attempts and events",
+        )
+
+    def job_logs(self, job, tail=65536):
+        def read_tail(path, limit):
+            if not path.is_file():
+                return None
+            with path.open("rb") as stream:
+                stream.seek(max(0, path.stat().st_size - limit))
+                return stream.read().decode("utf-8", errors="replace")
+
+        directory = self.store.root / "attempts" / job["attempt_id"]
+        logs = {}
+        for name, path in [
+            ("worker", directory / "worker.log"),
+            ("workflow", directory / "workflow.log"),
+            ("solver", directory / "output" / "solver.log"),
+        ]:
+            text = read_tail(path, tail)
+            if text is not None:
+                logs[name] = text
+        stages = "\n".join(f"{e['time']} {e['stage']}" for e in job.get("events", [])[-200:])
+        if stages:
+            logs["stages"] = stages
+        children = []
+        for child_id in (job.get("child_jobs") or [])[-50:]:
+            try:
+                child = self.store.job(child_id)
+            except DomainError:
+                continue
+            child_dir = self.store.root / "attempts" / child["attempt_id"]
+            children.append(
+                dict(
+                    job_id=child_id,
+                    operation=child["operation"],
+                    status=child["status"],
+                    stage=child.get("stage"),
+                    elapsed_seconds=child.get("elapsed_seconds"),
+                    worker_tail=read_tail(child_dir / "worker.log", 4096),
+                )
+            )
+        return dict(
+            job_id=job["id"],
+            attempt_id=job["attempt_id"],
+            status=job["status"],
+            tail_bytes_per_log=tail,
+            logs=logs,
+            child_jobs=children,
+        )
 
     def cancel(self, job_id):
         with self.lock:
@@ -851,8 +1039,28 @@ class Service:
         p, project_id = job["payload"], job["project_id"]
         children = []
         records = {}
+        states = {}
+        log_path = self.store.root / "attempts" / job["attempt_id"] / "workflow.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+
+        def log(message):
+            with log_path.open("a", encoding="utf-8") as stream:
+                stream.write(f"{now()} {message}\n")
+
+        def publish_states(**changes):
+            running = sorted(name for name, s in states.items() if s["status"] == "running")
+            stage = ("Узлы: " + ", ".join(running)) if running else changes.pop("stage", None)
+            visible = {name: {k: v for k, v in s.items() if k != "started"} for name, s in states.items()}
+            update = dict(node_states=visible, **changes)
+            if stage:
+                update["stage"] = stage
+            self.store.update_job(job["id"], **update)
+
         try:
-            self.store.update_job(job["id"], status="running", stage="Проверка графа", child_jobs=children)
+            log("workflow started")
+            self.store.update_job(
+                job["id"], status="running", stage="Проверка графа", child_jobs=children, started_at=now()
+            )
             if job["operation"] == "ensemble_run":
                 from opensubsurface.workflows.ensembles import execute
 
@@ -911,19 +1119,53 @@ class Service:
                             cached = self.store.object(project_id, old["result"])
                             outputs[name] = ref(cached)
                             records[name] = dict(hash=h, result=ref(cached), reused=True)
+                            states[name] = dict(status="reused", operation=node["operation"])
+                            log(f"node {name} ({node['operation']}) reused cached result")
                             remaining.remove(name)
                         else:
                             submission = self.invoke(node["operation"], typed)
+                            states[name] = dict(
+                                status="running",
+                                operation=node["operation"],
+                                job_id=submission.get("job_id"),
+                                started_at=now(),
+                                started=time.monotonic(),
+                            )
+                            log(f"node {name} ({node['operation']}) submitted job={submission.get('job_id')}")
                             if submission.get("job_id"):
                                 children.append(submission["job_id"])
-                                self.store.update_job(job["id"], child_jobs=children, stage="Узел " + name)
+                            publish_states(child_jobs=children)
                             pending.append((name, h, submission))
-                    for name, h, submission in pending:
+                    # Record nodes in completion order so stage/progress reflect what is really running.
+                    while pending:
                         self.check_cancel(job["id"])
-                        result = self.wait(submission)
-                        outputs[name] = ref(result)
-                        records[name] = dict(hash=h, result=ref(result), reused=False)
-                        remaining.remove(name)
+                        finished = [
+                            item
+                            for item in pending
+                            if "job_id" not in item[2]
+                            or self.store.job(item[2]["job_id"])["status"] in TERMINAL
+                        ]
+                        if not finished:
+                            time.sleep(0.1)
+                            continue
+                        for item in finished:
+                            pending.remove(item)
+                            name, h, submission = item
+                            try:
+                                result = self.wait(submission)
+                            except DomainError as error:
+                                states[name].update(status="failed", error=error.code)
+                                states[name].pop("started", None)
+                                log(f"node {name} failed: {error.code} {error.message}")
+                                publish_states()
+                                raise
+                            outputs[name] = ref(result)
+                            records[name] = dict(hash=h, result=ref(result), reused=False)
+                            seconds = round(time.monotonic() - states[name].pop("started"), 3)
+                            states[name].update(status="succeeded", seconds=seconds, completed_at=now())
+                            log(f"node {name} succeeded in {seconds} s")
+                            remaining.remove(name)
+                        publish_states(node_results=records)
                     self.store.update_job(job["id"], node_results=records)
                 gate = workflow["parameters"].get("result_gate_node")
                 validation_failed = False
@@ -963,8 +1205,14 @@ class Service:
                 else None,
                 completed_at=now(),
             )
+            log("workflow " + ("finished with failures" if partial else "succeeded"))
         except Exception as e:
             cancelled = self.store.job(job["id"])["status"] == "cancel_requested"
+            log(
+                "workflow "
+                + ("cancelled" if cancelled else "failed: ")
+                + ("" if cancelled else (e.code if isinstance(e, DomainError) else type(e).__name__))
+            )
             partial_ref = None
             if records and job["operation"] == "workflow_run":
                 partial_obj = self.store.publish(

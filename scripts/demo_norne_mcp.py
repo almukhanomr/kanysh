@@ -148,8 +148,8 @@ async def run(args):
                         goc_z_m=-records[r]["goc_depth_m"],
                         bo=1.2,
                         bg=0.005,
-                        oil_gas_saturation=0.0,
-                        gas_oil_saturation=0.05,
+                        sg_in_oil_zone=0.0,
+                        so_in_gas_zone=0.05,
                     )
                     for r in (1, 3)
                 ]

@@ -165,7 +165,12 @@ def plan(service, arguments):
             "INVALID_PLAN",
             "Selected zones are absent from imported properties",
         )
-        require(spec["execution"]["device_policy"] == "cpu", "NO_COMPATIBLE_GPU", "Large-grid plan uses CPU")
+        if spec["execution"]["device_policy"] != "cpu":
+            from opensubsurface.service import no_gpu_error
+
+            raise no_gpu_error(
+                "calculation_plan", "plans on imported properties (corner-point/large grid) run on CPU blocks"
+            )
         service.preflight("volumetrics_calculate", dict(execution=spec["execution"]))
         summary = dict(
             status="READY",
@@ -187,7 +192,9 @@ def plan(service, arguments):
             vertical_datum=project["vertical_datum"],
             runtime=fingerprint(),
             storage=props["summary"]["storage"],
-            estimated_working_bytes=props["summary"]["working_memory_bound_bytes"],
+            estimated_working_bytes=props["summary"].get(
+                "working_memory_bound_bytes", props["summary"].get("block_cells", 16384) * 2048
+            ),
             scope="Chunked static volumes using declared cell geometry; geological fitness requires review",
         )
         return service.store.publish(
@@ -447,12 +454,58 @@ def run_context(service, p):
     return job, plan_obj, records
 
 
+def workflow_progress(service, job):
+    """Fraction of workflow nodes finished, counting running children by their own progress."""
+    import time
+    from datetime import datetime
+
+    try:
+        workflow = service.store.object(job["project_id"], job["payload"]["workflow"])
+        total = len(workflow["parameters"]["nodes"])
+    except (DomainError, KeyError):
+        return dict(progress=None, eta_s=None, message=None, nodes={})
+    states = job.get("node_states") or {}
+    done, running, nodes = 0.0, [], {}
+    for name, state in states.items():
+        row = dict(state)
+        if state["status"] in ("succeeded", "reused"):
+            done += 1
+        elif state["status"] == "running" and state.get("job_id"):
+            child = service.store.job(state["job_id"])
+            child_progress = service.progress(child) if child["status"] != "succeeded" else {"progress": 1.0}
+            fraction = child_progress.get("progress")
+            row.update(child_status=child["status"], progress=fraction, eta_s=child_progress.get("eta_s"))
+            done += min(max(fraction or 0.0, 0.0), 0.99)
+            running.append(name)
+        nodes[name] = row
+    if job["status"] == "succeeded":
+        return dict(progress=1.0, eta_s=0.0, message="completed", nodes=nodes)
+    fraction = done / total if total else None
+    eta = None
+    if fraction and job.get("started_at") and job["status"] in ("running", "cancel_requested"):
+        started = datetime.fromisoformat(job["started_at"]).timestamp()
+        elapsed = max(time.time() - started, 0.0)
+        eta = round(elapsed * (1 - fraction) / fraction, 1)
+    message = (
+        f"{int(sum(1 for s in states.values() if s['status'] in ('succeeded', 'reused')))}/{total} nodes done"
+        + ("; running: " + ", ".join(sorted(running)) if running else "")
+    )
+    return dict(
+        progress=None if fraction is None else round(fraction, 4), eta_s=eta, message=message, nodes=nodes
+    )
+
+
 def status(service, p):
     job, plan_obj, records = run_context(service, p)
+    progress = workflow_progress(service, job)
     return dict(
         run_id=job["id"],
         status=job["status"],
         stage=job.get("stage"),
+        progress=progress["progress"],
+        eta_s=progress["eta_s"],
+        progress_message=progress["message"],
+        nodes=progress["nodes"],
         plan=ref(plan_obj),
         checkpoint=job.get("result"),
         error=job.get("error"),

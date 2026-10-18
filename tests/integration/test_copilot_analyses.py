@@ -81,10 +81,10 @@ def params():
                         goc_z_m=15.0,
                         bo=1.2,
                         bg=0.005,
-                        oil_gas_saturation=0.0,
-                        gas_oil_saturation=0.05,
+                        sg_in_oil_zone=0.0,
+                        so_in_gas_zone=0.05,
                     ),
-                    dict(region_id=2, owc_z_m=5.0, bo=1.2, oil_gas_saturation=0.0),
+                    dict(region_id=2, owc_z_m=5.0, bo=1.2, sg_in_oil_zone=0.0),
                 ],
             )
         ],
@@ -134,7 +134,7 @@ def test_height_sw_table_and_leverett_explicit_parameters(tmp_path):
             region_id=1,
             owc_z_m=5.0,
             bo=1.2,
-            oil_gas_saturation=0.0,
+            sg_in_oil_zone=0.0,
             sw_height=dict(method="table", table=[[0, 1], [10, 0]], extrapolation="clamp"),
         )
     ]

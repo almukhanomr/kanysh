@@ -37,6 +37,156 @@ EXT_ROLES = {
 MAX_HEADER_BYTES = 65536
 
 
+EQUIL_ITEMS = (
+    "datum_depth",
+    "datum_pressure",
+    "owc_depth",
+    "pc_at_owc",
+    "goc_depth",
+    "pc_at_goc",
+    "live_oil_init_flag",
+    "wet_gas_init_flag",
+    "init_accuracy",
+)
+TABLE_KIND = dict(
+    EQUIL="records",  # one record per EQLNUM region
+    RSVD="tables",  # one "/"-terminated table per EQLNUM region
+    PBVD="tables",
+    RVVD="tables",
+    PVDO="tables",  # one table per PVTNUM region
+    PVDG="tables",
+    PVTO="nested",  # records per Rs/Pg, table closed by an empty "/" record
+    PVTG="nested",
+)
+REGION_FIELD = dict(EQUIL="EQLNUM", RSVD="EQLNUM", PBVD="EQLNUM", RVVD="EQLNUM")
+CONFIRM = "PROPOSAL_REQUIRES_USER_CONFIRMATION"
+
+
+def _tokens(text):
+    """ECLIPSE tokens with n* repeats; defaults become None, numbers float."""
+    out = []
+    for token in text.split():
+        repeat = re.fullmatch(r"(\d+)\*(.*)", token)
+        count, token = (int(repeat[1]), repeat[2]) if repeat else (1, token)
+        try:
+            value = float(token) if token else None
+        except ValueError:
+            value = token.strip("'\"")
+        out.extend([value] * count)
+    return out
+
+
+def _records(lines, number):
+    """Records after the keyword on 1-based line number, until the next keyword or end of text."""
+    records, current, first = [], [], None
+    index = number
+    while index < len(lines):
+        text = lines[index].split("--", 1)[0]
+        stripped = text.strip()
+        if stripped and not current and re.match(r"^[A-Za-z][A-Za-z0-9_]{0,7}\b", stripped):
+            break
+        if stripped:
+            before, slash, _ = text.partition("/")
+            first = first or index + 1
+            current += _tokens(before)
+            if slash:
+                records.append(dict(first_line=first, last_line=index + 1, values=current))
+                current, first = [], None
+        index += 1
+    return records, bool(current)
+
+
+def table_proposals(path, lines, number, keyword):
+    records, unterminated = _records(lines, number)
+    region_field = REGION_FIELD.get(keyword, "PVTNUM")
+    base = dict(
+        status=CONFIRM,
+        parameter=keyword,
+        file=path,
+        keyword_line=number,
+        region_field=region_field,
+    )
+    interpretation = (
+        "Source text only. Region number is the record/table order in the keyword. Confirm deck units "
+        "(METRIC: m, bar), depth sign/datum and region mapping. Depths are positive down; Kanysh stores Z up, "
+        "so depth d m becomes Z=-d."
+    )
+    proposals = []
+    if TABLE_KIND[keyword] == "records":
+        for region, record in enumerate(r for r in records if r["values"]):
+            values = dict(zip(EQUIL_ITEMS, record["values"]))
+            proposal = dict(
+                base,
+                region=region + 1,
+                lines=[record["first_line"], record["last_line"]],
+                evidence=[
+                    dict(file=path, line=n, text=lines[n - 1][:500])
+                    for n in range(record["first_line"], record["last_line"] + 1)
+                ],
+                values=values,
+                interpretation=interpretation,
+            )
+            if isinstance(values.get("owc_depth"), float):
+                candidate = dict(region_id=region + 1, owc_z_m=-values["owc_depth"])
+                goc = values.get("goc_depth")
+                datum = values.get("datum_depth")
+                if isinstance(goc, float) and goc < values["owc_depth"]:
+                    candidate["goc_z_m"] = -goc
+                proposal["regional_volumes_candidate"] = dict(
+                    candidate,
+                    requires_confirmation=[
+                        "deck unit system (METRIC metres assumed only if confirmed)",
+                        "vertical datum of depths",
+                        f"region_field={region_field} with these region numbers",
+                        "Bo/Bg and saturations are NOT in EQUIL; ask the user",
+                    ],
+                    note="GOC equal to/below OWC or defaulted is omitted"
+                    + ("; GOC equals the datum depth" if goc is not None and goc == datum else ""),
+                )
+            proposals.append(proposal)
+        return proposals or [dict(base, evidence=[], interpretation="Keyword found without readable records")]
+    tables, rows = [], []
+    for record in records:
+        if TABLE_KIND[keyword] == "tables":
+            if record["values"]:
+                tables.append([record])
+            else:
+                break
+        elif record["values"]:
+            rows.append(record)
+        elif rows:
+            tables.append(rows)
+            rows = []
+        else:
+            break
+    if rows:
+        tables.append(rows)
+    for region, table in enumerate(tables):
+        first, last = table[0]["first_line"], table[-1]["last_line"]
+        proposal = dict(
+            base,
+            region=region + 1,
+            lines=[first, last],
+            table_ref=f"{path}#{keyword}[{region + 1}]",
+            records=len(table),
+            evidence=[dict(file=path, line=first, text=lines[first - 1][:500])]
+            + ([dict(file=path, line=last, text=lines[last - 1][:500])] if last != first else []),
+            interpretation=interpretation
+            + (
+                " PVT table reference only: no scalar Bo/Bg is selected; the user must choose a pressure/Rs basis."
+                if keyword.startswith("PV")
+                else ""
+            ),
+        )
+        if keyword in ("RSVD", "PBVD", "RVVD"):
+            values = table[0]["values"]
+            proposal["rows"] = [values[i : i + 2] for i in range(0, min(len(values), 100), 2)]
+        proposals.append(proposal)
+    if unterminated and proposals:
+        proposals[-1]["truncated"] = "Last record is not '/'-terminated within the inspected bytes"
+    return proposals or [dict(base, evidence=[], interpretation="Keyword found without readable tables")]
+
+
 def inspect_text(path, data):
     text = data.decode("utf-8-sig", errors="replace")
     lines = text.splitlines()
@@ -53,12 +203,16 @@ def inspect_text(path, data):
         if match:
             roles.add("geometry" if match[1].upper() in ("COORD", "ZCORN") else "properties")
             evidence.append(dict(keyword=match[1].upper(), file=path, line=number))
+        table = re.match(r"^(EQUIL|RSVD|PBVD|RVVD|PVTO|PVDO|PVTG|PVDG)\s*$", line, re.I)
+        if table:
+            proposals.extend(table_proposals(path, lines, number, table[1].upper()))
+            continue
         header = re.search(r"\b(CRS|EPSG|PROJ(?:ECTION)?|DATUM|UNITS?)\b\s*[:=]?\s*(.+)", raw, re.I)
-        keyword = re.match(r"^(EQUIL|PVTO|PVDO|PVTG|PVDG|METRIC|FIELD|LAB|GRIDUNIT|MAPUNITS)\b", line, re.I)
+        keyword = re.match(r"^(METRIC|FIELD|LAB|GRIDUNIT|MAPUNITS)\b", line, re.I)
         if header or keyword:
             key = header[1].upper() if header else keyword[1].upper()
             records = [dict(file=path, line=number, text=raw[:500])]
-            if keyword and key in ("EQUIL", "PVTO", "PVDO", "PVTG", "PVDG", "GRIDUNIT", "MAPUNITS"):
+            if keyword and key in ("GRIDUNIT", "MAPUNITS"):
                 for i in range(number, min(number + 8, len(lines))):
                     following = lines[i].split("--", 1)[0].strip()
                     if not following:

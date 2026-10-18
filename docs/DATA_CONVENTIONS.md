@@ -8,6 +8,17 @@
   Markers интерполируются по XYZ/MD trajectory в её диапазоне, без extrapolation.
 - LAS nulls остаются NaN; глубина требует явной единицы, рекомендуемый mapping `DEPT:m`.
   Кривые не получают автоматической петрофизической интерпретации.
+- Импорт ECLIPSE: `z_direction` описывает **вход** (ZCORN — глубина вниз), хранится всегда Z вверх:
+  `z_stored = -depth`. Summary/import_report содержат `input_z_direction`, `stored_z_direction`,
+  `z_conversion`. Все поля `*_z_m` (OWC/GOC/contacts) — Z вверх: глубина 2692 м → `-2692`.
+- `regional_volumes`: в нефтяной оторочке доля нефти `1 − Sw − sg_in_oil_zone` (свободный газ),
+  в газовой шапке доля газа `1 − Sw − so_in_gas_zone` (остаточная нефть). Старые имена
+  `oil_gas_saturation`/`gas_oil_saturation` — deprecated aliases тех же величин.
+- Corner-point pinch-out: пиллар нулевой длины даёт нулевой трилинейный якобиан в двух своих
+  вершинах; при положительном объёме и без отрицательных якобианов это валидная ячейка
+  (`pinched_pillar_cell`, INFO). Twisted/inverted/degenerate ячейки блокируют объёмы при
+  `geometry_policy=strict`; `exclude_flagged` только с `parameters_confirmed=true`, с отчётом
+  исключённых ячеек, bbox GRV/PV и доли, статус `PASS_WITH_EXCLUSIONS`.
 - Пористость/NTG/Sw в [0,1]; K в mD и ≥0; positive Bo. Missing active values блокируют volumes.
 - Объём ячейки dx×dy×dz. Reservoir zone membership по центру; пересечение горизонтального
   OWC дробное: `clip((z_top-contact_z)/dz,0,1)`.

@@ -107,17 +107,10 @@ def create_app(root=None, service=None, with_ui=False, with_mcp=True, mcp_profil
         return JSONResponse({"error": error.as_dict()}, status_code=status)
 
     @app.exception_handler(ValidationError)
-    async def validation_error(request, error):
-        return JSONResponse(
-            {
-                "error": {
-                    "code": "INVALID_ARGUMENTS",
-                    "message": "Arguments do not match the schema",
-                    "fields": [str(x["loc"]) for x in error.errors()],
-                }
-            },
-            status_code=422,
-        )
+    async def invalid_arguments(request, error):
+        from opensubsurface.errors import validation_error
+
+        return JSONResponse({"error": validation_error(error)}, status_code=422)
 
     @app.get("/health")
     def health():

@@ -65,6 +65,8 @@ async def check(bundle, variant="cpu"):
                             return payload["result"]
                         raise TimeoutError("Desktop did not become ready")
 
+                    # start/source_list answer from SERVICE_READY; wait for the full controller first.
+                    await call("compute_targets_list")
                     greeting = await call("start")
                     capability_resource = await session.read_resource("opensubsurface://capabilities")
                     capabilities = json.loads(capability_resource.contents[0].text)

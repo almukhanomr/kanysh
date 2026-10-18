@@ -7,8 +7,9 @@ from mcp.types import ImageContent, TextContent, ToolAnnotations
 from pydantic import ValidationError
 
 from opensubsurface.contracts import CONTRACTS, DESCRIPTIONS, READ_ONLY
-from opensubsurface.errors import DomainError
+from opensubsurface.errors import DomainError, validation_error
 from opensubsurface.mcp.guide import AGENT_TOOLS, GUIDE
+from opensubsurface.mcp.schema_docs import tool_input_schema
 from opensubsurface.viewer_links import present
 
 
@@ -26,8 +27,8 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
         **({"lifespan": lifespan} if lifespan else {}),
     )
 
-    def ready_service():
-        return service.require_ready() if hasattr(service, "require_ready") else service
+    def ready_service(operation=None):
+        return service.require_ready(operation) if hasattr(service, "require_ready") else service
 
     for name, schema in CONTRACTS.items():
         if profile == "agent" and name not in AGENT_TOOLS:
@@ -36,8 +37,12 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
         def make_tool(operation, input_schema):
             def tool(request):
                 try:
-                    active = ready_service()
                     args = input_schema.model_validate(request).model_dump(mode="json")
+                    if operation == "diagnostics":
+                        from opensubsurface.diagnostics import diagnostics
+
+                        return {"result": diagnostics(service, args)}
+                    active = ready_service(operation)
                     from opensubsurface.viewer_links import base_url
 
                     origin = base_url(active) if not active.owns_controller else None
@@ -66,6 +71,9 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
                             raise DomainError(
                                 error.get("code", "LOCAL_CONTROLLER_ERROR"),
                                 error.get("message", "Local controller rejected request"),
+                                error.get("field", ""),
+                                error.get("remediation", ""),
+                                error.get("details"),
                             )
                     else:
                         result = active.invoke(operation, args)
@@ -91,24 +99,17 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
                 except DomainError as e:
                     return {"error": e.as_dict()}
                 except ValidationError as e:
-                    return {
-                        "error": {
-                            "code": "INVALID_ARGUMENTS",
-                            "message": "Ошибка аргументов",
-                            "fields": [str(x["loc"]) for x in e.errors()],
-                        }
-                    }
+                    return {"error": validation_error(e)}
 
+            # FastMCP only checks that request is an object; input_schema.model_validate above returns
+            # INVALID_ARGUMENTS with JSON paths instead of a raw pydantic traceback text. The published
+            # inputSchema is still the full documented model (set after add_tool).
             tool.__name__ = operation
             tool.__signature__ = inspect.Signature(
-                [
-                    inspect.Parameter(
-                        "request", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=input_schema
-                    )
-                ],
+                [inspect.Parameter("request", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=dict)],
                 return_annotation=list[TextContent | ImageContent] if operation == "result_preview" else dict,
             )
-            tool.__annotations__ = {"request": input_schema, "return": tool.__signature__.return_annotation}
+            tool.__annotations__ = {"request": dict, "return": tool.__signature__.return_annotation}
             return tool
 
         server.add_tool(
@@ -123,6 +124,8 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
                 openWorldHint=False,
             ),
         )
+        # Publish a self-contained schema: some MCP clients do not resolve "$defs".
+        server._tool_manager.get_tool(name).parameters = tool_input_schema(schema)
 
     @server.resource("opensubsurface://capabilities")
     def capabilities() -> str:
@@ -147,7 +150,7 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
         from opensubsurface.onboarding import welcome
 
         try:
-            result = welcome(ready_service())
+            result = welcome(ready_service("start"))
         except DomainError as error:
             result = {"error": error.as_dict()}
         return GUIDE + "\n" + json.dumps(result, ensure_ascii=False)

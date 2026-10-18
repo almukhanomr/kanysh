@@ -6,17 +6,29 @@ from pathlib import Path
 import numpy as np
 import pyarrow.parquet as pq
 
-from opensubsurface.adapters import geostat, imports, opm, seismic
-from opensubsurface.domain.numerics import (
-    grid_arrays,
-    quantiles,
-    seismic_attribute,
-    table_time_to_z,
-    time_to_z,
-    validate_properties,
-    volumes,
-)
 from opensubsurface.errors import require
+
+
+class _Lazy:
+    """Import heavy adapters (gstools, scipy.signal, segyio, OPM) only in the worker that uses them.
+
+    Every job runs in a fresh process; eager imports cost ~2.5 s per node of a workflow.
+    """
+
+    def __init__(self, module):
+        self._module = module
+
+    def __getattr__(self, name):
+        import importlib
+
+        return getattr(importlib.import_module(self._module), name)
+
+
+geostat = _Lazy("opensubsurface.adapters.geostat")
+imports = _Lazy("opensubsurface.adapters.imports")
+opm = _Lazy("opensubsurface.adapters.opm")
+seismic = _Lazy("opensubsurface.adapters.seismic")
+numerics = _Lazy("opensubsurface.domain.numerics")
 
 
 def input_obj(request, name):
@@ -204,7 +216,7 @@ def run(request, out):
             "Разлом поддерживается только GemPy",
         )
         grid = p["grid"]
-        centers, _ = grid_arrays(grid)
+        centers, _ = numerics.grid_arrays(grid)
         if p["method"] == "horizontal_explicit":
             require(p["horizontal_assumption"], "MISSING_ORIENTATIONS", "Явно выберите горизонтальные слои")
             horizons = np.asarray(p["horizons_z"])
@@ -258,7 +270,7 @@ def run(request, out):
             mask = arrays["zones"] == int(zone)
             for name, value in values.items():
                 arrays[name][mask] = value
-        validate_properties(arrays)
+        numerics.validate_properties(arrays)
         return (
             "properties",
             dict(
@@ -296,7 +308,7 @@ def run(request, out):
                 ),
             )
         else:
-            summary = volumes(
+            summary = numerics.volumes(
                 load_arrays(props),
                 grid_of(props),
                 p["zone_ids"],
@@ -360,7 +372,7 @@ def run(request, out):
             for key in ("phi", "ntg", "sw"):
                 if key in row:
                     realization[key][mask] = row[key]
-            result = volumes(
+            result = numerics.volumes(
                 realization,
                 grid,
                 p["zone_ids"],
@@ -379,7 +391,7 @@ def run(request, out):
                 backend="chunked-cpu" if large else device,
                 metric="STOIIP",
                 unit="standard_m3",
-                statistics=quantiles(metrics),
+                statistics=numerics.quantiles(metrics),
             ),
             {"samples.json": out / "samples.json"},
         )
@@ -426,7 +438,7 @@ def run(request, out):
                     "amplitude", shape=shape, dtype="f8", chunks=(1, 1, shape[-1])
                 )
                 for i in range(shape[0]):
-                    amplitude[i, :, :] = seismic_attribute(
+                    amplitude[i, :, :] = numerics.seismic_attribute(
                         group["amplitude"][i, :, :], p["attribute"], p["window"], device
                     )
                 for key in ("inline", "crossline", "sample", "x", "y"):
@@ -492,8 +504,8 @@ def run(request, out):
 
         def convert_time(value):
             if p.get("time_depth_table") is not None:
-                return float(table_time_to_z(value, p["time_depth_table"], p["origin_z_m"]))
-            return float(time_to_z(value, p["velocity_m_s"], p["origin_z_m"]))
+                return float(numerics.table_time_to_z(value, p["time_depth_table"], p["origin_z_m"]))
+            return float(numerics.time_to_z(value, p["velocity_m_s"], p["origin_z_m"]))
 
         import csv
 

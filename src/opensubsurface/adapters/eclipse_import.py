@@ -12,6 +12,7 @@ from opensubsurface.adapters.eclipse_deck import Interpreter, discard_pages
 from opensubsurface.adapters.large_grid import FIELDS, UNITS
 from opensubsurface.adapters.local_sources import opened_source, revision
 from opensubsurface.errors import require
+from opensubsurface.execution import progress
 
 PROPERTIES = dict(active="ACTNUM", zones="FIPNUM", phi="PORO", ntg="NTG", sw="SWAT", permeability_md="PERMX")
 
@@ -103,6 +104,7 @@ def import_deck(context, p, out):
     hashes = {item["path"]: item["sha256"] for item in deck.files}
     low, high = np.full(3, np.inf), np.full(3, -np.inf)
     active_count, regions = 0, set()
+    region_values = {}
     extra = [key for key in ("FIPNUM", "SATNUM", "EQLNUM", "PVTNUM", "PERMY", "PERMZ") if key in deck.arrays]
     with zarr.ZipStore(str(out / "grid.zip"), mode="w") as store:
         group = zarr.group(store=store)
@@ -120,6 +122,7 @@ def import_deck(context, p, out):
                 else "f8",
             )
         for start in range(0, cells, step):
+            progress.report(0.5 * start / cells, "eclipse_import: geometry/property blocks")
             end = min(cells, start + step)
             corners = reconstruct(
                 deck.arrays["COORD"],
@@ -169,6 +172,8 @@ def import_deck(context, p, out):
                         "Invalid region ID",
                     )
                 group[name][start:end] = values
+                if name.endswith("NUM"):
+                    region_values.setdefault(name, set()).update(map(int, np.unique(values[mask])))
             kx = np.asarray(group["permeability_md"][start:end])
             kz = (
                 np.asarray(deck.arrays["PERMZ"][start:end])
@@ -192,9 +197,26 @@ def import_deck(context, p, out):
                 preserved &= bool(np.array_equal(actual, expected, equal_nan=True))
                 deck.arrays[source] = discard_pages(deck.arrays[source])
     require(preserved, "VALIDATION_FAILED", "Imported property differs from parsed source")
+    region_values["zones"] = regions
+    region_ids = {name: sorted(values) for name, values in region_values.items()}
+    z_convention = dict(
+        input_z_direction=p["z_direction"],
+        stored_z_direction="up",
+        conversion="z_stored = -depth" if p["z_direction"] == "down" else "z_stored = z",
+        input_length_unit=p["length_unit"],
+        stored_length_unit="m",
+        length_scale=0.3048 if p["length_unit"] == "ft" else 1.0,
+        example=(
+            "ZCORN depth 2692 m is stored as Z=-2692; give contacts as owc_z_m=-2692"
+            if p["z_direction"] == "down"
+            else "Z values are stored unchanged (positive upward)"
+        ),
+    )
     report = dict(
         operation="eclipse_import",
         status="PASS",
+        z_convention=z_convention,
+        region_ids=region_ids,
         scope="Static model import, not simulator initialization or geological validation",
         dimensions=list(deck.shape),
         cells=cells,
@@ -236,8 +258,14 @@ def import_deck(context, p, out):
         vertical_datum=p["vertical_datum"],
         units=UNITS,
         z_direction="up",
+        input_z_direction=p["z_direction"],
+        stored_z_direction="up",
+        z_conversion=z_convention["conversion"],
+        z_convention=z_convention,
+        region_ids=region_ids,
         order="ECLIPSE",
         block_cells=step,
+        working_memory_bound_bytes=step * 2048,
         source_sha256=hashes,
         assumptions=p["assumptions"],
         source_input_bytes=sum(v["size_bytes"] for v in deck.files),

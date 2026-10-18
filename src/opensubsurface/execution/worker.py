@@ -14,11 +14,16 @@ def main():
     directory = Path(sys.argv[1])
     start = time.monotonic()
     request = json.loads((directory / "request.json").read_text(encoding="utf-8"))
+    from opensubsurface.execution import progress
+
+    progress.attach(directory)
+    progress.log(f"worker started: operation={request['operation']} device={request['device']}")
     try:
         from opensubsurface.execution.device import select_device
 
         request["device"], _ = select_device(request["device"])
         kind, summary, files = run(request, directory / "output")
+        progress.report(1.0, "completed", force=True)
         versions = {}
         for package in ("numpy", "scipy", "gempy", "gstools", "torch", "segyio", "matplotlib", "xtgeo"):
             versions[package] = importlib.metadata.version(package)
@@ -52,6 +57,10 @@ def main():
                 remediation="Проверьте локальный worker.log и совместимость входов",
             ),
         )
+    progress.log(
+        "worker finished: "
+        + ("ok" if result["ok"] else f"error={result['error']['code']} {result['error']['message']}")
+    )
     if not result["ok"]:
         output = directory / "output"
         output.mkdir(exist_ok=True)

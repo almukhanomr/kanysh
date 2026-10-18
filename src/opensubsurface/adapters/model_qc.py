@@ -9,6 +9,15 @@ from scipy import ndimage
 from opensubsurface.adapters.cornerpoint import cell_volumes
 from opensubsurface.adapters.model_arrays import ijk, iterate, provenance, region
 from opensubsurface.calculations.cornerpoint_reference import integral
+from opensubsurface.execution import progress
+
+SOURCE_KEYWORDS = dict(phi="PORO", ntg="NTG", sw="SWAT", permeability_md="PERMX")
+
+
+def missing_properties(obj):
+    """Model properties declared absent at import (ECLIPSE keyword names in the summary)."""
+    absent = set(obj["summary"].get("missing_properties") or [])
+    return [name for name, keyword in SOURCE_KEYWORDS.items() if keyword in absent or name in absent]
 
 
 def jacobians(corners):
@@ -30,6 +39,49 @@ def jacobians(corners):
         matrix = np.einsum("nci,cj->nij", translated, derivative)
         values.append(np.linalg.det(matrix))
     return np.stack(values, axis=1)
+
+
+def geometry_flags(corners, storage=None):
+    """Classify cells by trilinear Jacobians; columns 0..7 are Gauss points, 8..15 the vertices.
+
+    Corner k and k+4 lie on the same pillar (offsets differ only in the local z bit). A pillar
+    collapsed to zero length (corner-point pinch-out) makes both vertex Jacobians on it exactly
+    zero, although the cell is a valid wedge with positive six-tetrahedron volume. Such zeros
+    are explained, not degenerate. Any negative Jacobian, a zero at a Gauss point or an
+    unexplained vertex zero remains invalid. Tolerances are unchanged: 256 eps L^3 (L = largest
+    corner extent) for determinants and 256 eps L for pillar lengths.
+    """
+    finite = np.isfinite(corners).all(axis=(1, 2))
+    safe = np.where(np.isfinite(corners), corners, 0)
+    determinants = jacobians(safe) * (-1 if storage == "cornerpoint-zarr-v1" else 1)
+    extent = np.maximum(np.max(np.ptp(safe, axis=1), axis=1), np.finfo(float).tiny)
+    tolerance = np.finfo(float).eps * 256 * np.maximum(extent**3, np.finfo(float).tiny)
+    pillar_tolerance = np.finfo(float).eps * 256 * extent
+    collapsed = np.linalg.norm(safe[:, 4:] - safe[:, :4], axis=2) <= pillar_tolerance[:, None]
+    vertex = determinants[:, 8:]
+    zero = np.abs(determinants) <= tolerance[:, None]
+    explained = np.concatenate(
+        (np.zeros_like(collapsed, shape=(len(safe), 8)), np.tile(collapsed, 2) & zero[:, 8:]), axis=1
+    )
+    volume = cell_volumes(safe)
+    negative = determinants[:, :8].mean(axis=1) < -tolerance
+    twisted = (determinants.min(axis=1) < -tolerance) & (determinants.max(axis=1) > tolerance)
+    degenerate = (volume <= tolerance) | (zero & ~explained).any(axis=1)
+    valid = finite & ((determinants > tolerance[:, None]) | explained).all(axis=1) & (volume > tolerance)
+    return dict(
+        finite=finite,
+        safe=safe,
+        determinants=determinants,
+        tolerance=tolerance,
+        volume=volume,
+        negative=finite & negative,
+        twisted=finite & twisted,
+        degenerate=finite & degenerate,
+        pinched=finite & valid & explained.any(axis=1),
+        collapsed_pillars=collapsed.sum(axis=1),
+        valid=valid,
+        vertex=vertex,
+    )
 
 
 def run(obj, p, out):
@@ -59,55 +111,40 @@ def run(obj, p, out):
                 if len(examples) < p["max_examples"]:
                     examples.append(row)
 
+        missing = missing_properties(obj)
+        for name in missing:
+            writer.writerow(
+                dict(
+                    severity="WARNING",
+                    code="missing_property:" + name,
+                    i="",
+                    j="",
+                    k="",
+                    cell_id="",
+                    region="",
+                )
+            )
         for start, data, order in iterate(obj):
+            progress.report(start / cells, "model_qc geometry/property scan")
             active = data["active"].astype(bool)
             active_all[start : start + len(active)] = active
             ids = ijk(np.arange(start, start + len(active)), shape, order)
             regions = region(data, p["region_field"])
-            c = data["corners"]
-            finite = np.isfinite(c).all(axis=(1, 2))
+            flags = geometry_flags(data["corners"], obj["summary"].get("storage"))
+            finite, safe, volume = flags["finite"], flags["safe"], flags["volume"]
             issue(active & ~finite, "ERROR", "nonfinite_geometry", start, ids, regions)
-            safe = np.where(np.isfinite(c), c, 0)
-            determinants = jacobians(safe)
-            orientation = -1 if obj["summary"].get("storage") == "cornerpoint-zarr-v1" else 1
-            determinants *= orientation
-            scale = np.max(np.ptp(safe, axis=1), axis=1) ** 3
-            tolerance = np.finfo(float).eps * 256 * np.maximum(scale, np.finfo(float).tiny)
-            signed = determinants[:, :8].mean(axis=1)
-            volume = cell_volumes(safe)
             reference = integral(safe)
             independent_ok &= bool(np.allclose(volume, reference, rtol=1e-10, atol=1e-8))
             checked += len(active)
-            issue(
-                active & finite & (signed < -tolerance),
-                "ERROR",
-                "negative_signed_volume",
-                start,
-                ids,
-                regions,
-            )
-            issue(
-                active
-                & finite
-                & (np.min(determinants, axis=1) < -tolerance)
-                & (np.max(determinants, axis=1) > tolerance),
-                "ERROR",
-                "twisted_cell",
-                start,
-                ids,
-                regions,
-            )
-            issue(
-                active
-                & finite
-                & ((volume <= tolerance) | (np.min(np.abs(determinants), axis=1) <= tolerance)),
-                "ERROR",
-                "degenerate_cell",
-                start,
-                ids,
-                regions,
-            )
+            issue(active & flags["negative"], "ERROR", "negative_signed_volume", start, ids, regions)
+            issue(active & flags["twisted"], "ERROR", "twisted_cell", start, ids, regions)
+            issue(active & flags["degenerate"], "ERROR", "degenerate_cell", start, ids, regions)
+            # Valid corner-point pinch-out: zero-length pillar(s), positive volume, no negative Jacobian.
+            issue(active & flags["pinched"], "INFO", "pinched_pillar_cell", start, ids, regions)
             for name in ("phi", "ntg", "sw", "permeability_md", "kz_ratio"):
+                if name in missing:
+                    # An absent array is not a range violation; reported once below as missing_property.
+                    continue
                 values = np.asarray(data.get(name, np.full(len(active), np.nan)))
                 bad = ~np.isfinite(values) | (values < 0)
                 if name in ("phi", "ntg", "sw"):
@@ -163,11 +200,27 @@ def run(obj, p, out):
             if len(cluster_rows) < p["max_examples"]:
                 cluster_rows.append(row)
         counts["small_isolated_clusters"] = len(small)
+    review_only = {"ntg_zero_with_porosity", "small_isolated_clusters", "pinched_pillar_cell"}
     return dict(
         operation="model_qc",
-        status="ISSUES"
-        if any(v for k, v in counts.items() if k not in {"ntg_zero_with_porosity", "small_isolated_clusters"})
-        else "PASS",
+        status="ISSUES" if any(v for k, v in counts.items() if k not in review_only) else "PASS",
+        missing_properties=[
+            dict(
+                property=name,
+                source_keyword=SOURCE_KEYWORDS.get(name),
+                severity="WARNING",
+                code="missing_property:" + name,
+                note="Array absent from the model; not a range violation. Supply an explicit user value "
+                "(e.g. sw_override) where a calculation needs it; nothing is inferred.",
+            )
+            for name in missing
+        ],
+        severity_definitions=dict(
+            ERROR="Cell-level numerical defect",
+            WARNING="Review item or absent property",
+            INFO="pinched_pillar_cell: corner-point pinch-out with zero-length pillar(s), positive volume "
+            "and no negative Jacobian; valid for volumetrics",
+        ),
         validation_status="PASS" if independent_ok and int(sizes.sum()) == int(active_all.sum()) else "FAIL",
         scope="Numerical model QC; geological fitness requires review",
         input=provenance(obj),

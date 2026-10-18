@@ -8,9 +8,11 @@ from opensubsurface.calculations.schemas import (
 from opensubsurface.calculations.schemas import PlanRequest as CalculationPlanRequest
 from opensubsurface.schemas import (
     OPERATION_SCHEMAS,
+    Diagnostics,
     FolderAssess,
     Inspect,
     JobRequest,
+    JobStatus,
     ProjectCreate,
     ProjectRequest,
     SourceScan,
@@ -40,15 +42,17 @@ CONTRACTS = dict(
     simulation_validate=Inspect,
     simulation_results=Inspect,
     compute_targets_list=Strict,
-    job_status=JobRequest,
+    job_status=JobStatus,
     job_logs=JobRequest,
     job_cancel=JobRequest,
     workflow_validate=Inspect,
     workflow_status=JobRequest,
     workflow_cancel=JobRequest,
     scene_inspect=ProjectRequest,
+    diagnostics=Diagnostics,
 )
 READ_ONLY = {
+    "diagnostics",
     "folder_assess",
     "start",
     "project_list",
@@ -102,5 +106,7 @@ DESCRIPTIONS = {
     "model_build": "Задать регулярную геологическую модель; GemPy или явно горизонтальные слои.",
     "volumetrics_calculate": "Начальный объём нефти (не извлекаемые запасы), fractional OWC; возвращает job_id.",
     "simulation_submit": "Запустить настоящий OPM Flow; при отсутствии solver возвращает ошибку job.",
-    "job_status": "Фактическое состояние задания; числа доступны после succeeded через artifact_inspect.",
+    "job_status": "Compact job state: id, status, stage, progress 0..1, eta_s, error, result ref, payload_hash. verbose=true returns the full record (payload, attempts, events). Numbers are in the result artifact (artifact_inspect).",
+    "job_logs": "Tail of worker stdout/stderr, workflow node log and stage events; for calculation_run also each child job's status and worker tail. Local evidence only; no secrets.",
+    "diagnostics": "Read-only startup/runtime diagnostics, available even while starting: stage/substage/waiting_for, startup.log tail, versions, CUDA state (if probed), viewer URL/port and log tail. No secrets or environment values.",
 }

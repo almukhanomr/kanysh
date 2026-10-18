@@ -99,10 +99,14 @@ def windows_symlink_privilege(monkeypatch):
     original = Path.symlink_to
 
     def symlink(path, *args, **kwargs):
+        import sys
+
         try:
             return original(path, *args, **kwargs)
         except OSError as error:
-            if getattr(error, "winerror", None) == 1314:
+            # pytest's own numbered tmp_path "current" link tolerates OSError; never turn it into a skip.
+            caller = sys._getframe(1).f_globals.get("__name__", "")
+            if getattr(error, "winerror", None) == 1314 and not caller.startswith("_pytest"):
                 pytest.skip(
                     "Windows symlink creation requires Developer Mode or SeCreateSymbolicLinkPrivilege"
                 )
