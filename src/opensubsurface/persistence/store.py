@@ -124,7 +124,7 @@ class Store:
     def project(self, project_id):
         with self.engine.connect() as c:
             raw = c.execute(select(projects.c.data).where(projects.c.id == project_id)).scalar_one_or_none()
-        require(raw is not None, "NOT_FOUND", "Проект не найден", "project_id")
+        require(raw is not None, "NOT_FOUND", "Project not found", "project_id")
         return json.loads(raw)
 
     def list_projects(self):
@@ -156,7 +156,12 @@ class Store:
                     objects.c.project_id == project_id,
                 )
             ).scalar_one_or_none()
-        require(raw is not None, "INPUT_REVISION_CONFLICT", "Объект или ревизия недоступны", "ref")
+        require(
+            raw is not None,
+            "INPUT_REVISION_CONFLICT",
+            f"Artifact {ref['id']} revision {ref['revision']} does not exist in project {project_id}",
+            "ref",
+        )
         obj = json.loads(raw)
         if verify:
             self.verify(obj)
@@ -168,18 +173,18 @@ class Store:
             require(
                 path.is_file() and file_hash(path) == h,
                 "INTEGRITY_ERROR",
-                "Нарушена целостность артефакта",
+                "Artifact integrity check failed",
                 name,
-                "Восстановите durable store из резервной копии",
+                "Restore the durable store from a backup",
             )
         data = {k: v for k, v in obj.items() if k != "content_hash"}
-        require(digest(data) == obj["content_hash"], "INTEGRITY_ERROR", "Нарушена целостность manifest")
+        require(digest(data) == obj["content_hash"], "INTEGRITY_ERROR", "Manifest integrity check failed")
 
     def publish(self, project_id, kind, summary, files=None, parameters=None, sources=None, object_id=None):
         self.project(project_id)
         file_refs = {}
         for name, source in (files or {}).items():
-            require(PurePosixPath(name).name == name, "INVALID_PATH", "Недопустимое имя файла")
+            require(PurePosixPath(name).name == name, "INVALID_PATH", "Invalid file name")
             h = file_hash(source)
             dest = self.root / "blobs" / h
             if not dest.exists() or file_hash(dest) != h:
@@ -195,7 +200,7 @@ class Store:
             require(
                 existing_project is None or existing_project == project_id,
                 "PERMISSION_DENIED",
-                "Нельзя создавать ревизию объекта другого проекта",
+                "Cannot create a revision of an object from another project",
             )
             revisions = c.execute(select(objects.c.revision).where(objects.c.id == object_id)).scalars().all()
             record = dict(
@@ -223,7 +228,7 @@ class Store:
         return record
 
     def path(self, obj, name):
-        require(name in obj["files"], "NOT_FOUND", "Файл артефакта не найден")
+        require(name in obj["files"], "NOT_FOUND", "Artifact file not found")
         self.verify(obj)
         return self.root / "blobs" / obj["files"][name]
 
@@ -236,7 +241,7 @@ class Store:
             with path.open("wb") as out:
                 while chunk := stream.read(1024 * 1024):
                     total += len(chunk)
-                    require(total <= max_bytes, "UPLOAD_TOO_LARGE", "Превышен лимит загрузки 256 MB")
+                    require(total <= max_bytes, "UPLOAD_TOO_LARGE", "Upload limit of 256 MB exceeded")
                     out.write(chunk)
             record = dict(
                 id=upload_id,
@@ -261,13 +266,13 @@ class Store:
             raw = c.execute(
                 select(uploads.c.data).where(uploads.c.id == upload_id, uploads.c.project_id == project_id)
             ).scalar_one_or_none()
-        require(raw is not None, "NOT_FOUND", "Загрузка недоступна в этом проекте")
+        require(raw is not None, "NOT_FOUND", "Upload is not available in this project")
         return json.loads(raw)
 
     def upload_path(self, project_id, upload_id):
         record = self.upload_record(project_id, upload_id)
         path = self.root / "uploads" / record["id"]
-        require(file_hash(path) == record["content_hash"], "INTEGRITY_ERROR", "Загрузка повреждена")
+        require(file_hash(path) == record["content_hash"], "INTEGRITY_ERROR", "Upload is corrupted")
         return path
 
     def put_job(self, operation, payload):
@@ -283,14 +288,18 @@ class Store:
                     )
                 ).first()
                 if row:
-                    require(row[1] == h, "IDEMPOTENCY_CONFLICT", "Ключ уже использован с другим запросом")
+                    require(
+                        row[1] == h,
+                        "IDEMPOTENCY_CONFLICT",
+                        "Idempotency key was already used with a different request",
+                    )
                     return json.loads(row[0]), False
             record = dict(
                 id=uid("job"),
                 project_id=payload["project_id"],
                 operation=operation,
                 status="queued",
-                stage="В очереди",
+                stage="Queued",
                 created_at=now(),
                 updated_at=now(),
                 attempt_id=uid("attempt"),
@@ -319,7 +328,7 @@ class Store:
     def job(self, job_id):
         with self.engine.connect() as c:
             raw = c.execute(select(jobs.c.data).where(jobs.c.id == job_id)).scalar_one_or_none()
-        require(raw is not None, "NOT_FOUND", "Задание не найдено")
+        require(raw is not None, "NOT_FOUND", f"Job {job_id} not found", "job_id")
         return json.loads(raw)
 
     def update_job(self, job_id, **changes):
@@ -366,32 +375,32 @@ class Store:
         # Validate the entire bundle before publishing any metadata.
         with zipfile.ZipFile(path) as z:
             names = [i.filename for i in z.infolist()]
-            require(len(names) == len(set(names)), "INVALID_ARCHIVE", "Дубли путей в ZIP")
+            require(len(names) == len(set(names)), "INVALID_ARCHIVE", "Duplicate paths in ZIP")
             require(
                 sum(i.file_size for i in z.infolist()) <= 512 * 1024**2,
                 "INVALID_ARCHIVE",
-                "Распакованный ZIP превышает 512 MB",
+                "Unpacked ZIP exceeds 512 MB",
             )
             for name in names:
                 p = PurePosixPath(name)
                 require(
                     not p.is_absolute() and ".." not in p.parts and "\\" not in name,
                     "INVALID_ARCHIVE",
-                    "Небезопасный путь в ZIP",
+                    "Unsafe path in ZIP",
                 )
-            require("manifest.json" in names, "INVALID_ARCHIVE", "Отсутствует manifest")
+            require("manifest.json" in names, "INVALID_ARCHIVE", "manifest is missing")
             require(
                 z.getinfo("manifest.json").file_size <= 8 * 1024**2,
                 "INVALID_ARCHIVE",
-                "Manifest слишком велик",
+                "Manifest is too large",
             )
             manifest = json.loads(z.read("manifest.json"))
-            require(manifest.get("schema_version") == 1, "INVALID_ARCHIVE", "Неизвестная схема")
+            require(manifest.get("schema_version") == 1, "INVALID_ARCHIVE", "Unknown schema")
             project = manifest["project"]
             require(
                 re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,100}", project.get("id", "")) is not None,
                 "INVALID_ARCHIVE",
-                "Недопустимый project ID",
+                "Invalid project ID",
             )
             from opensubsurface.schemas import ProjectCreate
 
@@ -399,52 +408,54 @@ class Store:
                 {k: project[k] for k in ("name", "crs", "vertical_datum", "length_unit")}
             )
             allowed = {"id", "name", "crs", "vertical_datum", "length_unit", "schema_version", "created_at"}
-            require(set(project) <= allowed, "INVALID_ARCHIVE", "Неизвестные поля проекта")
+            require(set(project) <= allowed, "INVALID_ARCHIVE", "Unknown project fields")
             referenced = set()
             for obj in manifest["objects"]:
                 require(
                     re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,100}", obj.get("id", "")) is not None,
                     "INVALID_ARCHIVE",
-                    "Недопустимый object ID",
+                    "Invalid object ID",
                 )
                 require(
                     isinstance(obj.get("revision"), int)
                     and obj["revision"] > 0
                     and obj.get("schema_version") == 1,
                     "INVALID_ARCHIVE",
-                    "Неизвестная schema/revision",
+                    "Unknown schema/revision",
                 )
-                require(obj["project_id"] == project["id"], "INVALID_ARCHIVE", "Чужой объект")
+                require(
+                    obj["project_id"] == project["id"], "INVALID_ARCHIVE", "Object belongs to another project"
+                )
                 require(
                     digest({k: v for k, v in obj.items() if k != "content_hash"}) == obj["content_hash"],
                     "INTEGRITY_ERROR",
-                    "Повреждён manifest",
+                    "Corrupted manifest",
                 )
                 for name, h in obj["files"].items():
                     require(
                         len(h) == 64 and all(c in "0123456789abcdef" for c in h),
                         "INVALID_ARCHIVE",
-                        "Неверный hash",
+                        "Hash mismatch",
                     )
-                    require(PurePosixPath(name).name == name, "INVALID_ARCHIVE", "Неверное имя файла")
+                    require(PurePosixPath(name).name == name, "INVALID_ARCHIVE", "Invalid file name")
                     referenced.add(h)
             require(
                 set(names) == {"manifest.json"} | {f"blobs/{h}" for h in referenced},
                 "INVALID_ARCHIVE",
-                "Лишние или недостающие файлы",
+                "Extra or missing files",
             )
             with tempfile.TemporaryDirectory(dir=self.root) as temp:
                 for h in referenced:
                     dest = Path(temp) / h
                     with z.open(f"blobs/{h}") as source, dest.open("wb") as out:
                         shutil.copyfileobj(source, out)
-                    require(file_hash(dest) == h, "INTEGRITY_ERROR", "Повреждён blob")
+                    require(file_hash(dest) == h, "INTEGRITY_ERROR", "Corrupted blob")
                 with self.lock, self.engine.begin() as c:
                     require(
                         c.execute(select(projects.c.id).where(projects.c.id == project["id"])).first()
                         is None,
                         "CONFLICT",
-                        "Проект с таким ID уже существует",
+                        "A project with this ID already exists",
                     )
                     for h in referenced:
                         dest = self.root / "blobs" / h

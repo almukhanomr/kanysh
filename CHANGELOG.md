@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.0.dev5 — install check fixes
+
+- `regional_volumes` (and reconcile/tornado/Monte Carlo) were unusable from Claude Desktop in
+  0.2.0.dev4: the client fills schema defaults and sent `gas_oil_saturation: null`, which was
+  refused as a deprecated-alias conflict. Null aliases are now ignored and the published alias
+  schema has no default; two non-null values for one quantity are still refused.
+- `diagnostics` reports the Kanysh version inside the MCPB (was `null` without package metadata).
+- `eclipse_import.format` and `property_files[].format` document their own values
+  (auto/ascii/egrid, init/grdecl) instead of the geodata formats.
+- Descriptions for `project_list`, `project_inspect`, `artifact_inspect`, `compute_targets_list`,
+  `job_cancel`, `scene_inspect`, `dataset_import` (previously just the tool name).
+- Block job progress reads "N of M cells processed" instead of internal function names.
+- Compact `job_status` of a finished `calculation_run` reports `elapsed_seconds` (was `null`);
+  values are rounded to milliseconds. `job_cancel` returns the compact job record.
+- Unknown job, missing artifact revision and invalid source path errors name the offending
+  `field`, state the id, and carry a remediation (generic per code when none was given).
+- Agent-facing text is English only: job `stage` values and events ("Computing", "Completed",
+  "Nodes: …", "Cancel requested", "Cancelled"), workflow/ensemble progress and all error
+  messages (previously ~370 Russian strings). Error codes, fields and scientific checks are
+  unchanged; per-code fallback remediations now cover ~40 more codes. The bilingual `start`
+  label and the Russian docs are kept.
+
 ## Unreleased — OPM Flow deck runs (optional)
 
 - New `simulation_deck_run`: runs the user's own ECLIPSE-format `.DATA` deck and its INCLUDE

@@ -36,7 +36,7 @@ def validation_inputs(service, p):
 
 def report_inputs(service, p):
     job, plan_obj, records = planning.run_context(service, p)
-    require(job["status"] != "queued", "RUN_NOT_READY", "Run ещё не начал работу")
+    require(job["status"] != "queued", "RUN_NOT_READY", "The run has not started yet")
     resolved = dict(plan=bound(service, plan_obj))
     unavailable = {}
     for name, row in records.items():
@@ -53,9 +53,13 @@ def report_inputs(service, p):
 
 def import_snapshot(service, p):
     plan_obj = service.store.object(p["project_id"], p["plan"])
-    require(plan_obj["kind"] == "calculation_plan", "TYPE_MISMATCH", "Нужен calculation_plan")
     require(
-        p["input_index"] < len(plan_obj["summary"]["inputs"]), "INVALID_ARGUMENTS", "Input index вне плана"
+        plan_obj["kind"] == "calculation_plan", "TYPE_MISMATCH", "A calculation_plan artifact is required"
+    )
+    require(
+        p["input_index"] < len(plan_obj["summary"]["inputs"]),
+        "INVALID_ARGUMENTS",
+        "Input index is outside the plan",
     )
     entry = plan_obj["summary"]["inputs"][p["input_index"]]
     with service.store.path(plan_obj, entry["file"]).open("rb") as stream:

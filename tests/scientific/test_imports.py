@@ -41,5 +41,5 @@ def test_feet_conversion_invalid_md_and_normals(tmp_path):
     _, _, files = import_dataset(source, args, tmp_path)
     assert pq.read_table(files["data.parquet"]).to_pylist()[0]["x"] == pytest.approx(30.48)
     args.update(kind="trajectory", units=dict(md="m", x="m", y="m", z="m"))
-    with pytest.raises(DomainError, match="возрастать"):
+    with pytest.raises(DomainError, match="increasing"):
         import_dataset(Path("examples/templates/invalid_trajectory.csv"), args, tmp_path)

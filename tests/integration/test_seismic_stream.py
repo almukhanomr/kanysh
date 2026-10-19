@@ -102,5 +102,5 @@ def test_oversized_slice_is_rejected_before_reading_or_allocating():
         def __getitem__(self, _):
             raise AssertionError("Must reject before any data access")
 
-    with pytest.raises(DomainError, match="4 млн"):
+    with pytest.raises(DomainError, match="4 million"):
         read_section({"amplitude": HeaderOnly()}, 0, 0)

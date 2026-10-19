@@ -24,7 +24,9 @@ def inspect_source(service, p):
     sources = LocalSources(service.store)
     with sources.opened(p["source_id"], p["path"]) as (fd, _):
         info = os.fstat(fd)
-        require(revision(info) == p["file_revision"], "SOURCE_CHANGED", "Повторите source_scan")
+        require(
+            revision(info) == p["file_revision"], "SOURCE_CHANGED", "The file changed; run source_scan again"
+        )
         result = dict(
             path=p["path"],
             size_bytes=info.st_size,
@@ -36,16 +38,18 @@ def inspect_source(service, p):
             return dict(result, status="UNSUPPORTED_INSPECTION", supported_format="CSV")
         raw = os.read(fd, 65536)
         require(
-            revision(os.fstat(fd)) == p["file_revision"], "SOURCE_CHANGED", "Файл изменён во время чтения"
+            revision(os.fstat(fd)) == p["file_revision"],
+            "SOURCE_CHANGED",
+            "The file changed while being read",
         )
-        require(b"\n" in raw or len(raw) < 65536, "HEADER_TOO_LARGE", "CSV header превышает 64 KiB")
+        require(b"\n" in raw or len(raw) < 65536, "HEADER_TOO_LARGE", "CSV header exceeds 64 KiB")
         try:
             reader = csv.DictReader(io.StringIO(raw.decode("utf-8-sig")))
             columns = reader.fieldnames or []
             require(
                 bool(columns) and len(columns) == len(set(columns)),
                 "QC_FAILED",
-                "Пустые/повторные CSV columns",
+                "Empty or duplicate CSV columns",
             )
             previews = []
             for _ in range(p.get("preview_rows", 0)):
@@ -54,7 +58,9 @@ def inspect_source(service, p):
                     break
                 previews.append({key: str(value)[:200] for key, value in row.items() if key is not None})
         except (UnicodeError, csv.Error) as error:
-            raise DomainError("INVALID_CSV", "Нужен CSV UTF-8 с доступным header/sample") from error
+            raise DomainError(
+                "INVALID_CSV", "A UTF-8 CSV with a readable header/sample is required"
+            ) from error
         return dict(
             result,
             status="INSPECTED",
@@ -69,14 +75,14 @@ def inspect_source(service, p):
 def requirements(spec):
     missing = []
     for field, question in {
-        "grid": "Какие extent и shape использовать? Координаты — метры, Z вверх.",
-        "method": "GemPy по surface points или явно горизонтальная модель?",
-        "horizontal_assumption": "Разрешено ли явно предполагать горизонтальные слои?",
-        "zones": "Какие phi/NTG/Sw/K задать каждой зоне и на каком основании?",
-        "zone_ids": "Какие зоны входят в подсчёт?",
-        "bo": "Какой Bo использовать?",
-        "contacts": "Какие варианты OWC Z (м, вверх) сравнить?",
-        "assumptions": "Какие предметные допущения приняты пользователем?",
+        "grid": "Which extent and shape should be used? Coordinates are metres, Z positive upward.",
+        "method": "GemPy from surface points or an explicitly horizontal model?",
+        "horizontal_assumption": "May horizontal layers be explicitly assumed?",
+        "zones": "Which phi/NTG/Sw/K apply to each zone, and on what basis?",
+        "zone_ids": "Which zones are included in the volumes?",
+        "bo": "Which Bo should be used?",
+        "contacts": "Which OWC Z variants (m, positive upward) should be compared?",
+        "assumptions": "Which domain assumptions has the user accepted?",
     }.items():
         if spec.get("properties") and field in ("grid", "method", "horizontal_assumption", "zones"):
             continue
@@ -85,35 +91,35 @@ def requirements(spec):
     roles = {entry["kind"] for entry in spec["inputs"]}
     if spec["method"] == "gempy":
         if "surfaces" not in roles:
-            missing.append(dict(field="inputs.surfaces", question="Укажите CSV surface points."))
+            missing.append(dict(field="inputs.surfaces", question="Provide a surface points CSV."))
         if not spec["horizontal_assumption"] and "orientations" not in roles:
             missing.append(
                 dict(
                     field="inputs.orientations",
-                    question="Укажите orientations или разрешите horizontal_assumption.",
+                    question="Provide orientations or allow horizontal_assumption.",
                 )
             )
     elif spec["method"] == "horizontal_explicit":
         if spec["horizontal_assumption"] is not True:
             missing.append(
-                dict(field="horizontal_assumption", question="Horizontal model требует явного true.")
+                dict(field="horizontal_assumption", question="A horizontal model requires an explicit true.")
             )
         if roles & {"surfaces", "orientations"}:
             missing.append(
                 dict(
                     field="method",
-                    question="Surface/orientation inputs требуют GemPy: horizontal_explicit их не использует.",
+                    question="Surface/orientation inputs require GemPy: horizontal_explicit does not use them.",
                 )
             )
     for i, entry in enumerate(spec["inputs"]):
         for key in REQUIRED[entry["kind"]]:
             if key in ("x", "y", "z", "reference_elevation") and not entry["units"].get(key):
-                missing.append(dict(field=f"inputs[{i}].units.{key}", question=f"Укажите единицу {key}."))
+                missing.append(dict(field=f"inputs[{i}].units.{key}", question=f"Declare the unit of {key}."))
     if spec["uncertainty"] and spec["contacts"]:
         require(
             spec["uncertainty"]["contact_name"] in {c["name"] for c in spec["contacts"]},
             "INVALID_PLAN",
-            "uncertainty.contact_name должен выбирать один contact",
+            "uncertainty.contact_name must select one contact",
         )
         for name, distribution in spec["uncertainty"]["distributions"].items():
             bounds = [distribution["low"]]
@@ -122,16 +128,18 @@ def requirements(spec):
             require(
                 name not in ("phi", "ntg", "sw") or all(0 <= v <= 1 for v in bounds),
                 "INVALID_PLAN",
-                "Границы distribution должны быть в [0,1]",
+                "Distribution bounds must be within [0,1]",
             )
             require(
                 name != "bo" or all(v > 0 for v in bounds),
                 "INVALID_PLAN",
-                "Bo distribution должен быть положительным",
+                "The Bo distribution must be positive",
             )
     if spec["zones"] and spec["zone_ids"]:
         require(
-            set(map(str, spec["zone_ids"])) <= set(spec["zones"]), "INVALID_PLAN", "Нет свойств выбранных зон"
+            set(map(str, spec["zone_ids"])) <= set(spec["zones"]),
+            "INVALID_PLAN",
+            "Properties of the selected zones are missing",
         )
     return missing
 
@@ -209,7 +217,7 @@ def plan(service, arguments):
         require(
             entry["kind"] in info["candidate_kinds"],
             "INVALID_PLAN",
-            "CSV columns не соответствуют выбранному kind",
+            "CSV columns do not match the selected kind",
         )
         inspected.append(info)
     if missing:
@@ -233,12 +241,12 @@ def plan(service, arguments):
             len(set(spec["horizons_z"])) == len(spec["horizons_z"])
             and all(spec["grid"]["extent"][4] < z < spec["grid"]["extent"][5] for z in spec["horizons_z"]),
             "INVALID_PLAN",
-            "Неверные горизонтальные границы",
+            "Invalid horizontal boundaries",
         )
         require(
             set(map(str, range(1, len(spec["horizons_z"]) + 2))) <= set(spec["zones"]),
             "INVALID_PLAN",
-            "Нужны свойства всех зон горизонтальной модели",
+            "Properties of every zone of the horizontal model are required",
         )
         model["execution"] = dict(spec["execution"], device_policy="cpu")
     model = ModelBuild.model_validate(model).model_dump(mode="json")
@@ -296,21 +304,21 @@ def plan(service, arguments):
 
 def validate_plan(service, p):
     obj = service.store.object(p["project_id"], p["plan"])
-    require(obj["kind"] == "calculation_plan", "TYPE_MISMATCH", "Требуется calculation_plan")
-    require(obj["summary"]["status"] == "READY", "INVALID_PLAN", "План не готов")
+    require(obj["kind"] == "calculation_plan", "TYPE_MISMATCH", "A calculation_plan artifact is required")
+    require(obj["summary"]["status"] == "READY", "INVALID_PLAN", "The plan is not READY")
     require(
         obj["summary"]["runtime"] == fingerprint(),
         "STALE_PLAN",
-        "Код/библиотеки/solver изменились: создайте новый план",
+        "Code, libraries or solver changed: create a new plan",
     )
     project = service.store.project(p["project_id"])
     require(
         all(project[k] == obj["summary"][k] for k in ("crs", "vertical_datum")),
         "INVALID_CRS",
-        "CRS/datum проекта изменился",
+        "The project CRS/datum changed",
     )
     spec = obj["parameters"]
-    require(not requirements(spec), "INVALID_PLAN", "В плане отсутствуют допущения")
+    require(not requirements(spec), "INVALID_PLAN", "The plan is missing required assumptions")
     if spec.get("properties"):
         props = service.store.object(p["project_id"], spec["properties"])
         require(
@@ -431,7 +439,7 @@ def run(service, p):
         require(
             old["kind"] == "workflow_run" and old["parameters"]["workflow"] == ref(workflow),
             "INVALID_RESUME",
-            "Resume должен относиться к этому плану",
+            "resume_run must belong to this plan",
         )
     key = p.get("idempotency_key") or "calculation:" + digest(
         dict(plan=p["plan"], resume=p.get("resume_run"))
@@ -450,10 +458,12 @@ def run(service, p):
 
 def run_context(service, p):
     job = service.store.job(p["run_id"])
-    require(job["project_id"] == p["project_id"], "PERMISSION_DENIED", "Run недоступен этому проекту")
-    require(job["operation"] == "workflow_run", "TYPE_MISMATCH", "Нужен calculation run")
+    require(
+        job["project_id"] == p["project_id"], "PERMISSION_DENIED", "The run does not belong to this project"
+    )
+    require(job["operation"] == "workflow_run", "TYPE_MISMATCH", "A calculation run is required")
     workflow = service.store.object(p["project_id"], job["payload"]["workflow"])
-    require("calculation_plan" in workflow["parameters"], "TYPE_MISMATCH", "Это не calculation run")
+    require("calculation_plan" in workflow["parameters"], "TYPE_MISMATCH", "This is not a calculation run")
     plan_obj = service.store.object(p["project_id"], workflow["parameters"]["calculation_plan"])
     records = dict(job.get("node_results", {}))
     if job.get("result"):

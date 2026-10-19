@@ -33,7 +33,7 @@ def test_archive_traversal_and_hash_tamper_rejected(tmp_path):
     path = tmp_path / "bad.zip"
     with zipfile.ZipFile(path, "w") as z:
         z.writestr("../escape", "bad")
-    with pytest.raises(DomainError, match="Небезопасный"):
+    with pytest.raises(DomainError, match="Unsafe"):
         store.import_project(path)
     assert store.list_projects() == []
     p = project(store)
@@ -41,7 +41,7 @@ def test_archive_traversal_and_hash_tamper_rejected(tmp_path):
     f.write_text("original")
     obj = store.publish(p["id"], "dataset", {}, {"a": f})
     store.path(obj, "a").write_text("changed")
-    with pytest.raises(DomainError, match="целостность"):
+    with pytest.raises(DomainError, match="integrity"):
         store.object(p["id"], obj)
 
 
@@ -59,7 +59,7 @@ def test_revisions_immutable_cross_project_and_idempotency(tmp_path):
     job, created = store.put_job("test", args)
     again, created_again = store.put_job("test", args)
     assert created and not created_again and job["id"] == again["id"]
-    with pytest.raises(DomainError, match="Ключ"):
+    with pytest.raises(DomainError, match="Idempotency key"):
         store.put_job("test", dict(args, value=2))
     store.update_job(job["id"], status="succeeded")
     assert store.update_job(job["id"], status="failed")["status"] == "succeeded"

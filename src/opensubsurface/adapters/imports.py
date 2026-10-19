@@ -24,15 +24,15 @@ def check_coordinates(crs, datum):
     require(
         bool(datum.strip()) and datum.lower() not in ("unknown", "неизвестно"),
         "MISSING_DATUM",
-        "Укажите вертикальный datum",
+        "Declare the vertical datum",
     )
     if crs != "LOCAL_METRIC":
         parsed = CRS.from_user_input(crs)
-        require(parsed.is_projected, "INVALID_CRS", "Нужна проекционная CRS с метрическими координатами")
+        require(parsed.is_projected, "INVALID_CRS", "A projected CRS with metric coordinates is required")
         require(
             all(a.unit_name == "metre" for a in parsed.axis_info[:2]),
             "INVALID_CRS",
-            "Координатные оси CRS должны быть в метрах",
+            "CRS coordinate axes must be in metres",
         )
 
 
@@ -41,25 +41,29 @@ def import_dataset(path, p, out, context=None):
     if p["kind"] == "las":
         import lasio
 
-        require(bool(p["well_id"]), "QC_FAILED", "LAS требует явный well_id")
+        require(bool(p["well_id"]), "QC_FAILED", "LAS import requires an explicit well_id")
         las = lasio.read(str(path))
-        require(float(las.version.VERS.value) in (1.2, 2.0), "UNSUPPORTED_PROFILE", "LAS только 1.2/2.0")
+        require(
+            float(las.version.VERS.value) in (1.2, 2.0),
+            "UNSUPPORTED_PROFILE",
+            "Only LAS 1.2/2.0 is supported",
+        )
         data = {}
         units = {}
         for curve in las.curves:
             data[curve.mnemonic] = np.asarray(las[curve.mnemonic], float)
             units[curve.mnemonic] = p["units"].get(curve.mnemonic, curve.unit)
-            require(bool(units[curve.mnemonic]), "INVALID_UNITS", f"Нет единиц кривой {curve.mnemonic}")
+            require(bool(units[curve.mnemonic]), "INVALID_UNITS", f"Curve {curve.mnemonic} has no unit")
         depth = data[las.curves[0].mnemonic]
         depth_unit = units[las.curves[0].mnemonic]
         try:
             depth = (depth * ureg(depth_unit)).to("meter").magnitude
         except Exception:
-            require(False, "INVALID_UNITS", "MD должен иметь единицу длины")
+            require(False, "INVALID_UNITS", "MD must have a length unit")
         require(
             np.isfinite(depth).all() and (np.diff(depth) > 0).all(),
             "QC_FAILED",
-            "LAS MD должен строго возрастать",
+            "LAS MD must be strictly increasing",
         )
         data[las.curves[0].mnemonic] = depth
         units[las.curves[0].mnemonic] = "m"
@@ -77,27 +81,27 @@ def import_dataset(path, p, out, context=None):
             require(
                 set(REQUIRED[p["kind"]]) <= set(reader.fieldnames or []),
                 "QC_FAILED",
-                "Не хватает обязательных CSV columns",
+                "Required CSV columns are missing",
                 remediation=", ".join(REQUIRED[p["kind"]]),
             )
             rows = list(reader)
-        require(0 < len(rows) <= 1_000_000, "QC_FAILED", "Пустой или слишком большой CSV")
+        require(0 < len(rows) <= 1_000_000, "QC_FAILED", "CSV is empty or too large")
         if p["kind"] == "production":
             require(
                 p.get("pressure_reference") == "absolute" and p.get("rate_reference") == "standard",
                 "INVALID_UNITS",
-                "Production требует absolute pressure и standard rates",
+                "Production requires absolute pressure and standard-condition rates",
             )
             last_dates = {}
             for row in rows:
                 try:
                     dt = date.fromisoformat(row["date"])
                 except ValueError:
-                    require(False, "QC_FAILED", "Дата должна быть ISO YYYY-MM-DD")
+                    require(False, "QC_FAILED", "Date must be ISO YYYY-MM-DD")
                 require(
                     dt > last_dates.get(row["well_id"], date.min),
                     "QC_FAILED",
-                    "Даты production должны возрастать",
+                    "Production dates must be increasing",
                 )
                 last_dates[row["well_id"]] = dt
         string_fields = {"well_id", "horizon", "date"}
@@ -106,7 +110,9 @@ def import_dataset(path, p, out, context=None):
             values = []
             unit = p["units"].get(key)
             is_length = key in ("x", "y", "z", "md", "reference_elevation")
-            require(unit is not None or key in ("nx", "ny", "nz"), "INVALID_UNITS", f"Нет единицы {key}")
+            require(
+                unit is not None or key in ("nx", "ny", "nz"), "INVALID_UNITS", f"No unit declared for {key}"
+            )
             try:
                 factor = ureg(unit).to("m").magnitude if is_length else 1
                 if key.endswith("_rate"):
@@ -115,17 +121,17 @@ def import_dataset(path, p, out, context=None):
                     factor = ureg(unit).to("bar").magnitude
                 for i, row in enumerate(rows):
                     value = float(row[key]) * factor
-                    require(np.isfinite(value), "QC_FAILED", f"NaN/Inf: строка {i + 2}, {key}")
+                    require(np.isfinite(value), "QC_FAILED", f"NaN/Inf: row {i + 2}, {key}")
                     values.append(value)
             except (ValueError, pint.errors.PintError, TypeError):
-                require(False, "INVALID_UNITS", f"Некорректное значение или units: {key}")
+                require(False, "INVALID_UNITS", f"Invalid value or unit: {key}")
             for row, value in zip(rows, values):
                 row[key] = value
         if p["kind"] == "production":
             require(
                 all(row[k] >= 0 for row in rows for k in ("oil_rate", "water_rate", "gas_rate", "pressure")),
                 "QC_FAILED",
-                "Отрицательные production rates/absolute pressure",
+                "Negative production rates or absolute pressure",
             )
         if p["kind"] == "trajectory":
             last = {}
@@ -133,18 +139,18 @@ def import_dataset(path, p, out, context=None):
                 require(
                     row["md"] > last.get(row["well_id"], -np.inf),
                     "QC_FAILED",
-                    "MD должен строго возрастать в каждой скважине",
+                    "MD must be strictly increasing within each well",
                 )
-                require(row["md"] >= 0, "QC_FAILED", "MD должен быть неотрицательным")
+                require(row["md"] >= 0, "QC_FAILED", "MD must be non-negative")
                 last[row["well_id"]] = row["md"]
         if p["kind"] == "collars":
-            require(len({r["well_id"] for r in rows}) == len(rows), "QC_FAILED", "Дубли well_id")
+            require(len({r["well_id"] for r in rows}) == len(rows), "QC_FAILED", "Duplicate well_id")
         if p["kind"] == "orientations":
             normals = np.array([[r["nx"], r["ny"], r["nz"]] for r in rows])
             require(
                 np.allclose(np.linalg.norm(normals, axis=1), 1, atol=1e-5),
                 "QC_FAILED",
-                "Нормали должны быть единичными",
+                "Normals must be unit vectors",
             )
         table = pa.Table.from_pylist([{k: r[k] for k in REQUIRED[p["kind"]]} for r in rows])
         summary = dict(
@@ -180,12 +186,12 @@ def import_dataset(path, p, out, context=None):
             normalized = []
             for row in table.to_pylist():
                 track = sorted(trajectories.get(row["well_id"], []), key=lambda r: r["md"])
-                require(bool(track), "QC_FAILED", "Marker требует XYZ/MD trajectory")
+                require(bool(track), "QC_FAILED", "Markers require an XYZ/MD trajectory")
                 md = np.array([r["md"] for r in track])
                 require(
                     md[0] <= row["md"] <= md[-1],
                     "QC_FAILED",
-                    "Marker MD вне trajectory; extrapolation запрещена",
+                    "Marker MD is outside the trajectory; extrapolation is not allowed",
                 )
                 row.update(
                     {k: float(np.interp(row["md"], md, [r[k] for r in track])) for k in ("x", "y", "z")}
@@ -203,7 +209,7 @@ def import_dataset(path, p, out, context=None):
                 severity="info",
                 object=p["kind"],
                 row=None,
-                message="Схема, конечность и базовые диапазоны проверены",
+                message="Schema, finiteness and basic ranges checked",
                 suggested_action=None,
             )
         ],

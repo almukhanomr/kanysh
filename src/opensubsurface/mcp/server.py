@@ -194,10 +194,10 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
                 "results.pdf",
             },
             "PERMISSION_DENIED",
-            "Только bounded report/validation resources",
+            "Only bounded report/validation resources are served",
         )
         path = active.store.path(obj, filename)
-        require(path.stat().st_size <= 4 * 1024**2, "RESOURCE_TOO_LARGE", "Resource превышает 4 MiB")
+        require(path.stat().st_size <= 4 * 1024**2, "RESOURCE_TOO_LARGE", "Resource exceeds 4 MiB")
         return path.read_bytes()
 
     return server

@@ -41,7 +41,7 @@ def test_fractional_contact_and_missing_active():
     assert result["GRV"] == 20e6
     assert result["STOIIP"] == pytest.approx(1e6, rel=1e-8)
     arrays["phi"][0, 0, 0] = np.nan
-    with pytest.raises(DomainError, match="Пропуски"):
+    with pytest.raises(DomainError, match="Missing/NaN/Inf"):
         volumes(arrays, grid, [1], -1010, 1.2)
 
 
@@ -106,7 +106,7 @@ def test_quantile_exceedance_and_undefined_water_cut():
 def test_faulted_opm_bridge_rejects_without_voxelization_claim(tmp_path):
     from opensubsurface.adapters.opm import generate_case
 
-    with pytest.raises(DomainError, match="Наклонный"):
+    with pytest.raises(DomainError, match="inclined"):
         generate_case({}, {}, {}, tmp_path, {"fault": True})
 
 

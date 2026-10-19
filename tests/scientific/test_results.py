@@ -58,7 +58,7 @@ def test_null_gap_not_bridged_and_actual_calendar_dates_matter():
     assert aligned["FOPT"] == [None, None]
     later = series()
     later["dates"] = [d.replace("2026-01", "2026-02") for d in DATES]
-    with pytest.raises(DomainError, match="календарного"):
+    with pytest.raises(DomainError, match="calendar range"):
         analyze_cases(
             [
                 dict(id="a", status="succeeded", series=series()),
@@ -70,7 +70,7 @@ def test_null_gap_not_bridged_and_actual_calendar_dates_matter():
 def test_pointwise_quantiles_partial_counting_and_representative_is_real_case():
     cases = [dict(id=str(i), status="succeeded", series=series(m)) for i, m in enumerate([1, 2, 3])]
     cases.append(dict(id="failed-4", status="failed", error=dict(code="COMPUTE_FAILED")))
-    with pytest.raises(DomainError, match="частичный"):
+    with pytest.raises(DomainError, match="partial report"):
         analyze_cases(cases)
     result = analyze_cases(cases, allow_partial=True)
     assert result["completed"] == 3 and result["total"] == 4 and result["partial"]
@@ -85,11 +85,11 @@ def test_pointwise_quantiles_partial_counting_and_representative_is_real_case():
 
 def test_no_silent_extrapolated_terminal_metric_or_incompatible_conditions():
     cases = [dict(id="a", status="succeeded", series=series())]
-    with pytest.raises(DomainError, match="Метрика"):
+    with pytest.raises(DomainError, match="Metric"):
         analyze_cases(cases, report_at="2026-01-06T00:00:00+00:00")
     changed = series()
     changed["standard_conditions"] = dict(pressure_pa=100000, temperature_k=288.71)
-    with pytest.raises(DomainError, match="стандартные условия"):
+    with pytest.raises(DomainError, match="standard conditions"):
         analyze_cases(cases + [dict(id="b", status="succeeded", series=changed)])
     with pytest.raises(ValueError):
         ReportSeries.model_validate(dict(series(), dates=["2026-01-01", "2026-01-03", "2026-01-05"]))
@@ -103,7 +103,7 @@ def test_bounded_ranking_constraints_and_units_are_explicit():
     result = analyze_cases(cases, constraints=[dict(metric="FOPT", unit="standard_m3", maximum=100)])
     assert result["ranking"][0]["id"] == "a" and result["ranking"][0]["feasible"]
     assert not result["ranking"][1]["feasible"]
-    with pytest.raises(DomainError, match="Единицы"):
+    with pytest.raises(DomainError, match="units"):
         analyze_cases(cases, constraints=[dict(metric="FOPT", unit="STB", maximum=100)])
 
 

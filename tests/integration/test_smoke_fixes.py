@@ -2,6 +2,7 @@
 regional preflight, corner-point pinch-outs, GPU messages, QC, job logs, discovery, Z)."""
 
 import asyncio
+import importlib.metadata
 import json
 import os
 import sys
@@ -108,6 +109,20 @@ def test_every_tool_schema_is_resolved_and_documented(profile):
         assert "$defs" not in json.dumps(tool.inputSchema), tool.name
         assert unresolved_refs(tool.inputSchema) == [], tool.name
         assert undocumented(tool.inputSchema) == [], (tool.name, undocumented(tool.inputSchema))
+        if profile == "agent":
+            assert tool.description != tool.name, tool.name  # every published tool has a description
+
+
+def test_eclipse_format_docs_and_diagnostics_version():
+    from opensubsurface import __version__
+    from opensubsurface.diagnostics import _versions
+
+    tools = {t.name: t for t in asyncio.run(create_mcp(_NoService(), profile="agent").list_tools())}
+    request = tools["eclipse_import"].inputSchema["properties"]["request"]["properties"]
+    assert "egrid" in request["format"]["description"] and "irap" not in request["format"]["description"]
+    files = request["property_files"]["items"]["properties"]["format"]["description"]
+    assert "init" in files and "grdecl" in files and "irap" not in files
+    assert _versions()["kanysh-basic"] in (__version__, importlib.metadata.version("kanysh-basic"))
 
 
 def test_schema_enums_examples_units_and_aliases():
@@ -120,6 +135,7 @@ def test_schema_enums_examples_units_and_aliases():
     region = scenarios["items"]["properties"]["regions"]["items"]
     assert "-2692" in region["properties"]["owc_z_m"]["description"]
     assert region["properties"]["oil_gas_saturation"]["deprecated"] is True
+    assert "default" not in region["properties"]["oil_gas_saturation"]  # clients would send old=null
     assert "sg_in_oil_zone" not in region.get("required", [])
     assert "exclude_flagged" in request["properties"]["geometry_policy"]["description"]
     plan = tools["calculation_plan"].inputSchema["properties"]["request"]["properties"]
@@ -159,6 +175,11 @@ def test_validation_errors_name_json_paths_and_aliases(service):
             )
             error = (await call("regional_volumes", old))["error"]
             assert error["code"] == "NOT_FOUND", error  # alias accepted; fails later on the unknown project
+            # Claude Desktop fills schema defaults: null aliases next to the new names are not a conflict.
+            nulls = json.loads(json.dumps(base))
+            nulls["scenarios"][0]["regions"][0].update(oil_gas_saturation=None, gas_oil_saturation=None)
+            error = (await call("regional_volumes", nulls))["error"]
+            assert error["code"] == "NOT_FOUND", error
 
     asyncio.run(scenario())
 
@@ -422,6 +443,9 @@ def test_compact_job_status_logs_and_calculation_progress(service, tmp_path):
     compact = service.invoke("job_status", dict(job_id=run["run_id"]))
     assert {"id", "status", "stage", "progress", "error", "result", "payload_hash"} <= compact.keys()
     assert "payload" not in compact and "events" not in compact
+    assert compact["elapsed_seconds"] > 0  # workflow jobs store only timestamps
+    cancelled = service.invoke("job_cancel", dict(job_id=run["run_id"]))
+    assert cancelled["status"] == "succeeded" and "payload" not in cancelled  # compact, terminal unchanged
     assert len(json.dumps(compact)) < len(
         json.dumps(service.invoke("job_status", dict(job_id=run["run_id"], verbose=True)))
     )
@@ -458,3 +482,16 @@ def test_folder_assess_proposes_every_equil_region_rsvd_and_pvt_tables():
     assert [(p["region"], p["lines"], p["records"]) for p in pvto] == [(1, [13, 15], 2), (2, [17, 17], 1)]
     assert all(p["status"] == "PROPOSAL_REQUIRES_USER_CONFIRMATION" for p in proposals)
     assert all("bo" not in json.dumps(p.get("values", {})).lower() for p in pvto)
+
+
+def test_common_errors_name_field_and_remediation(service):
+    with pytest.raises(DomainError) as raised:
+        service.invoke("job_status", dict(job_id="job-missing"))
+    error = raised.value.as_dict()
+    assert error["code"] == "NOT_FOUND" and error["field"] == "job_id" and "job-missing" in error["message"]
+    assert "project_inspect" in error["remediation"]
+    pid = service.invoke("project_create", dict(name="errors", vertical_datum="MSL"))["id"]
+    with pytest.raises(DomainError) as raised:
+        service.invoke("artifact_inspect", dict(project_id=pid, ref=dict(id="properties-x", revision=2)))
+    error = raised.value.as_dict()
+    assert error["code"] == "INPUT_REVISION_CONFLICT" and error["field"] == "ref" and error["remediation"]

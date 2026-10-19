@@ -149,6 +149,6 @@ if __name__ == "__main__":
     parser.add_argument("--variant", choices=["cpu", "gpu"], default="cpu")
     args = parser.parse_args()
     suffix = "-gpu" if args.variant == "gpu" else ""
-    result = asyncio.run(check(Path(f"dist/kanysh-basic{suffix}-0.2.0-dev4.mcpb").resolve(), args.variant))
+    result = asyncio.run(check(Path(f"dist/kanysh-basic{suffix}-0.2.0-dev5.mcpb").resolve(), args.variant))
     Path(f"docs/mcpb{suffix}-check.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))

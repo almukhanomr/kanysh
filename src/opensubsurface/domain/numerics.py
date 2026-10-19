@@ -1,4 +1,4 @@
-"""Научные конвенции: (x,y,z), Z-up; OPM I-fast, J-next, K-down."""
+"""Scientific conventions: (x,y,z), Z-up; OPM I-fast, J-next, K-down."""
 
 import numpy as np
 from scipy.ndimage import uniform_filter1d
@@ -20,25 +20,29 @@ def grid_arrays(grid):
 
 def validate_properties(arrays):
     active = arrays["active"].astype(bool)
-    require(active.any(), "QC_FAILED", "Нет активных ячеек")
+    require(active.any(), "QC_FAILED", "No active cells")
     for name, (low, high) in PROPERTY_BOUNDS.items():
         values = arrays[name]
-        require(values.shape == active.shape, "QC_FAILED", f"Размер {name} не совпадает с сеткой")
-        require(np.isfinite(values[active]).all(), "QC_FAILED", f"Пропуски/NaN/Inf в активной области {name}")
+        require(values.shape == active.shape, "QC_FAILED", f"Shape of {name} does not match the grid")
+        require(
+            np.isfinite(values[active]).all(),
+            "QC_FAILED",
+            f"Missing/NaN/Inf values in the active region of {name}",
+        )
         require(
             ((values[active] >= low) & (values[active] <= high)).all(),
             "QC_FAILED",
-            f"{name} вне физических границ",
+            f"{name} is outside physical bounds",
         )
 
 
 def volumes(arrays, grid, zone_ids, contact_z_m, bo, device="cpu", precision="float64"):
-    require(np.isfinite(bo) and bo > 0, "QC_FAILED", "Bo должен быть положительным")
-    require(np.isfinite(contact_z_m), "QC_FAILED", "OWC должен быть конечным")
+    require(np.isfinite(bo) and bo > 0, "QC_FAILED", "Bo must be positive")
+    require(np.isfinite(contact_z_m), "QC_FAILED", "OWC must be finite")
     validate_properties(arrays)
     centers, spacing = grid_arrays(grid)
     mask = arrays["active"].astype(bool) & np.isin(arrays["zones"], zone_ids)
-    require(mask.any(), "QC_FAILED", "Выбранные зоны не содержат активных ячеек")
+    require(mask.any(), "QC_FAILED", "The selected zones contain no active cells")
     cell_volume = float(np.prod(spacing))
     # Cell top minus OWC, clipped to cell thickness; center membership only for zone IDs.
     fraction = np.clip((centers[..., 2] + spacing[2] / 2 - contact_z_m) / spacing[2], 0, 1)
@@ -87,18 +91,18 @@ def volumes(arrays, grid, zone_ids, contact_z_m, bo, device="cpu", precision="fl
         "backend": device,
         "precision": precision,
         "assumptions": [
-            "Нефть–вода; горизонтальный OWC; без капиллярной переходной зоны",
-            "Начальный объём нефти, не извлекаемые запасы",
-            "Zone membership по центру; OWC пересекает ячейку дробно",
+            "Oil-water; horizontal OWC; no capillary transition zone",
+            "Initial oil in place, not recoverable reserves",
+            "Zone membership by cell centre; OWC cuts a cell fractionally",
         ],
         "vertical_cell_step_m": float(spacing[2]),
-        "boundary_discretization": "Ошибка геологической границы до одного шага сетки",
+        "boundary_discretization": "Geological boundary error up to one grid step",
     }
 
 
 def quantiles(values):
     v = np.asarray(values, dtype=float)
-    require(v.size > 0 and np.isfinite(v).all(), "QC_FAILED", "Недопустимая выборка статистики")
+    require(v.size > 0 and np.isfinite(v).all(), "QC_FAILED", "Invalid statistics sample")
     q10, q50, q90 = np.quantile(v, [0.1, 0.5, 0.9], method="linear")
     return dict(
         min=float(v.min()),
@@ -112,14 +116,14 @@ def quantiles(values):
         P50=float(q50),
         P10=float(q90),
         method="linear",
-        convention="P — вероятность превышения; P90=Q10",
+        convention="P is exceedance probability; P90=Q10",
     )
 
 
 def seismic_attribute(cube, kind, window=9, device="cpu"):
     cube = np.asarray(cube, dtype=np.float64)
-    require(cube.shape[-1] >= 3, "QC_FAILED", "Слишком короткая trace")
-    require(window <= cube.shape[-1] and window % 2 == 1, "QC_FAILED", "Недопустимое окно")
+    require(cube.shape[-1] >= 3, "QC_FAILED", "Trace is too short")
+    require(window <= cube.shape[-1] and window % 2 == 1, "QC_FAILED", "Invalid window")
     # A trace with any missing samples is masked in full for both CPU and GPU.
     valid = np.isfinite(cube).all(axis=-1, keepdims=True)
     clean = np.where(valid, cube, 0)
@@ -153,7 +157,7 @@ def seismic_attribute(cube, kind, window=9, device="cpu"):
 
 
 def time_to_z(twt_seconds, velocity_m_s, origin_z_m):
-    require(velocity_m_s > 0, "QC_FAILED", "Скорость должна быть положительной")
+    require(velocity_m_s > 0, "QC_FAILED", "Velocity must be positive")
     return origin_z_m - velocity_m_s * np.asarray(twt_seconds) / 2
 
 
@@ -172,7 +176,7 @@ def from_opm(values, shape, active=None):
         expanded = np.full(int(np.prod(shape)), np.nan)
         expanded[to_opm(active).astype(bool)] = flat
         flat = expanded
-    require(flat.size == np.prod(shape), "GRID_MAPPING_ERROR", "Число result cells не совпадает")
+    require(flat.size == np.prod(shape), "GRID_MAPPING_ERROR", "Result cell count does not match")
     return flat.reshape(shape, order="F")[:, :, ::-1]
 
 
@@ -188,7 +192,7 @@ def table_time_to_z(twt_seconds, table, origin_z_m):
     require(
         np.all((values >= table[0, 0]) & (values <= table[-1, 0])),
         "QC_FAILED",
-        "TWT вне time-depth table; extrapolation запрещена",
+        "TWT is outside the time-depth table; extrapolation is not allowed",
     )
     return origin_z_m - np.interp(values, table[:, 0], table[:, 1])
 
@@ -199,6 +203,6 @@ def table_z_to_time(z, table, origin_z_m):
     require(
         np.all((values >= table[0, 1]) & (values <= table[-1, 1])),
         "QC_FAILED",
-        "Глубина вне time-depth table; extrapolation запрещена",
+        "Depth is outside the time-depth table; extrapolation is not allowed",
     )
     return np.interp(values, table[:, 1], table[:, 0])

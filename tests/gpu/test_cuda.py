@@ -6,7 +6,7 @@ from opensubsurface.domain.numerics import seismic_attribute, volumes
 
 pytestmark = [
     pytest.mark.gpu,
-    pytest.mark.skipif(not torch.cuda.is_available(), reason="NVIDIA CUDA отсутствует"),
+    pytest.mark.skipif(not torch.cuda.is_available(), reason="NVIDIA CUDA is not available"),
 ]
 
 

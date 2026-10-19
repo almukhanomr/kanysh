@@ -17,7 +17,7 @@ release until the acceptance checklist at the end has been completed.
 
 Install/update [Claude Desktop](https://claude.ai/download). From this project's
 [releases](https://github.com/almukhanomr/kanysh/releases), download
-`kanysh-basic-0.2.0-dev4.mcpb` **if the release provides it**. The GitHub source ZIP
+`kanysh-basic-0.2.0-dev5.mcpb` **if the release provides it**. The GitHub source ZIP
 is not the extension. Double-click the `.mcpb` file to open its installation dialog.
 If Windows does not associate it with Claude, use Claude's local extension installation
 option in its settings. UI names depend on the client version.
@@ -83,7 +83,7 @@ selection require your confirmation. [Prepare Petrel/RMS exports](PETREL_EXPORT.
 
 ## GPU NVIDIA (optional, for IT)
 
-For NVIDIA, download **`kanysh-basic-gpu-0.2.0-dev4.mcpb`** instead of the CPU edition
+For NVIDIA, download **`kanysh-basic-gpu-0.2.0-dev5.mcpb`** instead of the CPU edition
 and follow the same three steps. It appears as **Kanysh Basic (GPU)** and uses a separate
 home, `%LOCALAPPDATA%\kanysh-basic-gpu`. Both editions can be installed alongside each
 other; keep separate homes. The first GPU installation downloads approximately **2.5 GB**

@@ -38,7 +38,7 @@ def generate(p, out):
             crs="LOCAL_METRIC",
             vertical_datum="SYNTHETIC_ORIGIN",
             geometry_unit="m",
-            provenance="Синтетический Ricker 25 Hz; Apache-2.0 generator; seed fixed",
+            provenance="Synthetic Ricker 25 Hz; Apache-2.0 generator; fixed seed",
             velocity_m_s=p["velocity_m_s"],
         ),
         {"cube.zip": path},
@@ -56,38 +56,38 @@ def import_segy(path, p, out):
         require(
             int(f.bin[segyio.BinField.Format]) in (1, 5),
             "UNSUPPORTED_PROFILE",
-            "Подтверждённый профиль: IBM/IEEE float32 SEG-Y",
+            "Supported profile: IBM/IEEE float32 SEG-Y",
         )
         require(
             np.all(np.asarray(f.attributes(segyio.TraceField.offset)[:]) == 0),
             "UNSUPPORTED_PROFILE",
-            "Поддерживается только zero-offset poststack; ненулевые offsets",
+            "Only zero-offset poststack is supported; non-zero offsets found",
         )
         il = np.array(f.attributes(p["inline_byte"])[:])
         xl = np.array(f.attributes(p["crossline_byte"])[:])
         ils, xls = np.unique(il), np.unique(xl)
         require(
-            len(ils) > 1 and len(xls) > 1, "AMBIGUOUS_GEOMETRY", "Проверьте inline/crossline header mapping"
+            len(ils) > 1 and len(xls) > 1, "AMBIGUOUS_GEOMETRY", "Check the inline/crossline header mapping"
         )
         require(
             len(set(zip(il.tolist(), xl.tolist()))) == len(il),
             "AMBIGUOUS_GEOMETRY",
-            "Дубли trace geometry; задайте явное правило",
+            "Duplicate trace geometry; declare an explicit rule",
         )
         require(
             len(ils) * len(xls) * len(f.samples) <= 50_000_000,
             "INSUFFICIENT_MEMORY",
-            "Профиль ограничен 50 млн samples; автоматическое уменьшение запрещено",
+            "The profile is limited to 50 million samples; automatic downsampling is not allowed",
         )
         require(
             np.all(np.diff(ils) == np.diff(ils)[0]) and np.all(np.diff(xls) == np.diff(xls)[0]),
             "UNSUPPORTED_PROFILE",
-            "Нерегулярная геометрия",
+            "Irregular geometry",
         )
         ns = len(f.samples)
         dt = int(f.bin[segyio.BinField.Interval])
         delays = np.array(f.attributes(segyio.TraceField.DelayRecordingTime)[:])
-        require(len(set(delays)) == 1, "UNSUPPORTED_PROFILE", "Variable trace origin не поддерживается")
+        require(len(set(delays)) == 1, "UNSUPPORTED_PROFILE", "Variable trace origin is not supported")
         with zarr.ZipStore(str(canonical), mode="w") as store:
             group = zarr.group(store=store)
             cube = group.create_dataset(
@@ -111,7 +111,7 @@ def import_segy(path, p, out):
                 require(
                     header[segyio.TraceField.CoordinateUnits] == 1,
                     "INVALID_UNITS",
-                    "Поддерживаются только declared length coordinates",
+                    "Only declared length coordinates are supported",
                 )
                 scalar = header[segyio.TraceField.SourceGroupScalar]
                 scale = scalar if scalar > 0 else (1 / abs(scalar) if scalar < 0 else 1)
@@ -148,11 +148,11 @@ def open_volume(path):
 
 def read_section(group, axis, index, max_samples=4_000_000):
     shape = group["amplitude"].shape
-    require(0 <= axis < 3 and 0 <= index < shape[axis], "QC_FAILED", "Индекс вне куба")
+    require(0 <= axis < 3 and 0 <= index < shape[axis], "QC_FAILED", "Index is outside the cube")
     require(
         int(np.prod([n for i, n in enumerate(shape) if i != axis])) <= max_samples,
         "VIEW_TOO_LARGE",
-        "Срез превышает 4 млн отсчётов; используйте scene_show со stride для ограниченного превью",
+        "The slice exceeds 4 million samples; use scene_show with stride for a bounded preview",
     )
     selection = [slice(None)] * 3
     selection[axis] = index

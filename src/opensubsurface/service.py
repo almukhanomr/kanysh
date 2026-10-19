@@ -4,6 +4,7 @@ import os
 import shutil
 import threading
 import time
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -159,7 +160,7 @@ class Service:
                 self.file_lock.close()
                 self.file_lock = None
                 raise DomainError(
-                    "CONTROL_PLANE_ACTIVE", "Уже запущен control plane; используйте его REST API"
+                    "CONTROL_PLANE_ACTIVE", "A control plane is already running; use its REST API"
                 )
             self.owns_controller = True
             self.recover_jobs()
@@ -191,9 +192,10 @@ class Service:
             self.store.update_job(
                 job["id"],
                 status="interrupted",
-                stage="Прервано после рестарта",
+                stage="Interrupted by restart",
                 error=dict(
-                    code="CONTROL_PLANE_RESTART", message="Не подтверждено завершение прежнего executor"
+                    code="CONTROL_PLANE_RESTART",
+                    message="Completion of the previous executor was not confirmed",
                 ),
             )
         for job in parents:
@@ -251,9 +253,9 @@ class Service:
             self.store.update_job(
                 job["id"],
                 status="interrupted",
-                stage="Прервано; snapshot для resume сохранён",
+                stage="Interrupted; resume snapshot saved",
                 result=result_ref,
-                error=dict(code="CONTROL_PLANE_RESTART", message="Повторите с resume ref"),
+                error=dict(code="CONTROL_PLANE_RESTART", message="Retry with the resume ref"),
             )
 
     def close(self):
@@ -387,12 +389,12 @@ class Service:
         require(
             execution["precision"] == "float64",
             "UNSUPPORTED_PRECISION",
-            "Профиль float32 ещё не прошёл численную проверку; используйте float64",
+            "The float32 profile has not passed numerical verification yet; use float64",
         )
         require(
             execution["placement"] != "remote" and execution["target_id"] in (None, "local-cpu"),
             "TARGET_UNREACHABLE",
-            "Удалённый target не настроен; передача данных не разрешена",
+            "No remote target is configured; data transfer is not allowed",
         )
         from opensubsurface.execution.device import select_device
 
@@ -434,7 +436,7 @@ class Service:
             require(
                 estimated < psutil.virtual_memory().available * 0.65,
                 "INSUFFICIENT_MEMORY",
-                "Оценка рабочих буферов превышает доступную RAM",
+                "Estimated working buffers exceed available RAM",
             )
         return device, warnings
 
@@ -452,9 +454,13 @@ class Service:
             if payload.get(key) is None:
                 continue
             obj = self.store.object(payload["project_id"], payload[key])
-            require(obj["kind"] in EXPECTED_KINDS[key], "TYPE_MISMATCH", f"Неверный тип входа {key}")
+            require(
+                obj["kind"] in EXPECTED_KINDS[key], "TYPE_MISMATCH", f"Wrong artifact kind for input {key}"
+            )
             if key in ("surfaces", "orientations"):
-                require(obj["summary"].get("kind") == key, "TYPE_MISMATCH", f"Нужен dataset kind={key}")
+                require(
+                    obj["summary"].get("kind") == key, "TYPE_MISMATCH", f"A dataset of kind={key} is required"
+                )
             resolved[key] = dict(obj, paths={k: str(self.store.path(obj, k)) for k in obj["files"]})
         if operation == "results_export":
             for index, reference in enumerate(payload["slices"]):
@@ -598,7 +604,7 @@ class Service:
             job = self.store.job(p.job_id)
             return job if p.verbose else self.compact_job(job)
         if operation == "job_cancel":
-            return self.cancel(JobRequest.model_validate(arguments).job_id)
+            return self.compact_job(self.cancel(JobRequest.model_validate(arguments).job_id))
         if operation in ("workflow_status", "workflow_cancel"):
             job_id = JobRequest.model_validate(arguments).job_id
             return self.store.job(job_id) if operation == "workflow_status" else self.cancel(job_id)
@@ -610,12 +616,12 @@ class Service:
             p = Inspect.model_validate(arguments)
             obj = self.store.object(p.project_id, p.ref)
             return dict(order=engine.validate(obj["parameters"]["nodes"]), status="valid")
-        require(operation in OPERATION_SCHEMAS, "UNSUPPORTED_OPERATION", "Неизвестная операция")
+        require(operation in OPERATION_SCHEMAS, "UNSUPPORTED_OPERATION", "Unknown operation")
         p = OPERATION_SCHEMAS[operation].model_validate(arguments).model_dump(mode="json")
         self.store.project(p["project_id"])
         if operation == "properties_reference":
             obj = self.store.object(p["project_id"], p["properties"])
-            require(obj["kind"] == "properties", "TYPE_MISMATCH", "Нужны свойства")
+            require(obj["kind"] == "properties", "TYPE_MISMATCH", "A properties artifact is required")
             return obj
         if operation == "dataset_import_snapshot":
             from opensubsurface.calculations.runtime import import_snapshot
@@ -683,7 +689,7 @@ class Service:
                         "uncertainty_monte_carlo",
                     ),
                     "UNSUPPORTED_LARGE_OPERATION",
-                    "Для этой операции нет блочного backend",
+                    "No block backend exists for this operation",
                 )
                 if device != "cpu" and not (
                     operation in {"regional_volumes", "volumetrics_calculate"}
@@ -732,7 +738,7 @@ class Service:
             require(
                 all(source_context["manifest"][k] == project[k] for k in ("crs", "vertical_datum")),
                 "INVALID_CRS",
-                "CRS/datum импорта должны совпадать с проектом",
+                "Import CRS/datum must match the project",
             )
         if operation == "simulation_deck_run":
             source_context = self.prepare_simulation(p)
@@ -755,7 +761,7 @@ class Service:
             require(
                 block_cells * 192 + 128 * 1024**2 < psutil.virtual_memory().available * 0.65,
                 "INSUFFICIENT_MEMORY",
-                "Недостаточно RAM для блочного backend",
+                "Not enough RAM for the block backend",
             )
         report_context = None
         if operation == "report_export":
@@ -764,7 +770,11 @@ class Service:
             resolved, report_context = report_inputs(self, p)
         if p.get("previous"):
             previous = self.store.object(p["project_id"], p["previous"])
-            require(previous["kind"] == "interpretation", "TYPE_MISMATCH", "previous требует interpretation")
+            require(
+                previous["kind"] == "interpretation",
+                "TYPE_MISMATCH",
+                "previous must be an interpretation artifact",
+            )
         upload_path = None
         upload_record = None
         context = None
@@ -773,7 +783,7 @@ class Service:
             require(
                 p["crs"] == project["crs"] and p["vertical_datum"] == project["vertical_datum"],
                 "INVALID_CRS",
-                "CRS/datum импорта должны совпадать с проектом; неявное преобразование запрещено",
+                "Import CRS/datum must match the project; implicit conversion is not allowed",
             )
             context = []
             for obj in self.store.list_objects(p["project_id"]):
@@ -823,7 +833,7 @@ class Service:
                         (directory / "cancel").touch()
                     self.store.update_job(
                         job["id"],
-                        stage="Повторная попытка" if index else "Вычисление",
+                        stage="Retrying" if index else "Computing",
                         status="cancel_requested" if cancelled else "running",
                         backend=request["device"],
                         warnings=warnings,
@@ -855,19 +865,19 @@ class Service:
                     break
             current = self.store.job(job["id"])
             if current["status"] == "cancel_requested" or result.get("error", {}).get("code") == "CANCELLED":
-                self.store.update_job(job["id"], status="cancelled", stage="Отменено", completed_at=now())
+                self.store.update_job(job["id"], status="cancelled", stage="Cancelled", completed_at=now())
             elif result["ok"]:
                 for path in result["files"].values():
                     require(
                         Path(path).resolve().is_relative_to(directory / "output")
                         or path == request.get("upload_path"),
                         "INVALID_OUTPUT",
-                        "Worker output вне разрешённого каталога",
+                        "Worker output is outside the allowed directory",
                     )
                 # Publication after integrity checks; cancellation cannot yield a succeeded job.
                 with self.lock:
                     if self.store.job(job["id"])["status"] == "cancel_requested":
-                        self.store.update_job(job["id"], status="cancelled", stage="Отменено")
+                        self.store.update_job(job["id"], status="cancelled", stage="Cancelled")
                         return
                     if request.get("source_context"):
                         from opensubsurface.adapters.large_grid import check_source
@@ -877,7 +887,7 @@ class Service:
                         require(
                             LocalSources(self.store).get(context["source"]["id"]) == context["source"],
                             "SOURCE_CHANGED",
-                            "Источник изменён или отозван во время импорта",
+                            "The source changed or was revoked during import",
                         )
                         check_source(context)
                     params = dict(request["payload"], environment=result["environment"])
@@ -909,7 +919,7 @@ class Service:
                     self.store.update_job(
                         job["id"],
                         status="succeeded",
-                        stage="Завершено",
+                        stage="Completed",
                         result=ref(obj),
                         elapsed_seconds=result["elapsed_seconds"],
                         completed_at=now(),
@@ -921,7 +931,7 @@ class Service:
                         require(
                             Path(path).resolve().is_relative_to(directory / "output"),
                             "INVALID_OUTPUT",
-                            "Неверный diagnostic output",
+                            "Invalid diagnostic output",
                         )
                     diagnostic = self.store.publish(
                         job["project_id"],
@@ -955,7 +965,7 @@ class Service:
                 self.store.update_job(
                     job["id"],
                     status="failed",
-                    stage="Ошибка",
+                    stage="Failed",
                     error=error,
                     result=diagnostics,
                     completed_at=now(),
@@ -964,10 +974,10 @@ class Service:
             self.store.update_job(
                 job["id"],
                 status="failed",
-                stage="Ошибка control plane",
+                stage="Control plane error",
                 error=e.as_dict()
                 if isinstance(e, DomainError)
-                else dict(code="EXECUTOR_FAILED", message="Ошибка исполнения: " + type(e).__name__),
+                else dict(code="EXECUTOR_FAILED", message="Execution error: " + type(e).__name__),
                 completed_at=now(),
             )
 
@@ -1040,6 +1050,15 @@ class Service:
     def compact_job(self, job):
         """Small status record for agents; verbose=true returns the full stored job."""
         progress = self.progress(job)
+        elapsed = job.get("elapsed_seconds")
+        if elapsed is None and job.get("started_at") and job.get("completed_at"):
+            # Workflow jobs record only timestamps.
+            elapsed = round(
+                (
+                    datetime.fromisoformat(job["completed_at"]) - datetime.fromisoformat(job["started_at"])
+                ).total_seconds(),
+                3,
+            )
         return dict(
             id=job["id"],
             operation=job["operation"],
@@ -1055,7 +1074,7 @@ class Service:
             created_at=job.get("created_at"),
             started_at=job.get("started_at"),
             completed_at=job.get("completed_at"),
-            elapsed_seconds=job.get("elapsed_seconds"),
+            elapsed_seconds=None if elapsed is None else round(elapsed, 3),
             child_jobs=len(job.get("child_jobs") or []),
             verbose_hint="job_status with verbose=true returns payload, attempts and events",
         )
@@ -1122,7 +1141,7 @@ class Service:
             (directory / "cancel").touch()
             for child_id in job.get("child_jobs", []):
                 self.cancel(child_id)
-            return self.store.update_job(job_id, status="cancel_requested", stage="Отмена запрошена")
+            return self.store.update_job(job_id, status="cancel_requested", stage="Cancel requested")
 
     def wait(self, submission, timeout=3600):
         if "job_id" not in submission:
@@ -1133,16 +1152,16 @@ class Service:
             if job["status"] in TERMINAL:
                 if job["status"] == "succeeded":
                     return self.store.object(job["project_id"], job["result"])
-                error = job["error"] or dict(code="CANCELLED", message="Задание отменено или прервано")
+                error = job["error"] or dict(code="CANCELLED", message="Job cancelled or interrupted")
                 raise DomainError(error["code"], error["message"])
             time.sleep(0.1)
-        raise DomainError("TIMEOUT", "Истёк срок ожидания")
+        raise DomainError("TIMEOUT", "Timed out waiting for the job")
 
     def submit_orchestrator(self, operation, payload):
         self.start()
         if operation == "workflow_run":
             workflow = self.store.object(payload["project_id"], payload["workflow"])
-            require(workflow["kind"] == "workflow", "TYPE_MISMATCH", "Требуется workflow")
+            require(workflow["kind"] == "workflow", "TYPE_MISMATCH", "A workflow artifact is required")
             engine.validate(workflow["parameters"]["nodes"])
             nodes = workflow["parameters"]["nodes"]
             future_refs = {node["id"]: dict(id="pending-" + node["id"], revision=1) for node in nodes}
@@ -1152,7 +1171,7 @@ class Service:
                 require(
                     args.get("project_id") == payload["project_id"],
                     "PERMISSION_DENIED",
-                    "Workflow не меняет проект",
+                    "The workflow belongs to another project",
                 )
                 typed = OPERATION_SCHEMAS[node["operation"]].model_validate(args).model_dump(mode="json")
                 self.preflight(node["operation"], typed)
@@ -1160,7 +1179,9 @@ class Service:
                     value = typed.get(port)
                     if value and value["id"] not in future_ids:
                         obj = self.store.object(payload["project_id"], value)
-                        require(obj["kind"] == kind, "TYPE_MISMATCH", f"Неверный тип входного порта {port}")
+                        require(
+                            obj["kind"] == kind, "TYPE_MISMATCH", f"Wrong artifact kind for input port {port}"
+                        )
                 for artifact_ref in engine.artifact_refs(typed):
                     if artifact_ref["id"] not in future_ids:
                         self.store.object(payload["project_id"], artifact_ref)
@@ -1172,7 +1193,11 @@ class Service:
             plan = build_plan(self, payload)
             if payload.get("resume_ensemble"):
                 previous = self.store.object(payload["project_id"], payload["resume_ensemble"])
-                require(previous["kind"] == "ensemble", "TYPE_MISMATCH", "resume_ensemble требует ensemble")
+                require(
+                    previous["kind"] == "ensemble",
+                    "TYPE_MISMATCH",
+                    "resume_ensemble requires an ensemble artifact",
+                )
         job, created = self.store.put_job(operation, payload)
         if created:
             if plan is not None:
@@ -1196,7 +1221,7 @@ class Service:
 
         def publish_states(**changes):
             running = sorted(name for name, s in states.items() if s["status"] == "running")
-            stage = ("Узлы: " + ", ".join(running)) if running else changes.pop("stage", None)
+            stage = ("Nodes: " + ", ".join(running)) if running else changes.pop("stage", None)
             visible = {name: {k: v for k, v in s.items() if k != "started"} for name, s in states.items()}
             update = dict(node_states=visible, **changes)
             if stage:
@@ -1206,7 +1231,7 @@ class Service:
         try:
             log("workflow started")
             self.store.update_job(
-                job["id"], status="running", stage="Проверка графа", child_jobs=children, started_at=now()
+                job["id"], status="running", stage="Validating graph", child_jobs=children, started_at=now()
             )
             if job["operation"] == "ensemble_run":
                 from opensubsurface.workflows.ensembles import execute
@@ -1223,7 +1248,7 @@ class Service:
                 if p.get("resume_run"):
                     old = self.store.object(project_id, p["resume_run"])
                     require(
-                        old["kind"] == "workflow_run", "TYPE_MISMATCH", "resume_run должен быть workflow run"
+                        old["kind"] == "workflow_run", "TYPE_MISMATCH", "resume_run must be a workflow run"
                     )
                     previous = old["summary"]["nodes"]
                 # Each ready frontier submitted before waiting: explicit fan-out, then fan-in.
@@ -1237,7 +1262,7 @@ class Service:
                         and (set(nodes[n]["depends_on"]) | set(engine.references(nodes[n]["arguments"])))
                         <= set(outputs)
                     ]
-                    require(bool(ready), "INVALID_WORKFLOW", "Не удалось разрешить зависимости")
+                    require(bool(ready), "INVALID_WORKFLOW", "Could not resolve dependencies")
                     pending = []
                     for name in ready:
                         self.check_cancel(job["id"])
@@ -1246,7 +1271,7 @@ class Service:
                         require(
                             args.get("project_id") == project_id,
                             "PERMISSION_DENIED",
-                            "Workflow не меняет проект",
+                            "The workflow belongs to another project",
                         )
                         typed = (
                             OPERATION_SCHEMAS[node["operation"]].model_validate(args).model_dump(mode="json")
@@ -1257,7 +1282,7 @@ class Service:
                                 operation=node["operation"],
                                 args=typed,
                                 inputs={k: v["content_hash"] for k, v in resolved.items()},
-                                app="0.2.0.dev4",
+                                app="0.2.0.dev5",
                                 runtime=runtime,
                             )
                         )
@@ -1340,13 +1365,13 @@ class Service:
             self.store.update_job(
                 job["id"],
                 status="failed" if partial else "succeeded",
-                stage="Часть cases завершилась с ошибкой" if partial else "Завершено",
+                stage="Some cases failed" if partial else "Completed",
                 result=ref(obj),
                 error=dict(
                     code="VALIDATION_FAILED" if validation_failed else "PARTIAL_FAILURE",
-                    message="Проверьте отчёт валидации"
+                    message="Check the validation report"
                     if validation_failed
-                    else "Проверьте статусы всех child cases",
+                    else "Check the status of every child case",
                 )
                 if partial
                 else None,
@@ -1377,7 +1402,7 @@ class Service:
             self.store.update_job(
                 job["id"],
                 status="cancelled" if cancelled else "failed",
-                stage="Прервано",
+                stage="Interrupted",
                 result=partial_ref,
                 error=e.as_dict()
                 if isinstance(e, DomainError)
@@ -1385,7 +1410,7 @@ class Service:
             )
 
     def check_cancel(self, job_id):
-        require(self.store.job(job_id)["status"] != "cancel_requested", "CANCELLED", "Workflow отменён")
+        require(self.store.job(job_id)["status"] != "cancel_requested", "CANCELLED", "Workflow cancelled")
 
     def compare(self, operation, p):
         from opensubsurface.domain.numerics import quantiles
@@ -1397,10 +1422,10 @@ class Service:
             require(
                 operation == "ensemble_compare",
                 "TYPE_MISMATCH",
-                "ensemble ref допустим только для ensemble_compare",
+                "An ensemble ref is allowed only for ensemble_compare",
             )
             ensemble = self.store.object(p["project_id"], p["ensemble"])
-            require(ensemble["kind"] == "ensemble", "TYPE_MISMATCH", "Требуется ensemble artifact")
+            require(ensemble["kind"] == "ensemble", "TYPE_MISMATCH", "An ensemble artifact is required")
             sources = [p["ensemble"]]
             for row in ensemble["summary"]["rows"]:
                 if row["status"] == "succeeded" and row.get("result"):
@@ -1417,14 +1442,12 @@ class Service:
             objects = []
         else:
             objects = [self.store.object(p["project_id"], r) for r in p["results"]]
-            require(
-                len({o["kind"] for o in objects}) == 1, "TYPE_MISMATCH", "Нельзя смешивать типы результатов"
-            )
+            require(len({o["kind"] for o in objects}) == 1, "TYPE_MISMATCH", "Result kinds cannot be mixed")
         if objects and objects[0]["kind"] == "volumetrics":
             require(
                 p["metric"] in ("auto", "STOIIP") and operation != "development_rank",
                 "TYPE_MISMATCH",
-                "Для статических объёмов метрика STOIIP",
+                "For static volumes the metric is STOIIP",
             )
             rows = [dict(result=ref(o), value=o["summary"]["values"]["STOIIP"]) for o in objects]
             summary = dict(
@@ -1433,7 +1456,7 @@ class Service:
                 ranking=sorted(rows, key=lambda r: r["value"], reverse=True),
                 metric="STOIIP",
                 unit="standard_m3",
-                claim="Ранжирование явных вариантов; не глобальный оптимум",
+                claim="Ranking of explicit variants; not a global optimum",
             )
             files = None
         else:
@@ -1476,15 +1499,17 @@ class Service:
         )
 
     def result_case(self, obj):
-        require(obj["kind"] == "simulation_result", "TYPE_MISMATCH", "Требуется simulation_result artifact")
-        require("series.json" in obj["files"], "INVALID_RESULTS", "Отсутствует нормализованный series.json")
+        require(
+            obj["kind"] == "simulation_result", "TYPE_MISMATCH", "A simulation_result artifact is required"
+        )
+        require("series.json" in obj["files"], "INVALID_RESULTS", "Normalized series.json is missing")
         raw = json.loads(self.store.path(obj, "series.json").read_text(encoding="utf-8"))
         return dict(id=obj["id"] + ":r" + str(obj["revision"]), status="succeeded", series=raw)
 
     def demo(self):
         project = self.invoke(
             "project_create",
-            dict(name="Демонстрационное месторождение", crs="LOCAL_METRIC", vertical_datum="SYNTHETIC_MSL"),
+            dict(name="Demo field", crs="LOCAL_METRIC", vertical_datum="SYNTHETIC_MSL"),
         )
         pid = project["id"]
         model = self.wait(self.invoke("model_build", dict(project_id=pid, horizontal_assumption=True)))

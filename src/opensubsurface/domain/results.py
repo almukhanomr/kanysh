@@ -58,23 +58,23 @@ class ReportSeries(Strict):
     @model_validator(mode="after")
     def coherent(self):
         if any(a >= b for a, b in zip(self.dates, self.dates[1:])):
-            raise ValueError("Календарные даты должны строго возрастать")
+            raise ValueError("Calendar dates must be strictly increasing")
         if self.elapsed_days is not None and (
             len(self.elapsed_days) != len(self.dates)
             or any(a >= b for a, b in zip(self.elapsed_days, self.elapsed_days[1:]))
         ):
-            raise ValueError("elapsed_days не соответствует календарным датам")
+            raise ValueError("elapsed_days does not match the calendar dates")
         if any(len(v.values) != len(self.dates) for v in self.vectors.values()):
-            raise ValueError("Длина вектора не совпадает с датами")
+            raise ValueError("Vector length does not match the dates")
         for name, vector in self.vectors.items():
             expected = "state" if name.startswith("WBHP:") else VECTOR_KINDS.get(name)
             if expected is None or expected != vector.kind:
-                raise ValueError("Неизвестный вектор или неверный вид величины: " + name)
+                raise ValueError("Unknown vector or wrong quantity kind: " + name)
         return self
 
 
 def utc_string(value):
-    require(value.utcoffset() is not None, "INVALID_RESULTS", "Дата должна иметь явный timezone")
+    require(value.utcoffset() is not None, "INVALID_RESULTS", "Dates must have an explicit timezone")
     return value.astimezone(timezone.utc).isoformat()
 
 
@@ -95,7 +95,7 @@ def conversion(unit, kind):
         "state": {"BARSA": 1.0, "BARA": 1.0, "BAR": 1.0, "PSIA": 0.06894757293168, "PA": 1e-5, "KPA": 0.01},
         "fraction": {"FRACTION": 1.0, "1": 1.0, "%": 0.01},
     }
-    require(aliases in factors[kind], "INVALID_UNITS", f"Не поддерживается единица {unit} для {kind}")
+    require(aliases in factors[kind], "INVALID_UNITS", f"Unit {unit} is not supported for {kind}")
     return factors[kind][aliases]
 
 
@@ -111,14 +111,12 @@ def normalize_series(raw):
             require(
                 all(b >= a - 1e-8 * max(abs(a), 1) for a, b in adjacent),
                 "INVALID_RESULTS",
-                "Накопленная добыча/закачка не должна убывать: " + name,
+                "Cumulative production/injection must not decrease: " + name,
             )
         if vector.kind in ("rate", "cumulative", "fraction"):
-            require(
-                all(v is None or v >= 0 for v in values), "INVALID_RESULTS", "Отрицательное значение: " + name
-            )
+            require(all(v is None or v >= 0 for v in values), "INVALID_RESULTS", "Negative value: " + name)
         if vector.kind == "fraction":
-            require(all(v is None or v <= 1 for v in values), "INVALID_RESULTS", "Доля вне [0,1]")
+            require(all(v is None or v <= 1 for v in values), "INVALID_RESULTS", "Fraction outside [0,1]")
         result["vectors"][name] = dict(values=values, unit=CANONICAL_UNITS[vector.kind], kind=vector.kind)
     if "FOPR" in result["vectors"] and "FWPR" in result["vectors"]:
         oil = np.array(result["vectors"]["FOPR"]["values"], dtype=float)
@@ -173,36 +171,36 @@ def analyze_cases(
     constraints=None,
 ):
     """cases: explicit [{id,status,series?,error?}]; failed/incomplete cases remain in the report."""
-    require(bool(cases), "INVALID_COMPARISON", "Нет явно выбранных cases")
-    require(len({c["id"] for c in cases}) == len(cases), "INVALID_COMPARISON", "Дубли cases")
+    require(bool(cases), "INVALID_COMPARISON", "No explicitly selected cases")
+    require(len({c["id"] for c in cases}) == len(cases), "INVALID_COMPARISON", "Duplicate cases")
     excluded = []
     eligible = []
     for case in cases:
         if case["status"] != "succeeded" or case.get("series") is None:
-            excluded.append(
-                dict(id=case["id"], status=case["status"], reason=case.get("error", "Нет результата"))
-            )
+            excluded.append(dict(id=case["id"], status=case["status"], reason=case.get("error", "No result")))
             continue
         series = normalize_series(case["series"])
         if not series["completed"]:
-            excluded.append(dict(id=case["id"], status="incomplete", reason="Расчёт не завершил schedule"))
+            excluded.append(
+                dict(id=case["id"], status="incomplete", reason="The run did not complete its schedule")
+            )
         else:
             eligible.append(dict(id=case["id"], series=series))
     require(
         allow_partial or not excluded,
         "PARTIAL_RESULTS",
-        "Есть failed/incomplete cases; явно разрешите частичный отчёт",
+        "Some cases are failed/incomplete; explicitly allow a partial report",
     )
-    require(bool(eligible), "NO_RESULTS", "Нет завершённых cases для статистики")
+    require(bool(eligible), "NO_RESULTS", "No completed cases for statistics")
     standard = eligible[0]["series"]["standard_conditions"]
     require(
         all(c["series"]["standard_conditions"] == standard for c in eligible),
         "INVALID_COMPARISON",
-        "Различаются стандартные условия объёмов; пересчёт условий не выполняется автоматически",
+        "Volume standard conditions differ; conditions are not converted automatically",
     )
     common_start = max(c["series"]["dates"][0] for c in eligible)
     common_end = min(c["series"]["dates"][-1] for c in eligible)
-    require(common_start <= common_end, "INVALID_COMPARISON", "Нет общего календарного диапазона")
+    require(common_start <= common_end, "INVALID_COMPARISON", "No common calendar range")
     if dates is None:
         dates = sorted({d for c in eligible for d in c["series"]["dates"] if common_start <= d <= common_end})
     else:
@@ -210,13 +208,13 @@ def analyze_cases(
         require(
             all(a < b for a, b in zip(dates, dates[1:])),
             "INVALID_COMPARISON",
-            "Даты сравнения должны возрастать",
+            "Comparison dates must be increasing",
         )
     report_at = (
         utc_string(datetime.fromisoformat(report_at.replace("Z", "+00:00"))) if report_at else common_end
     )
     vectors = sorted(set.intersection(*(set(c["series"]["vectors"]) for c in eligible)))
-    require(metric in vectors, "MISSING_VECTOR", "Метрика отсутствует в одном из cases: " + metric)
+    require(metric in vectors, "MISSING_VECTOR", "Metric is missing in one of the cases: " + metric)
     aligned = {c["id"]: align_series(c["series"], dates) for c in eligible}
     bands = {}
     for name in vectors:
@@ -238,7 +236,7 @@ def analyze_cases(
         point = align_series(case["series"], [report_at])
         value = point[metric][0]
         if value is None:
-            missing_metric.append(dict(id=case["id"], reason="Метрика не определена на выбранную дату"))
+            missing_metric.append(dict(id=case["id"], reason="Metric is undefined at the selected date"))
             continue
         violations = []
         for constraint in constraints or []:
@@ -248,7 +246,7 @@ def analyze_cases(
             require(
                 actual_unit == constraint["unit"],
                 "INVALID_UNITS",
-                "Единицы ограничения не совпадают с canonical metric",
+                "Constraint units do not match the canonical metric",
             )
             if (
                 observed is None
@@ -267,9 +265,9 @@ def analyze_cases(
     require(
         allow_partial or not missing_metric,
         "PARTIAL_RESULTS",
-        "Метрика не определена для всех cases на выбранную дату",
+        "Metric is undefined for all cases at the selected date",
     )
-    require(bool(ranking), "NO_RESULTS", "Нет определённых значений целевой метрики")
+    require(bool(ranking), "NO_RESULTS", "No defined values of the target metric")
     ranking.sort(
         key=lambda row: (
             not row["feasible"],
@@ -307,7 +305,7 @@ def analyze_cases(
             null_gaps="not bridged",
         ),
         standard_conditions=standard,
-        claim="Ранжирование явных вариантов; глобальный оптимум не заявляется",
+        claim="Ranking of explicit variants; no global optimum is claimed",
     )
 
 
@@ -316,13 +314,13 @@ def component_balance(inventory, produced, injected, unit, absolute_floor=1.0):
     require(
         unit in ("standard_m3", "kg"),
         "INVALID_UNITS",
-        "Balance требует mass или conserved standard component amount",
+        "Balance requires mass or a conserved standard component amount",
     )
     stock, prod, inj = (np.asarray(v, float) for v in (inventory, produced, injected))
     require(
         stock.ndim == 1 and len(stock) > 0 and stock.shape == prod.shape == inj.shape,
         "INVALID_RESULTS",
-        "Размеры component balance не совпадают",
+        "Component balance shapes do not match",
     )
     require(
         np.isfinite([stock, prod, inj]).all()
@@ -330,9 +328,9 @@ def component_balance(inventory, produced, injected, unit, absolute_floor=1.0):
         and np.all(prod >= 0)
         and np.all(inj >= 0),
         "INVALID_RESULTS",
-        "Невалидные component amounts",
+        "Invalid component amounts",
     )
-    require(absolute_floor > 0, "INVALID_RESULTS", "Нужен положительный physical absolute floor")
+    require(absolute_floor > 0, "INVALID_RESULTS", "A positive physical absolute floor is required")
     # Cumulatives may include a nonzero baseline: conservation uses deltas from the first report.
     p = prod - prod[0]
     i = inj - inj[0]

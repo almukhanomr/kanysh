@@ -73,23 +73,23 @@ def missing_result_error(log_text):
     if any(marker in log_text for marker in RENDERER_FAILURE_MARKERS):
         return dict(
             code="RENDERER_UNAVAILABLE",
-            message="3D-рендер недоступен: на этой машине нет рабочего OpenGL",
+            message="3D rendering is unavailable: no working OpenGL on this machine",
             field="",
-            remediation="Обновите драйвер видеокарты или запустите на машине с GPU; "
-            "расчёты и отчёты без 3D-сцены работают",
+            remediation="Update the graphics driver or run on a machine with a GPU; "
+            "calculations and reports without a 3D scene still work",
         )
     return dict(
         code="WORKER_CRASH",
-        message="Worker не опубликовал результат",
+        message="The worker did not publish a result",
         field="",
-        remediation="Проверьте worker.log",
+        remediation="Check worker.log (job_logs)",
     )
 
 
 def run_isolated(directory, timeout):
     directory = Path(directory)
     if (directory / "cancel").exists():
-        return {"ok": False, "error": {"code": "CANCELLED", "message": "Задание отменено"}}
+        return {"ok": False, "error": {"code": "CANCELLED", "message": "Job cancelled"}}
     # No provider, LLM or control-plane credentials in compute subprocess.
     env = {
         k: os.environ[k]
@@ -147,7 +147,7 @@ def run_isolated(directory, timeout):
                     ok=False,
                     error=dict(
                         code="CANCELLED" if cancelled else "TIMEOUT",
-                        message="Вычислительный процесс остановлен",
+                        message="The compute process was stopped",
                         field="",
                         remediation="",
                     ),

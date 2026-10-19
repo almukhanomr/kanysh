@@ -76,14 +76,16 @@ def parts(path):
     require(
         "\\" not in path and "\x00" not in path and ":" not in path,
         "INVALID_SOURCE_PATH",
-        "Неверный относительный путь",
+        "Invalid relative path",
+        "path",
     )
     p = PurePosixPath(path)
     require(
         not p.is_absolute()
         and all(not part.startswith(".") and not part.endswith((".", " ")) for part in p.parts),
         "INVALID_SOURCE_PATH",
-        "Нужен относительный путь внутри source; скрытые пути и .. запрещены",
+        "Path must be relative to the source folder; hidden parts and '..' are not allowed",
+        "path",
     )
     return p.parts
 
@@ -91,14 +93,14 @@ def parts(path):
 @contextmanager
 def opened_source(source, path, directory=False):
     components = parts(path)
-    require(directory or bool(components), "INVALID_SOURCE_PATH", "Выберите файл")
+    require(directory or bool(components), "INVALID_SOURCE_PATH", "Select a file")
     if os.name == "nt":
         try:
             with windows_opened(Path(source["root"]), components, directory) as (fd, info):
                 require(
                     (info.st_dev, info.st_ino) == (source["device"], source["inode"]),
                     "SOURCE_CHANGED",
-                    "Корневая папка source заменена; требуется регистрация владельца",
+                    "The source root folder was replaced; the owner must register it again",
                 )
                 yield fd, source
         except OSError as error:
@@ -115,7 +117,7 @@ def opened_source(source, path, directory=False):
         require(
             (info.st_dev, info.st_ino) == (source["device"], source["inode"]),
             "SOURCE_CHANGED",
-            "Корневая папка source заменена; требуется регистрация владельца",
+            "The source root folder was replaced; the owner must register it again",
         )
         for index, component in enumerate(components):
             leaf = index == len(components) - 1
@@ -126,11 +128,13 @@ def opened_source(source, path, directory=False):
         require(
             stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode),
             "INVALID_SOURCE_PATH",
-            "Нужна обычная папка/файл; специальные файлы запрещены",
+            "A regular folder or file is required; special files are not allowed",
         )
         yield current, source
     except OSError as error:
-        raise DomainError("SOURCE_ACCESS_DENIED", "Source недоступен или путь содержит symlink") from error
+        raise DomainError(
+            "SOURCE_ACCESS_DENIED", "Source is not accessible or the path contains a symlink"
+        ) from error
     finally:
         for descriptor in reversed(descriptors):
             os.close(descriptor)
@@ -148,7 +152,7 @@ class LocalSources:
             return self._register(name, directory)
 
     def _register(self, name, directory):
-        require(bool(name.strip()) and len(name) <= 120, "INVALID_ARGUMENTS", "Укажите короткое имя source")
+        require(bool(name.strip()) and len(name) <= 120, "INVALID_ARGUMENTS", "Give the source a short name")
         root = normalized_path(directory)
         if os.name == "nt":
             with windows_opened(root, (), True) as (_, info):
@@ -156,7 +160,7 @@ class LocalSources:
         else:
             require(not root.is_symlink(), "SOURCE_ACCESS_DENIED", "Source cannot be a symlink")
             root = root.resolve()
-            require(root.is_dir(), "INVALID_SOURCE_PATH", "Источник должен быть существующей папкой")
+            require(root.is_dir(), "INVALID_SOURCE_PATH", "The source must be an existing folder")
             info = root.stat()
         sources = self.store.get_state(STATE, {})
         existing = next(
@@ -166,7 +170,7 @@ class LocalSources:
             require(
                 (existing["device"], existing["inode"]) == (info.st_dev, info.st_ino),
                 "SOURCE_CHANGED",
-                "Папка заменена; удалите прежнюю регистрацию перед подключением",
+                "The folder was replaced; remove the previous registration before adding it again",
             )
             return existing
         source = dict(
@@ -188,14 +192,14 @@ class LocalSources:
 
     def _remove(self, source_id):
         sources = self.store.get_state(STATE, {})
-        require(source_id in sources, "NOT_FOUND", "Source не зарегистрирован")
+        require(source_id in sources, "NOT_FOUND", "Source is not registered")
         del sources[source_id]
         self.store.set_state(STATE, sources)
         return dict(source_id=source_id, removed=True)
 
     def get(self, source_id):
         source = self.store.get_state(STATE, {}).get(source_id)
-        require(source is not None, "NOT_FOUND", "Source не зарегистрирован владельцем")
+        require(source is not None, "NOT_FOUND", "Source is not registered by the owner")
         return source
 
     @contextmanager
@@ -211,7 +215,7 @@ class LocalSources:
                     require(
                         count <= MAX_DIRECTORY_ENTRIES,
                         "SOURCE_DIRECTORY_TOO_LARGE",
-                        "Больше 10 000 записей; выберите более узкую папку",
+                        "More than 10,000 entries; choose a narrower folder",
                     )
                     if entry.name.startswith(".") or is_reparse(entry.stat(follow_symlinks=False)):
                         continue
@@ -242,12 +246,12 @@ class LocalSources:
         require(
             p["offset"] == 0 or p["listing_revision"] is not None,
             "INVALID_ARGUMENTS",
-            "Для следующей страницы передайте listing_revision",
+            "Pass listing_revision to request the next page",
         )
         require(
             p["listing_revision"] in (None, listing),
             "SOURCE_CHANGED",
-            "Список файлов изменился; начните просмотр с первой страницы",
+            "The file listing changed; start again from the first page",
         )
         next_offset = p["offset"] + p["limit"]
         return dict(
@@ -263,16 +267,22 @@ class LocalSources:
 
     def upload(self, p):
         self.store.project(p["project_id"])
-        require(Path(p["path"]).suffix.lower() in EXTENSIONS, "UNSUPPORTED_FORMAT", "Нужен CSV/LAS/SEG-Y")
+        require(
+            Path(p["path"]).suffix.lower() in EXTENSIONS,
+            "UNSUPPORTED_FORMAT",
+            "A CSV/LAS/SEG-Y file is required",
+        )
         with self.opened(p["source_id"], p["path"]) as (descriptor, _):
             initial = os.fstat(descriptor)
             require(
                 revision(initial) == p["file_revision"],
                 "SOURCE_CHANGED",
-                "Файл изменился; повторите source_scan",
+                "The file changed; run source_scan again",
             )
             require(
-                initial.st_size <= MAX_UPLOAD_BYTES, "UPLOAD_TOO_LARGE", "Snapshot import ограничен 256 MiB"
+                initial.st_size <= MAX_UPLOAD_BYTES,
+                "UPLOAD_TOO_LARGE",
+                "Snapshot import is limited to 256 MiB",
             )
             with os.fdopen(os.dup(descriptor), "rb") as stream:
                 owner = self
@@ -285,7 +295,7 @@ class LocalSources:
                             require(
                                 revision(os.fstat(descriptor)) == p["file_revision"],
                                 "SOURCE_CHANGED",
-                                "Файл изменён во время копирования; snapshot не опубликован",
+                                "The file changed while being copied; the snapshot was not published",
                             )
                         return chunk
 

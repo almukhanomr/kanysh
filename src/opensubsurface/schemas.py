@@ -59,9 +59,9 @@ class Grid(Strict):
     @model_validator(mode="after")
     def valid(self):
         if any(n < 1 or n > 1000 for n in self.shape) or math.prod(self.shape) > 4_000_000:
-            raise ValueError("Разрешено 1–4 000 000 ячеек; размер каждой оси 1–1000")
+            raise ValueError("1-4,000,000 cells allowed; each axis size 1-1000")
         if any(self.extent[i] >= self.extent[i + 1] for i in (0, 2, 4)):
-            raise ValueError("Минимумы extent должны быть меньше максимумов")
+            raise ValueError("Extent minimums must be less than maximums")
         return self
 
 
@@ -93,9 +93,9 @@ class FaultCreate(Command):
     @model_validator(mode="after")
     def planar(self):
         if not math.isclose(sum(x * x for x in self.normal), 1, abs_tol=1e-6):
-            raise ValueError("Нормаль разлома должна быть единичной")
+            raise ValueError("Fault normal must be a unit vector")
         if len(set(self.points)) != len(self.points):
-            raise ValueError("Дубли точек разлома")
+            raise ValueError("Duplicate fault points")
         return self
 
 
@@ -113,7 +113,7 @@ class LargeGrid(Strict):
         if any(n < 1 or n > 1_000_000 for n in self.shape) or math.prod(self.shape) > 2_000_000_000:
             raise ValueError("Out-of-core profile: 1–2 billion cells, each axis <=1 million")
         if any(self.extent[i] >= self.extent[i + 1] for i in (0, 2, 4)):
-            raise ValueError("Минимумы extent должны быть меньше максимумов")
+            raise ValueError("Extent minimums must be less than maximums")
         return self
 
 
@@ -292,12 +292,17 @@ class RegionCase(Strict):
     @classmethod
     def single_name(cls, data):
         if isinstance(data, dict):
+            data = dict(data)
             for new, old in (
                 ("sg_in_oil_zone", "oil_gas_saturation"),
                 ("so_in_gas_zone", "gas_oil_saturation"),
             ):
-                if new in data and old in data:
+                if data.get(old) is not None and data.get(new) is not None:
                     raise ValueError(f"{old}: deprecated alias of {new}; send only {new}")
+                # Clients may send schema defaults (null) for every property, including aliases.
+                for name in (new, old):
+                    if name in data and data[name] is None:
+                        del data[name]
         return data
 
     # Messages start with "<field>: " so the MCP layer reports the exact JSON path.
@@ -403,9 +408,9 @@ class Distribution(Strict):
     @model_validator(mode="after")
     def ordered(self):
         if self.kind != "constant" and (self.high is None or self.high <= self.low):
-            raise ValueError("high должен быть больше low")
+            raise ValueError("high must be greater than low")
         if self.kind == "triangular" and (self.mode is None or not self.low <= self.mode <= self.high):
-            raise ValueError("mode вне low/high")
+            raise ValueError("mode is outside low/high")
         return self
 
 
@@ -523,7 +528,7 @@ class SyntheticSeismic(Command):
     @model_validator(mode="after")
     def limit(self):
         if any(n < 2 for n in self.shape) or math.prod(self.shape) > 10_000_000:
-            raise ValueError("Недопустимый размер сейсмического куба")
+            raise ValueError("Invalid seismic cube size")
         return self
 
 
@@ -541,7 +546,7 @@ class SeismicImport(Command):
     @model_validator(mode="after")
     def domain_unit(self):
         if (self.domain == "twt") != (self.sample_unit == "ms"):
-            raise ValueError("TWT требует ms, depth требует m")
+            raise ValueError("TWT requires ms, depth requires m")
         return self
 
 
@@ -566,7 +571,7 @@ class SeismicAttribute(Command):
     @model_validator(mode="after")
     def odd(self):
         if self.window % 2 == 0:
-            raise ValueError("Окно должно быть нечётным")
+            raise ValueError("Window must be odd")
         return self
 
 
@@ -593,7 +598,7 @@ class HorizonConvert(Command):
     @model_validator(mode="after")
     def velocity_profile(self):
         if (self.velocity_m_s is None) == (self.time_depth_table is None):
-            raise ValueError("Выберите constant velocity или одну time-depth table")
+            raise ValueError("Select either a constant velocity or one time-depth table")
         if self.time_depth_table is not None:
             rows = self.time_depth_table
             if (
@@ -602,7 +607,9 @@ class HorizonConvert(Command):
                 or rows[0][1] < 0
                 or any(a[0] >= b[0] or a[1] >= b[1] for a, b in zip(rows, rows[1:]))
             ):
-                raise ValueError("Time-depth table должна строго возрастать по TWT(s) и depth_difference(m)")
+                raise ValueError(
+                    "Time-depth table must be strictly increasing in TWT (s) and depth_difference (m)"
+                )
         return self
 
 
@@ -614,9 +621,9 @@ class Conditioning(Strict):
     @model_validator(mode="after")
     def lengths(self):
         if len(self.positions) != len(self.values) or len(self.values) != len(self.well_ids):
-            raise ValueError("Длины conditioning arrays не совпадают")
+            raise ValueError("Conditioning array lengths differ")
         if len(set(self.positions)) != len(self.positions):
-            raise ValueError("Дубли conditioning: предварительно выберите агрегацию")
+            raise ValueError("Duplicate conditioning points: choose an aggregation beforehand")
         return self
 
 
@@ -633,11 +640,11 @@ class Geostat(Command):
     @model_validator(mode="after")
     def bounds(self):
         if any(v <= 0 for v in self.anisotropy):
-            raise ValueError("Анизотропия должна быть положительной")
+            raise ValueError("Anisotropy must be positive")
         if self.field == "phi" and any(not 0 < v < 1 for v in self.conditioning.values):
-            raise ValueError("logit transform требует 0 < phi < 1")
+            raise ValueError("logit transform requires 0 < phi < 1")
         if self.field == "permeability_md" and any(v <= 0 for v in self.conditioning.values):
-            raise ValueError("log transform требует K > 0; нули не подменяются")
+            raise ValueError("log transform requires K > 0; zeros are not replaced")
         return self
 
 
@@ -657,11 +664,11 @@ class Fluid(Strict):
     @model_validator(mode="after")
     def scal(self):
         if len(self.swof) < 2 or any(a[0] >= b[0] for a, b in zip(self.swof, self.swof[1:])):
-            raise ValueError("SWOF: минимум 2 строки, Sw строго возрастает")
+            raise ValueError("SWOF: at least 2 rows, Sw strictly increasing")
         if any(not 0 <= v <= 1 for row in self.swof for v in row[:3]):
-            raise ValueError("SWOF: Sw/krw/kro вне [0,1]")
+            raise ValueError("SWOF: Sw/krw/kro outside [0,1]")
         if any(b[1] < a[1] or b[2] > a[2] for a, b in zip(self.swof, self.swof[1:])):
-            raise ValueError("SWOF: krw возрастает, kro убывает")
+            raise ValueError("SWOF: krw must increase and kro decrease")
         return self
 
 
@@ -684,9 +691,9 @@ class SimulationCaseCreate(Command):
             or self.report_days[0] <= 0
             or any(a >= b for a, b in zip(self.report_days, self.report_days[1:]))
         ):
-            raise ValueError("Даты отчётов положительные и строго возрастают")
+            raise ValueError("Report dates must be positive and strictly increasing")
         if self.producer_bhp_bara >= self.injector_bhp_bara:
-            raise ValueError("BHP producer должен быть ниже BHP injector")
+            raise ValueError("Producer BHP must be below injector BHP")
         return self
 
 
@@ -762,9 +769,9 @@ class EnsemblePlan(Command):
     def explicit_product(self):
         refs = [(r.id, r.revision) for r in self.property_realizations]
         if len(refs) != len(set(refs)):
-            raise ValueError("Property realization refs должны быть уникальны")
+            raise ValueError("Property realization refs must be unique")
         if len(self.property_realizations) * len(self.schedules) != self.expected_case_count:
-            raise ValueError("Подтвердите точное число сочетаний реализаций и schedules")
+            raise ValueError("Confirm the exact number of realization x schedule combinations")
         return self
 
 
@@ -843,9 +850,9 @@ class MetricConstraint(Strict):
     @model_validator(mode="after")
     def bounds(self):
         if self.minimum is None and self.maximum is None:
-            raise ValueError("Нужна минимум одна граница ограничения")
+            raise ValueError("At least one constraint bound is required")
         if self.minimum is not None and self.maximum is not None and self.minimum > self.maximum:
-            raise ValueError("minimum больше maximum")
+            raise ValueError("minimum is greater than maximum")
         return self
 
 
@@ -860,7 +867,7 @@ class Compare(Command):
     @model_validator(mode="after")
     def selection(self):
         if bool(self.results) == bool(self.ensemble):
-            raise ValueError("Выберите явные results или один ensemble")
+            raise ValueError("Select explicit results or one ensemble")
         return self
 
 

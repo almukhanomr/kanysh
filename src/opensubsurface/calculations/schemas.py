@@ -54,11 +54,11 @@ class CalculationPlan(Strict):
     @model_validator(mode="after")
     def distinct(self):
         if self.contacts and len({c.name for c in self.contacts}) != len(self.contacts):
-            raise ValueError("Имена вариантов контакта должны быть уникальны")
+            raise ValueError("Contact variant names must be unique")
         if len({i.kind for i in self.inputs}) != len(self.inputs):
-            raise ValueError("Один файл каждого kind; объедините исходные таблицы явно")
+            raise ValueError("One file per kind; merge the source tables explicitly")
         if self.zone_ids and (len(set(self.zone_ids)) != len(self.zone_ids) or min(self.zone_ids) < 1):
-            raise ValueError("Выберите уникальные положительные zone_ids")
+            raise ValueError("Select unique positive zone_ids")
         return self
 
 

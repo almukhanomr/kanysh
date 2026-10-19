@@ -24,7 +24,7 @@ def upgrade():
             {col["name"] for col in inspector.get_columns(table)} != columns
             for table, columns in expected.items()
         ):
-            raise RuntimeError("Неизвестная схема БД; автоматическая миграция запрещена")
+            raise RuntimeError("Unknown database schema; automatic migration is not allowed")
         return
     op.create_table("projects", sa.Column("id", sa.String, primary_key=True), sa.Column("data", sa.String))
     op.create_table(
@@ -57,4 +57,4 @@ def upgrade():
 
 
 def downgrade():
-    raise RuntimeError("Destructive downgrade запрещён; восстановите backup в отдельный каталог")
+    raise RuntimeError("Destructive downgrade is not allowed; restore a backup into a separate directory")

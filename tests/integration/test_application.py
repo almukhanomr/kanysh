@@ -133,7 +133,7 @@ def test_workflow_fanout_resume_and_input_invalidation(service, demo):
 
 def test_invalid_workflow_and_no_silent_gpu_fallback(service, demo):
     pid = demo["project"]["id"]
-    with pytest.raises(DomainError, match="Цикл"):
+    with pytest.raises(DomainError, match="Cycle"):
         service.invoke(
             "workflow_save",
             dict(
@@ -164,7 +164,7 @@ def test_opm_export_ntg_and_unavailable_solver(service, demo, monkeypatch):
     assert "NTG\n" in text and "PORO\n" in text and "WCONINJE" in text
     assert case["summary"]["input_pore_volume_m3"] == pytest.approx(3.2e6)
     monkeypatch.setenv("OPENSUBSURFACE_FLOW_EXECUTABLE", "no-such-flow-binary")
-    with pytest.raises(DomainError, match="не установлен|requires Linux/WSL"):
+    with pytest.raises(DomainError, match="not installed|requires Linux/WSL"):
         service.wait(service.invoke("simulation_submit", dict(project_id=pid, case=ref(case))))
 
 
@@ -185,7 +185,7 @@ def test_demo_wells_shared_import_and_marker_xyz(service, demo_wells):
 
 def test_workflow_rejects_wrong_ports_and_missing_params_before_children(service, demo):
     pid = demo["project"]["id"]
-    with pytest.raises(DomainError, match="тип связи"):
+    with pytest.raises(DomainError, match="link type"):
         service.invoke(
             "workflow_save",
             dict(
@@ -222,7 +222,7 @@ def test_workflow_rejects_wrong_ports_and_missing_params_before_children(service
         ),
     )
     before = len(service.store.list_jobs(pid))
-    with pytest.raises(DomainError, match="параметра"):
+    with pytest.raises(DomainError, match="run parameter"):
         service.invoke("workflow_run", dict(project_id=pid, workflow=ref(workflow)))
     assert len(service.store.list_jobs(pid)) == before
 

@@ -21,21 +21,27 @@ def build_plan(service, payload):
     pid = payload["project_id"]
     for realization in payload["property_realizations"]:
         properties = service.store.object(pid, realization)
-        require(properties["kind"] == "properties", "TYPE_MISMATCH", "Ensemble требует property realizations")
+        require(
+            properties["kind"] == "properties", "TYPE_MISMATCH", "An ensemble requires property realizations"
+        )
         require(
             not properties["summary"].get("model_summary", {}).get("fault"),
             "UNSUPPORTED_GRID_BRIDGE",
-            "Faulted realization не поддерживается OPM Cartesian bridge",
+            "Faulted realizations are not supported by the OPM Cartesian bridge",
         )
         for index, schedule in enumerate(payload["schedules"]):
-            require(schedule["project_id"] == pid, "PERMISSION_DENIED", "Schedule template не меняет проект")
+            require(
+                schedule["project_id"] == pid,
+                "PERMISSION_DENIED",
+                "The schedule template belongs to another project",
+            )
             args = SimulationCaseCreate.model_validate(dict(schedule, properties=realization)).model_dump(
                 mode="json"
             )
             require(
                 args["demo_assumptions_accepted"],
                 "INVALID_PVT",
-                "Подтвердите synthetic demo PVT/SCAL для каждого schedule",
+                "Confirm the synthetic demo PVT/SCAL for every schedule",
             )
             service.preflight("simulation_case_create", args)
             key = digest(
@@ -65,7 +71,7 @@ def build_plan(service, payload):
     require(
         len(rows) == payload["expected_case_count"],
         "INVALID_ENSEMBLE",
-        "Число cases изменилось при планировании",
+        "The number of cases changed during planning",
     )
     return dict(
         schema_version=1,
@@ -114,7 +120,9 @@ def execute(service, job):
     if payload.get("resume_ensemble"):
         old = service.store.object(pid, payload["resume_ensemble"])
         require(
-            old["kind"] == "ensemble", "TYPE_MISMATCH", "resume_ensemble требует immutable ensemble artifact"
+            old["kind"] == "ensemble",
+            "TYPE_MISMATCH",
+            "resume_ensemble requires an immutable ensemble artifact",
         )
         previous = {row["combination_id"]: row for row in old["summary"]["rows"]}
 
@@ -126,7 +134,7 @@ def execute(service, job):
 
     try:
         # Register every combination before any compute, including combinations whose exporter fails.
-        persist("План ансамбля сохранён")
+        persist("Ensemble plan saved")
         pending_exports = []
         for row in rows:
             service.check_cancel(job["id"])
@@ -155,7 +163,7 @@ def execute(service, job):
                 children.append(submission["job_id"])
                 row.update(status="creating_case", case_job_id=submission["job_id"])
                 pending_exports.append((row, submission))
-            persist("Подготовка cases")
+            persist("Preparing cases")
         for row, submission in pending_exports:
             service.check_cancel(job["id"])
             try:
@@ -163,7 +171,7 @@ def execute(service, job):
                 row.update(case=reference(case), status="case_ready")
             except DomainError as error:
                 fail(row, error, "case_create")
-            persist("Cases подготовлены")
+            persist("Cases prepared")
         for row in rows:
             service.check_cancel(job["id"])
             if row["status"] in ("failed", "succeeded"):
@@ -182,7 +190,7 @@ def execute(service, job):
                 row.update(status="running", job_id=submission["job_id"])
             except DomainError as error:
                 fail(row, error, "submit")
-            persist("Независимые расчёты отправлены")
+            persist("Independent runs submitted")
         for row in rows:
             service.check_cancel(job["id"])
             if row["status"] != "running":
@@ -198,12 +206,12 @@ def execute(service, job):
                     failure_stage="compute",
                     completed_at=now(),
                 )
-            persist("Результаты ансамбля учтены")
+            persist("Ensemble results collected")
     except Exception as original:
         error = (
             original
             if isinstance(original, DomainError)
-            else DomainError("ENSEMBLE_FAILED", "Ошибка orchestration: " + type(original).__name__)
+            else DomainError("ENSEMBLE_FAILED", "Orchestration error: " + type(original).__name__)
         )
         # Cancel only owned child jobs and await native resource release before marking the parent cancelled.
         for child_id in children:
@@ -217,7 +225,7 @@ def execute(service, job):
         alive = [child for child in children if service.store.job(child)["status"] not in TERMINAL]
         if alive:
             error = DomainError(
-                "CANCEL_TIMEOUT", "Не подтверждена остановка всех child jobs: " + ",".join(alive)
+                "CANCEL_TIMEOUT", "Stop of all child jobs was not confirmed: " + ",".join(alive)
             )
         for row in rows:
             if row["status"] in TERMINAL:
@@ -237,7 +245,7 @@ def execute(service, job):
                     else "interrupted"
                 )
                 row.update(status=status, error=error.as_dict(), completed_at=now())
-        persist("Ансамбль прерван; частичные результаты сохранены")
+        persist("Ensemble interrupted; partial results saved")
         obj = service.store.publish(
             pid,
             "ensemble",
@@ -248,7 +256,7 @@ def execute(service, job):
         service.store.update_job(
             job["id"],
             status="cancelled" if error.code == "CANCELLED" else "failed",
-            stage="Ансамбль прерван",
+            stage="Ensemble interrupted",
             result=reference(obj),
             error=error.as_dict(),
             completed_at=now(),

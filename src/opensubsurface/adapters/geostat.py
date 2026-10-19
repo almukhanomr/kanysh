@@ -18,14 +18,14 @@ def conditioned(p, arrays, grid, mode):
     zvals = transform(vals)
     centers, _ = grid_arrays(grid)
     mask = arrays["active"].astype(bool) & (arrays["zones"] == p["zone_id"])
-    require(mask.any(), "QC_FAILED", "Зона не найдена")
+    require(mask.any(), "QC_FAILED", "Zone not found in the model")
     e, shape = grid["extent"], grid["shape"]
     # Conditioning must be inside the selected zone, preventing cross-boundary leakage.
     ijk = np.floor(
         (pos.T - np.array(e)[[0, 2, 4]]) / ((np.array(e)[[1, 3, 5]] - np.array(e)[[0, 2, 4]]) / shape)
     ).astype(int)
-    require(((ijk >= 0) & (ijk < shape)).all(), "QC_FAILED", "Conditioning вне сетки")
-    require(mask[tuple(ijk.T)].all(), "QC_FAILED", "Conditioning принадлежит другой зоне")
+    require(((ijk >= 0) & (ijk < shape)).all(), "QC_FAILED", "Conditioning point is outside the grid")
+    require(mask[tuple(ijk.T)].all(), "QC_FAILED", "Conditioning point belongs to another zone")
     model = gs.Exponential(
         dim=3, var=p["variance"], len_scale=p["length_scale_m"], anis=p["anisotropy"], nugget=0
     )
@@ -34,7 +34,7 @@ def conditioned(p, arrays, grid, mode):
     fit_status = "specified_model"
     if mode == "variogram_fit":
         good = np.isfinite(gamma) & (counts > 0)
-        require(good.sum() >= 3, "QC_FAILED", "Недостаточно непустых lag bins для fit")
+        require(good.sum() >= 3, "QC_FAILED", "Too few non-empty lag bins for the variogram fit")
         model.fit_variogram(bin_center[good], gamma[good], nugget=False, anis=False)
         fit_status = "fitted_exponential"
     krige = gs.krige.Ordinary(model, cond_pos=pos, cond_val=zvals, exact=True, cond_err="nugget")
@@ -48,7 +48,7 @@ def conditioned(p, arrays, grid, mode):
     residual = inverse(at_observations) - vals
     out = {k: v.copy() for k, v in arrays.items()}
     out[p["field"]][mask] = inverse(field)
-    require(np.isfinite(out[p["field"]][mask]).all(), "QC_FAILED", "Обратный transform переполнен")
+    require(np.isfinite(out[p["field"]][mask]).all(), "QC_FAILED", "Back-transform overflowed")
     errors = []
     for well in sorted(set(p["conditioning"]["well_ids"])):
         training = np.array([w != well for w in p["conditioning"]["well_ids"]])
@@ -80,6 +80,6 @@ def conditioned(p, arrays, grid, mode):
             rmse=float(np.sqrt(np.mean(np.square(errors)))) if errors else None,
             bias=float(np.mean(errors)) if errors else None,
         ),
-        assumption="phi и K независимы; моделирование только внутри выбранной зоны",
+        assumption="phi and K are independent; simulation only inside the selected zone",
     )
     return out, summary

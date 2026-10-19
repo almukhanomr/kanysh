@@ -64,6 +64,11 @@ def _apply(function, obj, start, count, args, include_corners):
     return function(*read_block(obj, start, count, include_corners), *args)
 
 
+def _cells_message(done, cells):
+    # Shown to users in job_status: report cells, not private helper names like "_scan_block".
+    return f"{min(done, cells):,} of {cells:,} cells processed"
+
+
 def mapped(obj, function, *args, execution=None, include_corners=True):
     import math
 
@@ -96,7 +101,8 @@ def mapped(obj, function, *args, execution=None, include_corners=True):
             try:
                 for start, data, order in iterate(obj, include_corners=include_corners):
                     result = function(start, data, order, *args)
-                    progress.report((start + len(data["active"])) / cells, function.__name__)
+                    done = start + len(data["active"])
+                    progress.report(done / cells, _cells_message(done, cells))
                     yield result
             finally:
                 _session.reset(token)
@@ -240,7 +246,7 @@ def _parallel(obj, function, args, cells, step, workers, include_corners):
                 ok, answer = ready.pop(expected)
                 if not ok:
                     raise DomainError(**answer)
-                progress.report(min(expected + step, cells) / cells, function.__name__)
+                progress.report(min(expected + step, cells) / cells, _cells_message(expected + step, cells))
                 expected += step
                 dispatch()
                 yield answer

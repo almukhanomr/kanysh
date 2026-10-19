@@ -31,6 +31,11 @@ def _versions():
             versions[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
             versions[name] = None
+    # The MCPB bundles the source tree without dist-info: fall back to the package's own version.
+    if versions["kanysh-basic"] is None:
+        from opensubsurface import __version__
+
+        versions["kanysh-basic"] = __version__
     return versions
 
 

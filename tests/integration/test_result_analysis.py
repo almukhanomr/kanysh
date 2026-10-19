@@ -66,7 +66,7 @@ def test_ensemble_failed_members_are_never_silently_dropped(service, tmp_path):
             ],
         ),
     )
-    with pytest.raises(DomainError, match="частичный"):
+    with pytest.raises(DomainError, match="partial report"):
         service.invoke("ensemble_compare", dict(project_id=pid, ensemble=ref(ensemble)))
     comparison = service.invoke(
         "ensemble_compare", dict(project_id=pid, ensemble=ref(ensemble), allow_partial=True)

@@ -52,9 +52,9 @@ def main():
             ok=False,
             error=dict(
                 code="COMPUTE_FAILED",
-                message="Ошибка вычислительного адаптера: " + type(e).__name__,
+                message="Compute adapter error: " + type(e).__name__,
                 field="",
-                remediation="Проверьте локальный worker.log и совместимость входов",
+                remediation="Check the local worker.log (job_logs) and input compatibility",
             ),
         )
     progress.log(

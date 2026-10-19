@@ -71,10 +71,10 @@ def test_listing_is_metadata_only_paginated_and_changed_files_rejected(service, 
         scan(service, source, offset=1)
     old = page["entries"][0]
     (directory / "collars.csv").write_text("Changed fixture")
-    with pytest.raises(DomainError, match="изменился"):
+    with pytest.raises(DomainError, match="changed"):
         scan(service, source, offset=1, listing_revision=page["listing_revision"])
     pid = service.invoke("project_create", dict(name="Changed", vertical_datum="TEST"))["id"]
-    with pytest.raises(DomainError, match="изменился"):
+    with pytest.raises(DomainError, match="changed"):
         service.invoke(
             "source_upload",
             dict(

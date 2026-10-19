@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = "==3.12.*"
 resolution-markers = [
     "sys_platform != 'darwin' and extra != 'extra-12-kanysh-basic-gpu' and extra == 'group-12-kanysh-basic-cpu'",
@@ -1065,9 +1065,8 @@ wheels = [
 
 [[package]]
 name = "kanysh-basic"
-version = "0.2.0.dev4"
+version = "0.2.0.dev5"
 source = { editable = "." }
-default-groups = ["cpu", "dev"]
 dependencies = [
     { name = "alembic" },
     { name = "dask", extra = ["distributed"] },

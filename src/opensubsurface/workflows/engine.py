@@ -28,12 +28,14 @@ def references(value):
 
 def validate(nodes):
     ids = [node["id"] for node in nodes]
-    require(len(ids) == len(set(ids)), "INVALID_WORKFLOW", "Дубли node IDs")
+    require(len(ids) == len(set(ids)), "INVALID_WORKFLOW", "Duplicate node IDs")
     graph = {}
     for node in nodes:
-        require(node["operation"] in ALLOWED, "INVALID_WORKFLOW", "Операция не разрешена в DAG")
+        require(
+            node["operation"] in ALLOWED, "INVALID_WORKFLOW", "Operation is not allowed in a workflow DAG"
+        )
         deps = set(node["depends_on"]) | set(references(node["arguments"]))
-        require(deps <= set(ids), "INVALID_WORKFLOW", "Неизвестная зависимость")
+        require(deps <= set(ids), "INVALID_WORKFLOW", "Unknown dependency")
         graph[node["id"]] = deps
         # Validate fully concrete nodes now. Nodes with references validated after resolution.
     try:
@@ -41,7 +43,7 @@ def validate(nodes):
         validate_port_kinds(nodes)
         return order
     except graphlib.CycleError:
-        require(False, "INVALID_WORKFLOW", "Цикл в workflow")
+        require(False, "INVALID_WORKFLOW", "Cycle in workflow")
 
 
 def resolve(value, outputs, parameters, run_id="pending-run"):
@@ -49,10 +51,10 @@ def resolve(value, outputs, parameters, run_id="pending-run"):
         if value == {"$run_id": True}:
             return run_id
         if set(value) == {"$node"}:
-            require(value["$node"] in outputs, "INVALID_WORKFLOW", "Выход зависимости ещё не доступен")
+            require(value["$node"] in outputs, "INVALID_WORKFLOW", "Dependency output is not available yet")
             return outputs[value["$node"]]
         if set(value) == {"$parameter"}:
-            require(value["$parameter"] in parameters, "INVALID_WORKFLOW", "Нет параметра запуска")
+            require(value["$parameter"] in parameters, "INVALID_WORKFLOW", "Missing run parameter")
             return parameters[value["$parameter"]]
         return {k: resolve(v, outputs, parameters, run_id) for k, v in value.items()}
     if isinstance(value, list):
@@ -111,14 +113,14 @@ def validate_port_kinds(nodes):
                 require(
                     outputs[value["$node"]] == PORT_KINDS[key],
                     "TYPE_MISMATCH",
-                    f"Неверный тип связи {value['$node']} → {node['id']}.{key}",
+                    f"Wrong link type {value['$node']} -> {node['id']}.{key}",
                 )
             if key == "results" and isinstance(value, list):
                 kinds = [outputs[v["$node"]] for v in value if isinstance(v, dict) and set(v) == {"$node"}]
                 require(
                     all(k in ("volumetrics", "simulation_result") for k in kinds) and len(set(kinds)) <= 1,
                     "TYPE_MISMATCH",
-                    "Comparison требует однородные results",
+                    "Comparison requires results of one kind",
                 )
 
 

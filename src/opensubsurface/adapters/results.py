@@ -23,31 +23,35 @@ def read_restart_fields(directory, mapping_path, output):
         from resdata.grid import Grid
         from resdata.resfile import ResdataFile, ResdataRestartFile
     except ImportError:
-        raise DomainError("RESULT_READER_UNAVAILABLE", "Установите extra solver (resdata)")
+        raise DomainError("RESULT_READER_UNAVAILABLE", "Install the solver extra (resdata)")
     with np.load(mapping_path, allow_pickle=False) as mapping:
         active = mapping["active"].astype(bool)
     shape = active.shape
     grid = Grid(str(directory / "CASE.EGRID"))
     require(
-        tuple(grid.get_dims()[:3]) == shape, "GRID_MAPPING_ERROR", "EGRID dimensions не совпадают с геологией"
+        tuple(grid.get_dims()[:3]) == shape,
+        "GRID_MAPPING_ERROR",
+        "EGRID dimensions do not match the geological model",
     )
     # This bridge is METRIC-only; imported FIELD grids require a separately validated profile.
     require(
-        grid.unit_system.name == "METRIC", "INVALID_UNITS", "Restart reader этого bridge требует METRIC grid"
+        grid.unit_system.name == "METRIC",
+        "INVALID_UNITS",
+        "The restart reader of this bridge requires a METRIC grid",
     )
     actual = from_opm(grid.export_actnum().numpy_copy(), shape).astype(bool)
-    require(np.array_equal(actual, active), "GRID_MAPPING_ERROR", "EGRID ACTNUM не совпадает с GridMapping")
+    require(np.array_equal(actual, active), "GRID_MAPPING_ERROR", "EGRID ACTNUM does not match GridMapping")
     init = ResdataFile(str(directory / "CASE.INIT"))
-    require("PORV" in init, "INVALID_RESULTS", "INIT не содержит PORV")
+    require("PORV" in init, "INVALID_RESULTS", "INIT does not contain PORV")
     pore_volume = from_opm(init["PORV"][0].numpy_copy(), shape, active)
     require(
         np.isfinite(pore_volume[active]).all() and (pore_volume[active] > 0).all(),
         "INVALID_RESULTS",
-        "Неположительный/неполный simulator PORV",
+        "Simulator PORV is non-positive or incomplete",
     )
     restart = ResdataRestartFile(grid, str(directory / "CASE.UNRST"))
     headers = restart.headers()
-    require(bool(headers), "INCOMPLETE_OUTPUT", "Нет restart report snapshots")
+    require(bool(headers), "INCOMPLETE_OUTPUT", "No restart report snapshots")
     dates = []
     days = []
     reports = []
@@ -67,14 +71,14 @@ def read_restart_fields(directory, mapping_path, output):
             require(
                 "PRESSURE" in view and "SWAT" in view,
                 "INCOMPLETE_OUTPUT",
-                "PRESSURE/SWAT отсутствуют в restart",
+                "PRESSURE/SWAT are missing from restart",
             )
             values = {}
             for keyword, name in [("PRESSURE", "pressure"), ("SWAT", "sw"), ("SGAS", "sg")]:
                 if keyword in view:
                     array = from_opm(view[keyword][0].numpy_copy(), shape, active)
                     require(
-                        np.isfinite(array[active]).all(), "INVALID_RESULTS", "NaN/Inf в restart " + keyword
+                        np.isfinite(array[active]).all(), "INVALID_RESULTS", "NaN/Inf in restart " + keyword
                     )
                     values[name] = array
             values["so"] = 1 - values["sw"] - values.get("sg", 0)
@@ -83,7 +87,7 @@ def read_restart_fields(directory, mapping_path, output):
                     require(
                         ((array[active] >= -1e-6) & (array[active] <= 1 + 1e-6)).all(),
                         "INVALID_RESULTS",
-                        "Насыщенность вне диапазона: " + name,
+                        "Saturation out of range: " + name,
                     )
                 if name not in fields:
                     group.create_dataset(
@@ -98,7 +102,7 @@ def read_restart_fields(directory, mapping_path, output):
         require(
             all(a < b for a, b in zip(days, days[1:])),
             "INVALID_RESULTS",
-            "Restart report times не возрастают",
+            "Restart report times are not increasing",
         )
         group.attrs.update(
             dates=dates,
@@ -118,10 +122,10 @@ def read_restart_fields(directory, mapping_path, output):
 def snapshot(path, report_index, field, axis, index):
     with zarr.ZipStore(str(path), mode="r") as store:
         group = zarr.open_group(store, mode="r")
-        require(field in group, "MISSING_VECTOR", "Поле не записано в simulation result: " + field)
-        require(report_index < len(group.attrs["dates"]), "INVALID_ARGUMENTS", "Report index вне диапазона")
+        require(field in group, "MISSING_VECTOR", "Field is not stored in the simulation result: " + field)
+        require(report_index < len(group.attrs["dates"]), "INVALID_ARGUMENTS", "Report index out of range")
         dim = {"XY": 2, "XZ": 1, "YZ": 0}[axis]
-        require(index < group[field].shape[dim + 1], "INVALID_ARGUMENTS", "Индекс среза вне сетки")
+        require(index < group[field].shape[dim + 1], "INVALID_ARGUMENTS", "Slice index is outside the grid")
         selector = [report_index, slice(None), slice(None), slice(None)]
         selector[dim + 1] = index
         section = np.asarray(group[field][tuple(selector)])
@@ -174,11 +178,11 @@ def conservation_report(states_path, initial_path, series, case):
     ):
         return dict(
             status="UNSUPPORTED_PROFILE",
-            reason="Conservation adapter требует fresh explicit constant-PVT, incompressible rock",
+            reason="Conservation adapter requires a fresh case with explicit constant PVT and incompressible rock",
         )
     required = {"FOPT", "FWPT", "FWIT"}
     if not required <= set(series["vectors"]):
-        return dict(status="NOT RUN", reason="Не хватает component production/injection cumulative vectors")
+        return dict(status="NOT RUN", reason="Component production/injection cumulative vectors are missing")
     start = datetime.fromisoformat(case["start_date"]).replace(tzinfo=timezone.utc).isoformat()
     augmented = deepcopy(series)
     if augmented["dates"][0] > start:
@@ -191,7 +195,7 @@ def conservation_report(states_path, initial_path, series, case):
     require(
         all(initial_cumul[name][0] is not None and abs(initial_cumul[name][0]) < 1e-10 for name in required),
         "UNSUPPORTED_CONSERVATION_PROFILE",
-        "Fresh case должен начинаться с нулевых cumulative amounts",
+        "A fresh case must start with zero cumulative amounts",
     )
     with np.load(initial_path, allow_pickle=False) as initial:
         initial_sw = initial["sw"]
@@ -208,7 +212,7 @@ def conservation_report(states_path, initial_path, series, case):
         water = [baseline_water]
         pressure_drift = [0.0]
         for i, date in enumerate(group.attrs["dates"]):
-            require(date >= start, "INVALID_RESULTS", "Restart предшествует start date")
+            require(date >= start, "INVALID_RESULTS", "Restart precedes the start date")
             sw = group["sw"][i][active]
             pressure = group["pressure"][i][active]
             stocks = [
@@ -233,7 +237,7 @@ def conservation_report(states_path, initial_path, series, case):
     require(
         all(v is not None for name in required for v in aligned[name]),
         "INCOMPLETE_OUTPUT",
-        "Нет summary coverage на restart dates; баланс не экстраполируется",
+        "No summary coverage at restart dates; the balance is not extrapolated",
     )
     oil_balance = component_balance(oil, aligned["FOPT"], np.zeros(len(dates)), "standard_m3")
     water_balance = component_balance(water, aligned["FWPT"], aligned["FWIT"], "standard_m3")
@@ -241,12 +245,12 @@ def conservation_report(states_path, initial_path, series, case):
     pv_error = abs(actual_pv - expected) / max(abs(expected), 1.0)
     errors = []
     if pv_error > 1e-6:
-        errors.append("INIT PORV не совпадает с экспортированным net-rock NTG convention")
+        errors.append("INIT PORV does not match the exported net-rock NTG convention")
     for name, balance in [("oil", oil_balance), ("water", water_balance)]:
         if balance["max_abs_normalized_residual"] > tolerance:
-            errors.append("Component balance residual выше допуска: " + name)
+            errors.append("Component balance residual above tolerance: " + name)
     if case["profile"] == "no_flow" and max(pressure_drift) > 1e-6:
-        errors.append("No-flow pressure drift выше допуска 1e-6")
+        errors.append("No-flow pressure drift above tolerance 1e-6")
     return dict(
         status="FAIL" if errors else "PASS",
         errors=errors,

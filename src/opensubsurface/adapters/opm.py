@@ -1,4 +1,4 @@
-"""Ограниченный exporter oil-water Cartesian. Никакого заменителя OPM solver."""
+"""Bounded oil-water Cartesian exporter. Not a substitute for the OPM solver."""
 
 import json
 import shutil
@@ -28,31 +28,31 @@ def generate_case(p, arrays, grid, out, model_summary):
     require(
         not model_summary.get("fault"),
         "UNSUPPORTED_GRID_BRIDGE",
-        "Наклонный геологический разлом нельзя автоматически передать в Cartesian OPM",
+        "An inclined geological fault cannot be passed to Cartesian OPM automatically",
     )
     require(
         p["demo_assumptions_accepted"],
         "INVALID_PVT",
-        "Профиль использует именованные demo PVT/SCAL; подтвердите эти допущения",
+        "The profile uses named demo PVT/SCAL; confirm these assumptions",
     )
     validate_properties(arrays)
     nx, ny, nz = shape = tuple(grid["shape"])
-    require(nx >= 2 and ny >= 2, "UNSUPPORTED_GRID_BRIDGE", "Для demo wells нужны nx,ny ≥ 2")
+    require(nx >= 2 and ny >= 2, "UNSUPPORTED_GRID_BRIDGE", "Demo wells require nx, ny >= 2")
     active = arrays["active"].astype(bool)
     require(
         ((arrays["phi"] * arrays["ntg"])[active] > 0).all(),
         "UNSUPPORTED_GRID_BRIDGE",
-        "Для supported OPM bridge активные ячейки должны иметь положительный PORV",
+        "For the supported OPM bridge active cells must have positive PORV",
     )
     components, n = label(active)
-    require(n == 1, "QC_FAILED", "Активная область несвязна")
-    require(active[0, 0].all() and active[-1, -1].all(), "QC_FAILED", "Completion в неактивной ячейке")
+    require(n == 1, "QC_FAILED", "The active region is not connected")
+    require(active[0, 0].all() and active[-1, -1].all(), "QC_FAILED", "Completion in an inactive cell")
     centers, spacing = grid_arrays(grid)
     dx, dy, dz = spacing
     fluid = p["fluid"]
     # Datum: z=0 maps to simulation depth=0. All tops positive in this profile.
     top_depth = -grid["extent"][5]
-    require(top_depth >= 0, "UNSUPPORTED_GRID_BRIDGE", "Для demo profile требуется Z <= 0")
+    require(top_depth >= 0, "UNSUPPORTED_GRID_BRIDGE", "The demo profile requires Z <= 0")
     count = nx * ny * nz
     deck = "-- Kanysh Basic synthetic demo; units METRIC, pressure absolute bar\n"
     deck += f"RUNSPEC\nTITLE\n Kanysh Basic {p['profile']}\nDIMENS\n {nx} {ny} {nz} /\n"
@@ -89,13 +89,13 @@ def generate_case(p, arrays, grid, out, model_summary):
         + fluid["water_density_kg_m3"] / fluid["bw"] * arrays["sw"]
     )
     pressure = fluid["reference_pressure_bara"] + rho_mix * 9.80665 * (reference_z - centers[..., 2]) / 1e5
-    require((pressure[active] > 0).all(), "INVALID_PVT", "Неположительное начальное давление")
+    require((pressure[active] > 0).all(), "INVALID_PVT", "Non-positive initial pressure")
     require(
         (
             (arrays["sw"][active] >= fluid["swof"][0][0]) & (arrays["sw"][active] <= fluid["swof"][-1][0])
         ).all(),
         "INVALID_PVT",
-        "Sw вне SCAL endpoints",
+        "Sw is outside the SCAL endpoints",
     )
     deck += keyword("PRESSURE", to_opm(pressure)) + keyword("SWAT", to_opm(arrays["sw"]))
     deck += "RPTRST\n BASIC=2 /\nSUMMARY\nFPR\nFOPT\nFWPT\nFWIT\nFOPR\nFWPR\n"
@@ -173,30 +173,32 @@ def run_case(case_files, p, out):
     require(
         identity is not None,
         "SOLVER_UNAVAILABLE",
-        "OPM Flow не установлен",
-        remediation="Установите закреплённый OPM в Linux worker; см. docs/SUPPORTED_PROFILES.md",
+        "OPM Flow is not installed",
+        remediation="Install the pinned OPM in a Linux worker; see docs/SUPPORTED_PROFILES.md",
     )
     require(
         p["execution"]["device_policy"] != "require_gpu",
         "NO_COMPATIBLE_GPU",
-        "CUDA solver profile пока не прошёл контрольный benchmark",
+        "The CUDA solver profile has not passed the reference benchmark yet",
     )
     context = p["_case_summary"]
-    require("standard_conditions" in context, "INPUT_REVISION_CONFLICT", "Пересоздайте case с явными STCOND")
+    require(
+        "standard_conditions" in context, "INPUT_REVISION_CONFLICT", "Recreate the case with explicit STCOND"
+    )
     from opensubsurface.domain.results import StandardConditions
 
     StandardConditions.model_validate(context["standard_conditions"])
     require(
         all(name in case_files for name in ("CASE.DATA", "mapping.npz", "initial_state.npz")),
         "INPUT_REVISION_CONFLICT",
-        "Пересоздайте case с initial state и GridMapping",
+        "Recreate the case with initial state and GridMapping",
     )
     try:
         from resdata.grid import Grid  # noqa: F401
         from resdata.resfile import ResdataFile, ResdataRestartFile  # noqa: F401
         from resdata.summary import Summary  # noqa: F401
     except ImportError:
-        raise DomainError("RESULT_READER_UNAVAILABLE", "Установите extra solver (resdata)")
+        raise DomainError("RESULT_READER_UNAVAILABLE", "Install the solver extra (resdata)")
     run_dir = out / "solver"
     run_dir.mkdir()
     deck = run_dir / "CASE.DATA"
@@ -208,17 +210,17 @@ def run_case(case_files, p, out):
             stderr=subprocess.STDOUT,
             check=False,
         )
-    require(result.returncode == 0, "COMPUTE_FAILED", "OPM завершился с ошибкой; журнал сохранён")
+    require(result.returncode == 0, "COMPUTE_FAILED", "OPM exited with an error; the log is saved")
     require(
         all((run_dir / f"CASE.{ext}").is_file() for ext in ("SMSPEC", "UNSMRY", "UNRST", "INIT", "EGRID")),
         "INCOMPLETE_OUTPUT",
-        "Solver не создал обязательные результаты",
+        "The solver did not produce the required results",
     )
     summary = read_summary(run_dir / "CASE.SMSPEC", context["standard_conditions"])
     require(
         summary["elapsed_days"][-1] >= p["_case_summary"]["report_days"][-1] - 1e-5,
         "INCOMPLETE_OUTPUT",
-        "Solver не завершил report schedule",
+        "The solver did not complete the report schedule",
     )
     require(
         all(
@@ -226,7 +228,7 @@ def run_case(case_files, p, out):
             for day in context["report_days"]
         ),
         "INCOMPLETE_OUTPUT",
-        "Summary не содержит все запрошенные report dates",
+        "Summary does not contain all requested report dates",
     )
     (out / "series.json").write_text(json.dumps(summary, allow_nan=False), encoding="utf-8")
     from opensubsurface.adapters.results import read_restart_fields, write_series_csv
@@ -235,7 +237,7 @@ def run_case(case_files, p, out):
     require(
         fields_summary["restart_days"][-1] >= context["report_days"][-1] - 1e-5,
         "INCOMPLETE_OUTPUT",
-        "Restart snapshots не завершили report schedule",
+        "Restart snapshots do not cover the full report schedule",
     )
     from opensubsurface.adapters.results import conservation_report
 
@@ -244,7 +246,7 @@ def run_case(case_files, p, out):
     require(
         conservation["status"] != "FAIL",
         "CONSERVATION_FAILED",
-        "Component balance / initialization QC не пройдены; см. job diagnostics",
+        "Component balance / initialization QC failed; see job diagnostics",
     )
     require(
         all(
@@ -252,7 +254,7 @@ def run_case(case_files, p, out):
             for day in context["report_days"]
         ),
         "INCOMPLETE_OUTPUT",
-        "Restart не содержит все запрошенные report dates",
+        "Restart does not contain all requested report dates",
     )
     write_series_csv(summary, out / "series.csv")
     shutil.copyfile(case_files["mapping.npz"], out / "mapping.npz")
@@ -289,7 +291,7 @@ def read_summary(path, standard_conditions):
     try:
         from resdata.summary import Summary
     except ImportError:
-        raise DomainError("RESULT_READER_UNAVAILABLE", "Установите extra solver (resdata)")
+        raise DomainError("RESULT_READER_UNAVAILABLE", "Install the solver extra (resdata)")
     reader = Summary(str(path))
     keys = list(VECTOR_KINDS)
     keys.extend(str(k) for k in reader.keys("WBHP:*"))
@@ -298,7 +300,7 @@ def read_summary(path, standard_conditions):
         if key == "WATER_CUT" or key not in reader:
             continue
         values = reader.numpy_vector(key)
-        require(np.isfinite(values).all(), "INVALID_RESULTS", "NaN/Inf в summary " + key)
+        require(np.isfinite(values).all(), "INVALID_RESULTS", "NaN/Inf in summary " + key)
         vectors[key] = dict(
             values=values.tolist(),
             unit=reader.unit(key),

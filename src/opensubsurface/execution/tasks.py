@@ -198,12 +198,12 @@ def run(request, out):
         require(
             np.linalg.matrix_rank(centered, tol=span * 1e-8) == 2,
             "QC_FAILED",
-            "Точки должны задавать одну плоскость",
+            "Points must define a single plane",
         )
         require(
             np.max(np.abs(centered @ normal)) <= span * 1e-6,
             "QC_FAILED",
-            "Точки не лежат в плоскости с заданной нормалью",
+            "Points do not lie in the plane with the given normal",
         )
         geometry = dict(name=p["name"], points=p["points"], normal=p["normal"], relation=p["relation"])
         (out / "fault.json").write_text(json.dumps(geometry), encoding="utf-8")
@@ -216,18 +216,18 @@ def run(request, out):
         require(
             not p.get("fault") or p["method"] == "gempy",
             "UNSUPPORTED_PROFILE",
-            "Разлом поддерживается только GemPy",
+            "Faults are supported only with GemPy",
         )
         grid = p["grid"]
         centers, _ = numerics.grid_arrays(grid)
         if p["method"] == "horizontal_explicit":
-            require(p["horizontal_assumption"], "MISSING_ORIENTATIONS", "Явно выберите горизонтальные слои")
+            require(p["horizontal_assumption"], "MISSING_ORIENTATIONS", "Explicitly select horizontal layers")
             horizons = np.asarray(p["horizons_z"])
-            require(len(set(horizons)) == len(horizons), "QC_FAILED", "Повторяющиеся горизонты")
+            require(len(set(horizons)) == len(horizons), "QC_FAILED", "Duplicate horizons")
             require(
                 all(grid["extent"][4] < h < grid["extent"][5] for h in horizons),
                 "QC_FAILED",
-                "Горизонт вне extent",
+                "Horizon is outside the extent",
             )
             zones = np.searchsorted(np.sort(horizons), centers[..., 2]) + 1
             backend = "numpy-explicit-horizontal"
@@ -235,7 +235,7 @@ def run(request, out):
         else:
             from opensubsurface.adapters.structure import gempy_build
 
-            require("surfaces" in request["resolved"], "QC_FAILED", "GemPy требует surface points")
+            require("surfaces" in request["resolved"], "QC_FAILED", "GemPy requires surface points")
             surfaces = pq.read_table(input_obj(request, "surfaces")["paths"]["data.parquet"]).to_pandas()
             orientations = None
             if "orientations" in request["resolved"]:
@@ -343,9 +343,9 @@ def run(request, out):
                     distribution["low"], distribution["mode"], distribution["high"], p["count"]
                 )
             if name in ("phi", "ntg", "sw"):
-                require(((values >= 0) & (values <= 1)).all(), "QC_FAILED", f"{name} вне [0,1]")
+                require(((values >= 0) & (values <= 1)).all(), "QC_FAILED", f"{name} is outside [0,1]")
             if name == "bo":
-                require((values > 0).all(), "QC_FAILED", "Bo должен быть положительным")
+                require((values > 0).all(), "QC_FAILED", "Bo must be positive")
             samples[name] = values
         rows, metrics = [], []
         if large:
@@ -470,15 +470,15 @@ def run(request, out):
                 require(
                     pick["inline"] in group["inline"][:] and pick["crossline"] in group["crossline"][:],
                     "QC_FAILED",
-                    "Pick не соответствует geometry",
+                    "Pick does not match the geometry",
                 )
                 i = int(np.where(group["inline"][:] == pick["inline"])[0][0])
                 j = int(np.where(group["crossline"][:] == pick["crossline"])[0][0])
                 sample = pick["sample_index"]
-                require(sample <= len(group["sample"]) - 1, "QC_FAILED", "Pick вне sample axis")
+                require(sample <= len(group["sample"]) - 1, "QC_FAILED", "Pick is outside the sample axis")
                 value = float(np.interp(sample, np.arange(len(group["sample"])), group["sample"][:]))
                 x, y = float(group["x"][i, j]), float(group["y"][i, j])
-                require(np.isfinite([x, y, value]).all(), "QC_FAILED", "Pick на missing trace")
+                require(np.isfinite([x, y, value]).all(), "QC_FAILED", "Pick is on a missing trace")
                 picks.append(dict(**pick, x=x, y=y, value=value))
             (out / "picks.json").write_text(json.dumps(picks), encoding="utf-8")
             return (
@@ -499,9 +499,9 @@ def run(request, out):
             store.close()
     if operation == "horizon_convert_domain":
         obj = input_obj(request, "interpretation")
-        require(obj["summary"]["domain"] == "twt", "QC_FAILED", "Конвертировать можно только TWT picks")
+        require(obj["summary"]["domain"] == "twt", "QC_FAILED", "Only TWT picks can be converted")
         require(
-            p["datum"] == obj["summary"]["vertical_datum"], "MISSING_DATUM", "Datum velocity не совпадает"
+            p["datum"] == obj["summary"]["vertical_datum"], "MISSING_DATUM", "Velocity datum does not match"
         )
         points = json.loads(Path(obj["paths"]["picks.json"]).read_text(encoding="utf-8"))
 
@@ -566,7 +566,7 @@ def run(request, out):
         from opensubsurface.adapters.results import snapshot
 
         result = input_obj(request, "result")
-        require("states.zip" in result["paths"], "INVALID_RESULTS", "Нет канонических restart snapshots")
+        require("states.zip" in result["paths"], "INVALID_RESULTS", "No canonical restart snapshots")
         section, summary = snapshot(
             result["paths"]["states.zip"], p["report_index"], p["field"], p["axis"], p["index"]
         )
@@ -580,4 +580,4 @@ def run(request, out):
     if operation == "simulation_submit":
         case = input_obj(request, "case")
         return opm.run_case(case["paths"], dict(p, _case_summary=case["summary"]), out)
-    require(False, "UNSUPPORTED_OPERATION", "Операция не поддерживается вычислительным worker")
+    require(False, "UNSUPPORTED_OPERATION", "The operation is not supported by the compute worker")

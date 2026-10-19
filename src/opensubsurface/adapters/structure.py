@@ -8,18 +8,18 @@ def gempy_build(p, surfaces, orientations, device, fault=None):
     import gempy as gp
     from gempy_engine.config import AvailableBackends
 
-    require(len(surfaces) >= 3, "QC_FAILED", "GemPy требует минимум три surface points")
+    require(len(surfaces) >= 3, "QC_FAILED", "GemPy requires at least three surface points")
     encountered = list(dict.fromkeys(surfaces.horizon.astype(str)))
     order = p.get("stratigraphic_order") or encountered
     require(
         len(encountered) == 1 or bool(p.get("stratigraphic_order")),
         "QC_FAILED",
-        "Для нескольких горизонтов задайте stratigraphic_order от молодого к старому",
+        "For several horizons set stratigraphic_order from youngest to oldest",
     )
     require(
         set(order) == set(encountered) and len(order) == len(encountered),
         "QC_FAILED",
-        "stratigraphic_order должен содержать все горизонты ровно один раз",
+        "stratigraphic_order must list every horizon exactly once",
     )
     surfaces = surfaces.assign(_rank=surfaces.horizon.map({h: i for i, h in enumerate(order)})).sort_values(
         "_rank"
@@ -32,7 +32,7 @@ def gempy_build(p, surfaces, orientations, device, fault=None):
         require(
             p["horizontal_assumption"],
             "MISSING_ORIENTATIONS",
-            "Нужны orientations или явно выбранные горизонтальные слои",
+            "Orientations or explicitly selected horizontal layers are required",
         )
         selected = surfaces.groupby("horizon", sort=False).first().reset_index()
         x, y, z = selected.x.to_numpy(), selected.y.to_numpy(), selected.z.to_numpy()
@@ -51,7 +51,7 @@ def gempy_build(p, surfaces, orientations, device, fault=None):
         fp = np.asarray(fault["points"], float)
         normal = np.asarray(fault["normal"], float)
         name = fault["name"]
-        require(name not in encountered, "QC_FAILED", "Имя разлома совпадает с горизонтом")
+        require(name not in encountered, "QC_FAILED", "Fault name equals a horizon name")
         element = gp.data.StructuralElement(
             name=name,
             color=next(frame.color_generator),
@@ -98,7 +98,7 @@ def gempy_build(p, surfaces, orientations, device, fault=None):
     if values.ndim == 2:
         values = values[0]
     zones = np.rint(values).astype(int).reshape(p["grid"]["shape"])
-    require((zones > 0).all(), "QC_FAILED", "GemPy вернул неизвестные lithology IDs")
+    require((zones > 0).all(), "QC_FAILED", "GemPy returned unknown lithology IDs")
     transform = model.input_transform
     return zones, dict(
         gempy_version=gp.__version__,

@@ -126,6 +126,8 @@ FIELD_DOCS = {
     "defaults": "Explicit user-confirmed constants for MISSING properties only, keyed by ECLIPSE name (ACTNUM, PORO, NTG, PERMX, PERMY, PERMZ, SWAT, FIPNUM, SATNUM, EQLNUM). Recorded in the report.",
     # Geodata
     "GeodataImport.kind": "Allowed: surfaces, trajectory, markers, polygons.",
+    "EclipseImport.format": "Grid file format. Allowed: auto (default: .EGRID/.GRID -> egrid, otherwise ascii), ascii (DATA/GRDECL deck with INCLUDE), egrid (binary EGRID, or the simulator's legacy .GRID, read together with property_files INIT).",
+    "EclipsePropertyFile.format": "Property file format. Allowed: init (binary .INIT from the same run as the EGRID/GRID), grdecl (ASCII GRDECL with exactly one property; keyword required).",
     "format": "Source format. Allowed: irap_ascii, irap_binary, zmap_ascii, cps3_ascii, rms_ascii, petrel_ascii, mapped_ascii, xyz, zmap.",
     "GeodataImport.name": "Dataset name (>=1 character).",
     "well_id": "Well identifier for single-well files.",
@@ -449,6 +451,8 @@ def _publish_aliases(node):
             prop = dict(node["properties"][new], deprecated=True)
             prop["description"] = f"DEPRECATED alias of {new}; send {new} instead. " + prop["description"]
             prop.pop("examples", None)
+            # No default: clients that fill schema defaults would otherwise send old=null with new.
+            prop.pop("default", None)
             node["properties"][old] = prop
             if new in required:
                 required.remove(new)
