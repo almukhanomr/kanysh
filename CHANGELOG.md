@@ -28,7 +28,18 @@
   unchanged; per-code fallback remediations now cover ~40 more codes. The bilingual `start`
   label and the Russian docs are kept.
 
-## Unreleased — OPM Flow deck runs (optional)
+## 0.2.0.dev4 — OPM Flow deck runs, 200M-cell models, Volve fixes
+
+First release containing the changes below (previously listed as Unreleased).
+
+### Large models
+
+- Streaming corner-point pipeline validated on a synthetic 200 million-cell DATA/COORD/ZCORN
+  profile (import, `model_qc`, regional volumes 1/5 scenarios, tornado, `calculation_run`,
+  scene export: PASS on 16 cores / 64 GB). See docs/SCALING.md and docs/BENCHMARKS.md.
+- Memory preflight counts one in-process worker once and uses measured per-cell bytes.
+
+### OPM Flow deck runs (optional)
 
 - New `simulation_deck_run`: runs the user's own ECLIPSE-format `.DATA` deck and its INCLUDE
   closure in OPM Flow exactly as supplied (byte-for-byte snapshot, revision-checked; no deck
@@ -51,7 +62,7 @@
   (ignored keywords listed, status `PASS_WITH_IGNORED_KEYWORDS`) and OPM's fatal input message in
   errors. `folder_assess` flags far-above-datum GOC placeholders. See docs/VOLVE_REAL_DATA_TEST.md.
 
-## Unreleased — MCP smoke-test fixes (2026-10-18)
+### MCP smoke-test fixes (2026-10-18)
 
 - MCP tools publish self-contained input schemas: every `$ref` inlined, every field
   documented with units, the Z-up convention and allowed enum values; examples for
