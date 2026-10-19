@@ -54,8 +54,8 @@ uv run --no-sync kanysh-basic --home "$HOME/.kanysh-basic" setup
 
 ## CPU или NVIDIA
 
-Доступны два расширения: `kanysh-basic-0.2.0-dev5.mcpb` (CPU) и
-`kanysh-basic-gpu-0.2.0-dev5.mcpb` (GPU). Их можно установить рядом; оставьте разные
+Доступны два расширения: `kanysh-basic-0.2.0-dev6.mcpb` (CPU) и
+`kanysh-basic-gpu-0.2.0-dev6.mcpb` (GPU). Их можно установить рядом; оставьте разные
 папки результатов: `%LOCALAPPDATA%\kanysh-basic` и `%LOCALAPPDATA%\kanysh-basic-gpu`.
 GPU-вариант загружает около **2,5 ГБ** при первой установке, выбирает CUDA 12.6 на
 Windows/Linux и CPU на macOS. Без доступной CUDA он работает на CPU с предупреждением.
@@ -137,7 +137,7 @@ CI рассчитан на Windows/Ubuntu/macOS, ruff и CPU pytest без gpu/o
 
 Python namespace, идентификаторы форматов, MCP URI и `OPENSUBSURFACE_*` сохранены
 для совместимости. Пакет и основная команда — `kanysh-basic`; `opensubsurface` остаётся
-CLI-псевдонимом. Development-релиз `0.2.0.dev5`; [внешняя приёмка](docs/ACCEPTANCE.md) ведётся отдельно.
+CLI-псевдонимом. Development-релиз `0.2.0.dev6`; [внешняя приёмка](docs/ACCEPTANCE.md) ведётся отдельно.
 
 Код — Apache-2.0; данные Norne — ODbL/DbCL с исходными уведомлениями.
 У зависимостей свои лицензии: [THIRD_PARTY](THIRD_PARTY.md).

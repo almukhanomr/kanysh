@@ -1,10 +1,10 @@
 {
   "status": "PASS",
-  "source_archive": "C:\\Users\\Admin\\kanysh\\dist\\kanysh-basic-0.2.0-dev5.mcpb",
-  "archive_sha256": "3ace66d84fdf58a2e1809bd87b8347191e5e178a496cee7b94115a6179be74aa",
+  "source_archive": "C:\\Users\\Admin\\kanysh\\dist\\kanysh-basic-0.2.0-dev6.mcpb",
+  "archive_sha256": "1c52a8c8753cc74eaa7150719540e935554c0c411cf9aa00148456c5325f6a58",
   "sdk_stdio": "PASS",
   "variant": "cpu",
-  "initialize_and_list_seconds": 1.5734669999947073,
+  "initialize_and_list_seconds": 1.6132520999963162,
   "installer_selected_folder": "PASS",
   "startup_log": "PASS",
   "shared_local_viewer_controller": "PASS",

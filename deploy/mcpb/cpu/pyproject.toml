@@ -1,6 +1,6 @@
 [project]
 name = "kanysh-basic-mcpb"
-version = "0.2.0.dev5"
+version = "0.2.0.dev6"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "numpy>=1.26,<3",

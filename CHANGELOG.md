@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0.dev6 — no third-party analytics
+
+- The local viewer no longer contacts Gradio/Hugging Face analytics on start
+  (`GRADIO_ANALYTICS_ENABLED=False`, Hub telemetry off; an explicit environment value wins).
+- Compact `job_status` of a running job reports `elapsed_seconds` so far (was `null`).
+
 ## 0.2.0.dev5 — install check fixes
 
 - `regional_volumes` (and reconcile/tornado/Monte Carlo) were unusable from Claude Desktop in

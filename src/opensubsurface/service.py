@@ -1051,14 +1051,12 @@ class Service:
         """Small status record for agents; verbose=true returns the full stored job."""
         progress = self.progress(job)
         elapsed = job.get("elapsed_seconds")
-        if elapsed is None and job.get("started_at") and job.get("completed_at"):
-            # Workflow jobs record only timestamps.
-            elapsed = round(
-                (
-                    datetime.fromisoformat(job["completed_at"]) - datetime.fromisoformat(job["started_at"])
-                ).total_seconds(),
-                3,
-            )
+        if elapsed is None and job.get("started_at"):
+            # Workflow jobs record only timestamps; a running job reports time so far.
+            elapsed = (
+                datetime.fromisoformat(job.get("completed_at") or now())
+                - datetime.fromisoformat(job["started_at"])
+            ).total_seconds()
         return dict(
             id=job["id"],
             operation=job["operation"],
@@ -1282,7 +1280,7 @@ class Service:
                                 operation=node["operation"],
                                 args=typed,
                                 inputs={k: v["content_hash"] for k, v in resolved.items()},
-                                app="0.2.0.dev5",
+                                app="0.2.0.dev6",
                                 runtime=runtime,
                             )
                         )

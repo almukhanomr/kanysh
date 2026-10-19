@@ -57,8 +57,8 @@ Real external chat-client acceptance remains **NOT RUN**.
 
 | Extension | Default results home on Windows | Runtime |
 |---|---|---|
-| `kanysh-basic-0.2.0-dev5.mcpb` | `%LOCALAPPDATA%\kanysh-basic` | CPU |
-| `kanysh-basic-gpu-0.2.0-dev5.mcpb` | `%LOCALAPPDATA%\kanysh-basic-gpu` | CUDA 12.6 on Windows/Linux; CPU on macOS |
+| `kanysh-basic-0.2.0-dev6.mcpb` | `%LOCALAPPDATA%\kanysh-basic` | CPU |
+| `kanysh-basic-gpu-0.2.0-dev6.mcpb` | `%LOCALAPPDATA%\kanysh-basic-gpu` | CUDA 12.6 on Windows/Linux; CPU on macOS |
 
 Both extensions can be installed alongside each other. Keep their separate default
 homes. The GPU edition's first installation downloads approximately **2.5 GB**; allow
@@ -143,7 +143,7 @@ CI targets Windows/Ubuntu/macOS with ruff and CPU pytest, excluding gpu/opm/exte
 The Python namespace, data-format IDs, MCP resource URIs and `OPENSUBSURFACE_*`
 environment names retain their existing identifiers for compatibility. The package
 and public CLI are `kanysh-basic`; `opensubsurface` remains a CLI compatibility alias.
-This is a development release (`0.2.0.dev5`); [external acceptance](docs/ACCEPTANCE.md) is separate.
+This is a development release (`0.2.0.dev6`); [external acceptance](docs/ACCEPTANCE.md) is separate.
 
 Application source: Apache-2.0. Norne data: ODbL/DbCL with upstream notices retained.
 Dependencies have separate licences: [THIRD_PARTY](THIRD_PARTY.md).

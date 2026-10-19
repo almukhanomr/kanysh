@@ -495,3 +495,14 @@ def test_common_errors_name_field_and_remediation(service):
         service.invoke("artifact_inspect", dict(project_id=pid, ref=dict(id="properties-x", revision=2)))
     error = raised.value.as_dict()
     assert error["code"] == "INPUT_REVISION_CONFLICT" and error["field"] == "ref" and error["remediation"]
+
+
+def test_gradio_analytics_and_hub_telemetry_are_off_by_default():
+    import os
+    import subprocess
+    import sys
+
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("GRADIO_", "HF_HUB_"))}
+    code = "import opensubsurface, gradio.analytics as a; print(a.analytics_enabled())"
+    out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == "False"
