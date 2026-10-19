@@ -1257,7 +1257,7 @@ class Service:
                                 operation=node["operation"],
                                 args=typed,
                                 inputs={k: v["content_hash"] for k, v in resolved.items()},
-                                app="0.2.0.dev3",
+                                app="0.2.0.dev4",
                                 runtime=runtime,
                             )
                         )

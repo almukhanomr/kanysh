@@ -12,7 +12,8 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MCPB = ["npx", "--yes", "@anthropic-ai/mcpb@2.1.2"]
+# shutil.which finds npx.cmd on Windows, where CreateProcess cannot run a bare "npx".
+MCPB = [shutil.which("npx") or "npx", "--yes", "@anthropic-ai/mcpb@2.1.2"]
 
 
 def configuration(variant):

@@ -1065,7 +1065,7 @@ wheels = [
 
 [[package]]
 name = "kanysh-basic"
-version = "0.2.0.dev3"
+version = "0.2.0.dev4"
 source = { editable = "." }
 default-groups = ["cpu", "dev"]
 dependencies = [

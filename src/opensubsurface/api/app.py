@@ -117,7 +117,7 @@ def create_app(root=None, service=None, with_ui=False, with_mcp=True, mcp_profil
         return {
             "status": "ok",
             "profile": "local",
-            "version": "0.2.0.dev3",
+            "version": "0.2.0.dev4",
             "service": "kanysh-basic",
             "home": str(service.store.root.resolve()),
         }

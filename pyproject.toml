@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kanysh-basic"
-version = "0.2.0.dev3"
+version = "0.2.0.dev4"
 description = "MCP server for subsurface modeling + local web viewer"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"

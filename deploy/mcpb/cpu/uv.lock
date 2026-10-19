@@ -899,7 +899,7 @@ wheels = [
 
 [[package]]
 name = "kanysh-basic-mcpb"
-version = "0.2.0.dev3"
+version = "0.2.0.dev4"
 source = { virtual = "." }
 dependencies = [
     { name = "alembic" },
