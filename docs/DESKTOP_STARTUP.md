@@ -68,7 +68,7 @@ The GPU edition initially downloads approximately 2.5 GB, plus other dependencie
 Claude's UV runtime installs Python/dependencies **before** the Python entry point.
 Background initialization cannot prevent a host-controlled dependency download timeout.
 Neither a successful lock resolution nor an SDK launch proves a clean Claude Desktop
-UV installation; that remains NOT RUN.
+UV installation; that was verified separately on Windows 11 (owner check, 2026-10-18…19).
 
 ## Build and reproduce checks
 
@@ -110,8 +110,9 @@ macOS arm64, Python 3.12, warm installed environment:
 | GPU archive real SDK initialize + tools/list | 0.425 s; CPU fallback without CUDA |
 | Official CPU and GPU MCPB validation/packing | PASS |
 | Root / CPU / GPU frozen lock consistency and installed package compatibility | PASS |
-| Real Windows Claude Desktop installation, toggle/re-enable, no orphans | NOT RUN |
-| Real Windows/NVIDIA CUDA computations | NOT RUN |
+| Real Windows Claude Desktop installation | PASS (owner check, later than this dev3 record) |
+| Desktop toggle/re-enable, no orphans | NOT RUN |
+| Real Windows/NVIDIA CUDA computations | PASS, RTX 3080 Ti Laptop: [GPU tests](test-results-scaling-gpu.xml) |
 
 Initial dev3 measurement of `python -X importtime server.py` with stdin EOF: **4.269 s before**, **0.881 s after**,
 both exit 0. This compares process lifetime (including shutdown), not protocol latency;

@@ -1,11 +1,11 @@
 # Kanysh Advanced — historical vision acceptance ledger
 
-Обновлено: 2026-10-17T18:11:33+05:00. Стенд: macOS arm64 / Python3.12.14 / 16GiB / CPU.
+Обновлено: 2026-11-10T23:01:59+05:00. Стенды: macOS arm64 / Python3.12.14 / 16GiB / CPU; Windows 11 x64 / 16 cores / 64GB / RTX 3080 Ti Laptop / OPM Flow 2026.04 в WSL2 (2026-10-18…19). Hosted CI: Ubuntu/macOS/Windows PASS на коммите aabb128.
 
 **A–D/O принят пользователем; новых возможностей в публикационную упаковку не добавляется.**
 Этот ledger относится к расширенной исторической [VISION](VISION.md), а не к текущему принятому scope. Исторический scope не принят целиком: PASS подкомпонента не повышает комбинированный criterion до PASS.
 FAIL — известный программный/приёмочный пробел; NOT RUN — нет необходимого внешнего стенда/аккаунта/выполненного запуска.
-Mocks не доказывают real CUDA, OAuth или OPM. Обязательный MCP-first scope исключает A-10 и Runpod; scientific acceptance остаётся открытой.
+Mocks не доказывают real CUDA, OAuth или OPM; статусы CUDA и Flow ниже опираются на реальные запуски. Обязательный MCP-first scope исключает A-10 и Runpod; scientific acceptance остаётся открытой.
 
 ## Воспроизведение
 
@@ -19,31 +19,31 @@ Solver SDK fixtures: `uv sync --frozen --extra solver --group dev`. Raw evidence
 | A-02 | Импорт/QC | **PASS** | tests/scientific/test_imports.py; demo wells shared imports; supported CSV/LAS2 scope; LAS1.2 additional fixture pending |
 | A-03 | Units/CRS/depth | **PASS** | feet→m; invalid datum API; time/Z roundtrip and asymmetric GridMapping; projected metric-only profile |
 | A-04 | Геология | **PASS** | Real GemPy CPU horizontal boundary + 3-resolution dipping convergence |
-| A-05 | Объёмы | **NOT RUN** | CPU analytical all metrics PASS; CUDA half of combined criterion NOT RUN |
-| A-06 | Локальный GPU | **NOT RUN** | No NVIDIA CUDA device; tests/gpu skipped explicitly |
+| A-05 | Объёмы | **PASS** | CPU analytical all metrics PASS; CUDA float64 analytical volume PASS on RTX 3080 Ti Laptop (tests/gpu/test_cuda.py, docs/test-results-scaling-gpu.xml) |
+| A-06 | Локальный GPU | **PASS** | Windows 11 / RTX 3080 Ti Laptop: gpu marker 10 passed, 1 skipped; GemPy GPU control, CUDA volumes/attributes and tetra6 with mandatory CPU comparison; Norne CUDA regional volumes PASS_WITH_EXCLUSIONS, slower than CPU on this profile (docs/benchmark-scaling-norne-cuda.json). GPU 10–200M cells NOT RUN |
 | A-07 | Remote GPU | **NOT RUN** | No remote host; transport adapter incomplete |
 | A-08 | Jobs | **PASS** | Idempotency, process-group cancel/timeout, interrupted restart, bounded retry/attempt IDs, require-GPU rejection; persistent headless HTTP and metadata-client ownership isolation tests PASS |
 | A-09 | UI | **PASS** | Read-only viewer in ui extra: projects/revisions, sandboxed reports/scenes, seismic slices, uploads, offline Norne. No chat/voice or scientific forms; tests/integration/test_viewer_pages.py |
 | A-10 | Заменено MCP-клиентами | **REPLACED** | заменено MCP-клиентами; собственные чат и голос удалены; не обязательная приёмка |
-| A-11 | MCP | **NOT RUN** | MCP SDK stdio/shared ASGI + actual headless CLI HTTP daemon/source snapshot/import/disconnect PASS; agent profile pinned GemPy/static plan, independent checks, partial/resume and report/image SDK PASS; real ChatGPT/Claude OAuth connectors not tested |
+| A-11 | MCP | **NOT RUN** | MCP SDK stdio/shared ASGI + actual headless CLI HTTP daemon/source snapshot/import/disconnect PASS; agent profile pinned GemPy/static plan, independent checks, partial/resume and report/image SDK PASS; real Claude Desktop MCPB (stdio) on Windows verified by the owner on Volve; ChatGPT and remote OAuth connectors not tested |
 | A-12 | Version/export | **PASS** | test_store bundle roundtrip/hash/revisions/backup; runtime credentials not included in object bundles |
 | B-01 | SEG-Y | **FAIL** | IEEE float32 big/little scalar fixtures and direct-source 269.4MB/67.1M-sample float32 Zarr exact comparison PASS; both sorted trace orders/missing mask verified; IBM/affine field geometry acceptance incomplete |
 | B-02 | Slices/picks | **FAIL** | Pick revisions/domain roundtrip PASS; pixel/polyline picking and interpolation UI incomplete |
-| B-03 | Атрибуты | **NOT RUN** | RMS constant/impulse and sine-envelope CPU PASS; CUDA not run |
+| B-03 | Атрибуты | **PASS** | RMS constant/impulse and sine-envelope CPU PASS; CUDA attributes against analytic PASS (tests/gpu/test_cuda.py) |
 | B-04 | Time-depth | **PASS** | Constant velocity expected Z=-400m at TWT=.5s,v=2000,origin100; roundtrip atol1e-15 |
 | B-05 | Разлом | **PASS** | Real GemPy single planar fault CPU: left -40m/right -60m and valid zones; unsupported OPM bridge rejected |
 | B-06 | Геостатистика | **FAIL** | GSTools exact/seed/logit/holdout and independent anisotropic covariance PASS; fitted variogram/ensemble statistical acceptance incomplete |
 | B-07 | GridMapping | **PASS** | Independent 3x4x2 hardcoded I-fast/K-down fixture + inactive cell restoration |
 | B-08 | PVT/SCAL/schedule | **FAIL** | Basic PVT/SCAL/report dates and explicit STCOND present; complete completions/events/PVT schemas incomplete |
-| B-09 | Initialization | **NOT RUN** | No OPM initialization outputs; static input PORV3.2e6m3 verified only before export |
-| B-10 | Waterflood | **NOT RUN** | Generated 20x20x5 case exported; Flow executable not installed |
+| B-09 | Initialization | **NOT RUN** | Generated case not initialized in Flow; static input PORV3.2e6m3 verified only before export. User deck (Volve) in OPM Flow 2026.04: initial FOIP/FWIP equal ECLIPSE, see VOLVE_REAL_DATA_TEST.md |
+| B-10 | Waterflood | **NOT RUN** | Generated 20x20x5 case exported but not run; OPM Flow 2026.04 (WSL2) runs user decks via simulation_deck_run |
 | B-11 | OPM CUDA | **NOT RUN** | No validated CUDA OPM build/device |
-| B-12 | Conservation | **NOT RUN** | Constant-FVF oil-water component balance/PORV/no-flow pressure-drift QC implemented; analytical conservation PASS; native no-flow/waterflood not run |
-| B-13 | Result analysis | **FAIL** | Native summary SDK + artificial EGRID/INIT/two-report UNRST fixture and analytical UI/alignment/comparison PASS; real Flow outputs and per-well analysis acceptance incomplete |
+| B-12 | Conservation | **NOT RUN** | Constant-FVF oil-water component balance/PORV/no-flow pressure-drift QC implemented; analytical conservation PASS; native no-flow/waterflood fixtures not run (Flow itself runs user decks) |
+| B-13 | Result analysis | **FAIL** | Native summary SDK + artificial EGRID/INIT/two-report UNRST fixture and analytical UI/alignment/comparison PASS; real Flow outputs read for Volve (FPR/FOPT/well BHP vs ECLIPSE); per-well analysis acceptance incomplete |
 | B-14 | Interoperability | **NOT RUN** | Direct OPM/ResInsight external opening unavailable; reproducible generated/reference files supplied |
-| B-15 | Сквозной сценарий | **NOT RUN** | Seismic/picks/depth/property paths available; full solver integration not run |
+| B-15 | Сквозной сценарий | **NOT RUN** | Seismic/picks/depth/property paths available; generated-case solver integration not run |
 | B-16 | MCP coverage | **NOT RUN** | Common contracts exist; real external clients and full B integration not run |
-| C-01 | Ансамбль | **NOT RUN** | 3 real property artifacts x 2 real case exporters; mocked solver 4 success/2 fail then resume only 2 PASS; 6 real Flow cases not run |
+| C-01 | Ансамбль | **NOT RUN** | 3 real property artifacts x 2 real case exporters; mocked solver 4 success/2 fail then resume only 2 PASS; 6 real Flow cases not run (Flow is available for user decks) |
 | C-02 | Статистика | **PASS** | Independent analytical Q/P, pointwise bands/sample counts, explicit partial failure policy/total/completed/excluded PASS; real solver inputs separate C-01 |
 | C-03 | Bounded search | **PASS** | Explicit completed-case ranking <=10, date/unit normalization, constraints/feasibility/direction and no-global-optimum declaration; analytical fixtures PASS |
 | C-04 | Workflow | **FAIL** | Save/run/fan-out/fan-in/resume plus preflight typed artifact ports/missing parameters PASS; advanced multi-port/units coverage incomplete |
@@ -54,7 +54,7 @@ Solver SDK fixtures: `uv sync --frozen --extra solver --group dev`. Raw evidence
 | C-09 | Cleanup | **EXPERIMENTAL** | Вынесено в experimental/runpod; не входит в пакет/MCP и обязательную приёмку |
 | C-10 | Учёт стоимости | **EXPERIMENTAL** | Вынесено в experimental/runpod; не входит в пакет/MCP и обязательную приёмку |
 | C-11 | Experimental cloud policy | **EXPERIMENTAL** | Вынесено в experimental/runpod; не входит в пакет/MCP и обязательную приёмку |
-| C-12 | Полная демонстрация | **FAIL** | Full dynamic process with actual OPM not yet validated; cloud cleanup is experimental |
+| C-12 | Полная демонстрация | **FAIL** | Full generated dynamic process with actual OPM not yet validated (user-deck Flow runs only); cloud cleanup is experimental |
 
 ## Отдельные доступные проверки
 
@@ -72,13 +72,13 @@ Solver SDK fixtures: `uv sync --frozen --extra solver --group dev`. Raw evidence
 - XTGeo corner-point GRDECL/EGRID/ROFF rotated analytic controls; public Norne all113344 cells/44927 active, original properties/mapping, independent ConvexHull contact clipping, plan/report PASS and full active-cell PyVista/trame scene; docs/PETREL_WORKFLOW.md. XTGeo geometry import uses full RAM, <=2M-cell profile.
 - Large SEG-Y source import: actual269422096-byte synthetic IEEE file, all67108864 samples bitwise exact, import sampled peak RSS402.5MiB, working amplitude buffer2MiB; benchmark-seismic.json. No1TiB or Volve claim.
 - Published OPM SPE10 model2 input files: 1.122M cells, pinned commit+SHA-256, original PORO/PERMX/PERMZ preserved, independent source-layer sums and numerical validation PASS. NTG/Sw/Bo are explicit static-control settings; no Flow/real field/>15GiB acceptance inferred.
-- Native Windows x64 is the main Basic deployment target; NVIDIA is optional and WSL is reserved for Linux-only OPM Flow. Backend/MCPB/Windows CI are prepared; native workstation/Desktop/NVIDIA acceptance remains NOT RUN. See INSTALL_WINDOWS.md.
+- Native Windows x64 is the main Basic deployment target; NVIDIA is optional and WSL is reserved for Linux-only OPM Flow. Verified on Windows 11 / RTX 3080 Ti Laptop: MCPB installation in Claude Desktop (owner check), hosted Windows CI, gpu-marker tests and a Volve deck in OPM Flow. See INSTALL_WINDOWS.md and VOLVE_REAL_DATA_TEST.md.
 
 ## Blockers
 
 Список программных пробелов и внешних стендов: [ROADMAP.md](ROADMAP.md). Не все FAIL объясняются отсутствием hardware.
-OPM deck и SPE1 fixture не имеют reference results: simulator не запускался. Docker recipe не built и не digest-pinned.
-Внешний GPU/OPM стенд и реальные HTTPS/OAuth MCP-клиенты ещё требуют проверки. LLM/ASR keys и Runpod не являются требованиями основного продукта.
+Сгенерированные OPM deck и SPE1 fixture не имеют reference results; Flow проверен на пользовательском deck Volve против ECLIPSE. Docker recipe не built и не digest-pinned.
+Remote GPU, OPM CUDA build и реальные HTTPS/OAuth MCP-клиенты (ChatGPT, удалённые коннекторы) ещё требуют проверки. LLM/ASR keys и Runpod не являются требованиями основного продукта.
 
 ## Известные сторонние предупреждения
 
@@ -88,5 +88,5 @@ GemPy/Pydantic json_encoders, Gradio5 deprecations к Gradio6, Starlette portal 
 
 A–D/O implementation, explicit format limits and onboarding evidence: [COPILOT_RESULT.md](COPILOT_RESULT.md).
 Publication checks and current CPU regression: [PUBLICATION.md](PUBLICATION.md). Scientific algorithms are unchanged by packaging.
-Full Norne DATA static import and 20M synthetic corner-point benchmark passed. SWAT equilibrium, Windows/WSL2/NVIDIA, real Claude/Desktop extension installation and OPM remain NOT RUN.
+Full Norne DATA static import and 20M synthetic corner-point benchmark passed. Later Windows checks (2026-10-18…19) cover Claude Desktop installation, CUDA and a Volve deck in OPM Flow. SWAT equilibrium import and generated-case Flow acceptance remain NOT RUN.
 The updated wheel passed an existing UI-free core environment. A fresh full offline dependency solve was unavailable due incomplete cache; see copilot-core-check.json.

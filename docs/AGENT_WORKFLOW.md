@@ -24,7 +24,7 @@ Endpoint: `http://127.0.0.1:8765/mcp/`. При установленном OPENSU
 
 Для отдельного stdio-клиента: `kanysh-basic --home /separate/state mcp --profile agent`.
 Нельзя запускать два executor над одним каталогом состояния. Для общего состояния используйте
-HTTP работающего сервиса. Реальные ChatGPT/Claude подключения ещё NOT RUN; SDK-проверка
+HTTP работающего сервиса. Claude Desktop (локальный MCPB) проверен на Windows; ChatGPT и удалённые коннекторы ещё NOT RUN; SDK-проверка
 не доказывает доступность localhost из облачного клиента. Детали транспорта: [MCP_SETUP](MCP_SETUP.md).
 
 ## Контракт агента
@@ -137,7 +137,7 @@ resume, повреждённые blobs и неверные числа при в�
 ./.venv/bin/pytest tests/gpu -q
 ```
 
-Windows/WSL2 и NVIDIA выполняет владелец на своей станции. GPU skip означает NOT RUN.
+Windows и NVIDIA проверены владельцем на станции с RTX 3080 Ti Laptop ([тесты GPU](test-results-scaling-gpu.xml)). На хосте без CUDA GPU skip означает NOT RUN.
 CSV snapshot по-прежнему ≤256 MiB, все CSV plan inputs ≤512 MiB, GemPy grid ≤4 млн ячеек.
 Для готовых больших декартовых моделей добавлен отдельный grid_import → properties ref → plan
 с блочным хранением и вычислениями (до 2 млрд ячеек по контракту). [LARGE_MODELS](LARGE_MODELS.md).

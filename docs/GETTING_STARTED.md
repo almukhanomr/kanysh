@@ -10,8 +10,8 @@ opens models, reports and files. Calculations and model arrays stay on your work
 Your chat client controls what messages and tool results it sends to its AI provider.
 
 This is a development release. Numerical code and local SDK connections have been
-checked. Actual Claude Desktop installation, real external chat-client acceptance
-and native Windows/NVIDIA workstation checks remain **NOT RUN**. You may need IT help
+checked. Claude Desktop installation and native Windows/NVIDIA were verified on one
+workstation; ChatGPT and remote OAuth connectors remain **NOT RUN**. You may need IT help
 for a source installation. Windows users should follow the [native extension guide](INSTALL_WINDOWS.md). A GPU is not required for the Basic CPU workflows.
 
 ## 1. Install once
@@ -80,7 +80,7 @@ original `--home` instead of starting an empty one. Details: [setup reference](O
 ### If you received a Desktop extension instead
 
 Follow [Install on Windows](INSTALL_WINDOWS.md). The bundle also declares macOS/Linux;
-its host must support MCPB 0.4 UV. Actual host installation remains NOT RUN. Choose the
+its host must support MCPB 0.4 UV. Installation is verified in Claude Desktop on Windows; macOS/Linux hosts are NOT RUN. Choose the
 same results home on future runs. The viewer opens on first startup; its URL and
 status are recorded in startup.log. A real tool call confirms the client connection.
 

@@ -38,8 +38,8 @@ These options allow isolated configuration tests without editing a real account.
 Windows uses the **native Win32 backend**; [three-step MCPB installation](INSTALL_WINDOWS.md).
 Owner registration accepts paths such as `D:\Geology\FieldA`. Portalocker excludes a
 second controller; Windows source handles reject reparse points and pin ancestors.
-WSL is optional for Linux-only OPM Flow. Native Windows/Claude Desktop/NVIDIA acceptance
-remains **NOT RUN**. Linux without WSL has no native Desktop registration; Claude Code
+WSL is optional for Linux-only OPM Flow. Native Windows, Claude Desktop and NVIDIA were verified on one
+workstation ([status](ROADMAP.md#basic-verification-status)). Linux without WSL has no native Desktop registration; Claude Code
 still gets configured.
 
 The viewer opens at a loopback address, reusing an active viewer or choosing a free
@@ -88,7 +88,7 @@ registered read-only at startup. CPU PyTorch is selected explicitly; no solver e
 is included. The viewer opens on first startup and startup.log records MCP_READY or
 failure. UV installation failures happen before the launcher and belong to host logs.
 Archive inspection and SDK launches are separate from actual Claude Desktop extension
-installation, which remains **NOT RUN**. See [Windows acceptance](INSTALL_WINDOWS.md).
+installation, which is verified on Windows. See [Windows acceptance](INSTALL_WINDOWS.md).
 
 The GPU extension is `dist/kanysh-basic-gpu-0.2.0-dev6.mcpb`, with its own home and
 checked-in lock. Official validation/packing and startup concurrency details:

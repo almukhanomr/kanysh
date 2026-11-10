@@ -7,11 +7,11 @@ runtime. Static model checks and volume scenarios run natively; **WSL is not nee
 The extension includes the Norne demo. First installation needs internet access to
 fetch Python 3.12 and scientific dependencies; downloads can be substantial.
 
-**Acceptance: native Windows execution, the actual Claude Desktop UV installation and
-NVIDIA hardware checks are NOT RUN.** Windows dependency resolution has a separate
-check; it is not proof of installation. The pictures below are guide illustrations,
-not screenshots of a verified Windows install. Do not promise a validated one-click
-release until the acceptance checklist at the end has been completed.
+**Acceptance: verified on one workstation** (Windows 11 x64, RTX 3080 Ti Laptop,
+2026-10-18…19): the `.mcpb` installs in Claude Desktop, tools run on a real model
+([Volve test](VOLVE_REAL_DATA_TEST.md)), hosted Windows CI passes and CUDA tests pass.
+This is an owner check on a single machine, not a clean-machine certification. The
+pictures below are guide illustrations, not screenshots of that installation.
 
 ## 1. Download and open the extension
 
@@ -89,7 +89,8 @@ home, `%LOCALAPPDATA%\kanysh-basic-gpu`. Both editions can be installed alongsid
 other; keep separate homes. The first GPU installation downloads approximately **2.5 GB**
 and requires additional disk space. PyTorch uses the explicit official CUDA 12.6 index
 on Windows/Linux. A compatible NVIDIA driver is required. Drivers are not installed by
-the extension. Actual NVIDIA/Claude Desktop acceptance remains **NOT RUN**.
+the extension. Verified on an RTX 3080 Ti Laptop: [GPU tests](test-results-scaling-gpu.xml) pass and GPU
+volumes match the mandatory CPU comparison. Other NVIDIA cards are NOT RUN.
 
 Startup status records GPU name, PyTorch/CUDA version and availability. Without available
 CUDA, the GPU edition starts on CPU and reports a warning. Supported calculations need
@@ -123,7 +124,8 @@ is separate from executing OPM Flow. Static model workflows remain native Window
 
 For simulation, IT prepares a separate Linux/WSL installation with a chosen OPM Flow
 binary, the solver extra and its own calculation home. Do not run two owners against
-one SQLite home across Windows and WSL. Follow [supported profiles](SUPPORTED_PROFILES.md). End-to-end OPM acceptance remains **NOT RUN**.
+one SQLite home across Windows and WSL. Follow [supported profiles](SUPPORTED_PROFILES.md). A user deck (Volve) was run in OPM Flow 2026.04 through WSL2 and compared with ECLIPSE;
+generated-case acceptance remains **NOT RUN**.
 
 ## Windows release acceptance (record actual evidence)
 

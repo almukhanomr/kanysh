@@ -14,8 +14,9 @@
 
 Повтор: `uv run kanysh-basic benchmark`. Отчёт включает hardware, package version, grid,
 precision, preparation/compute/full timings и error против аналитических 2e6 standard_m3.
-200×200×100, CUDA, remote, synthetic seismic performance, OPM small/medium — NOT RUN.
-Никаких заявлений об ускорении GPU или полной производительности solver пока нет.
+В этом CPU-профиле 200×200×100, remote, synthetic seismic performance, OPM small/medium — NOT RUN.
+CUDA измерена отдельно на Norne (раздел ниже). Заявлений об ускорении GPU или полной
+производительности solver нет.
 
 ## Блочный Cartesian профиль
 
@@ -35,7 +36,7 @@ Import+QC43.76s, volume22.43s, independent volume+property validation33.53s;
 полный wall124.44s. Disk peak21.88GiB, temporary data removed.
 Все численные, integrity/physical, memory/size/disk controls PASS.
 Это synthetic Cartesian CPU профиль; модель состоит из семи файлов, snapshot ZIP2.669GB.
-Один input/ZIP>15GiB, CUDA, corner-point/Petrel native и полевые geometry-fitting задачи не проверены.
+Один input/ZIP>15GiB, CUDA на этом Cartesian профиле, corner-point/Petrel native и полевые geometry-fitting задачи не проверены.
 Метод измерения, допущения и ограничения: [LARGE_MODEL_RESULT](LARGE_MODEL_RESULT.md).
 
 ## Масштабирование corner-point, 18 октября 2026

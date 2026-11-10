@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-17T18:11:33+05:00",
+  "timestamp": "2026-11-10T23:01:59+05:00",
   "environment": "macOS arm64 Python3.12.14 CPU",
   "release_accepted": false,
   "acceptance_scope": "Kanysh Advanced historical VISION; not the accepted Kanysh Basic A-D/O scope",
@@ -40,16 +40,16 @@
     {
       "id": "A-05",
       "name": "Объёмы",
-      "status": "NOT RUN",
-      "evidence": "CPU analytical all metrics PASS; CUDA half of combined criterion NOT RUN",
+      "status": "PASS",
+      "evidence": "CPU analytical all metrics PASS; CUDA float64 analytical volume PASS on RTX 3080 Ti Laptop (tests/gpu/test_cuda.py, docs/test-results-scaling-gpu.xml)",
       "required": true,
       "scope": "product"
     },
     {
       "id": "A-06",
       "name": "Локальный GPU",
-      "status": "NOT RUN",
-      "evidence": "No NVIDIA CUDA device; tests/gpu skipped explicitly",
+      "status": "PASS",
+      "evidence": "Windows 11 / RTX 3080 Ti Laptop: gpu marker 10 passed, 1 skipped; GemPy GPU control, CUDA volumes/attributes and tetra6 with mandatory CPU comparison; Norne CUDA regional volumes PASS_WITH_EXCLUSIONS, slower than CPU on this profile (docs/benchmark-scaling-norne-cuda.json). GPU 10–200M cells NOT RUN",
       "required": true,
       "scope": "product"
     },
@@ -89,7 +89,7 @@
       "id": "A-11",
       "name": "MCP",
       "status": "NOT RUN",
-      "evidence": "MCP SDK stdio/shared ASGI + actual headless CLI HTTP daemon/source snapshot/import/disconnect PASS; agent profile pinned GemPy/static plan, independent checks, partial/resume and report/image SDK PASS; real ChatGPT/Claude OAuth connectors not tested",
+      "evidence": "MCP SDK stdio/shared ASGI + actual headless CLI HTTP daemon/source snapshot/import/disconnect PASS; agent profile pinned GemPy/static plan, independent checks, partial/resume and report/image SDK PASS; real Claude Desktop MCPB (stdio) on Windows verified by the owner on Volve; ChatGPT and remote OAuth connectors not tested",
       "required": true,
       "scope": "product"
     },
@@ -120,8 +120,8 @@
     {
       "id": "B-03",
       "name": "Атрибуты",
-      "status": "NOT RUN",
-      "evidence": "RMS constant/impulse and sine-envelope CPU PASS; CUDA not run",
+      "status": "PASS",
+      "evidence": "RMS constant/impulse and sine-envelope CPU PASS; CUDA attributes against analytic PASS (tests/gpu/test_cuda.py)",
       "required": true,
       "scope": "product"
     },
@@ -169,7 +169,7 @@
       "id": "B-09",
       "name": "Initialization",
       "status": "NOT RUN",
-      "evidence": "No OPM initialization outputs; static input PORV3.2e6m3 verified only before export",
+      "evidence": "Generated case not initialized in Flow; static input PORV3.2e6m3 verified only before export. User deck (Volve) in OPM Flow 2026.04: initial FOIP/FWIP equal ECLIPSE, see VOLVE_REAL_DATA_TEST.md",
       "required": true,
       "scope": "product"
     },
@@ -177,7 +177,7 @@
       "id": "B-10",
       "name": "Waterflood",
       "status": "NOT RUN",
-      "evidence": "Generated 20x20x5 case exported; Flow executable not installed",
+      "evidence": "Generated 20x20x5 case exported but not run; OPM Flow 2026.04 (WSL2) runs user decks via simulation_deck_run",
       "required": true,
       "scope": "product"
     },
@@ -193,7 +193,7 @@
       "id": "B-12",
       "name": "Conservation",
       "status": "NOT RUN",
-      "evidence": "Constant-FVF oil-water component balance/PORV/no-flow pressure-drift QC implemented; analytical conservation PASS; native no-flow/waterflood not run",
+      "evidence": "Constant-FVF oil-water component balance/PORV/no-flow pressure-drift QC implemented; analytical conservation PASS; native no-flow/waterflood fixtures not run (Flow itself runs user decks)",
       "required": true,
       "scope": "product"
     },
@@ -201,7 +201,7 @@
       "id": "B-13",
       "name": "Result analysis",
       "status": "FAIL",
-      "evidence": "Native summary SDK + artificial EGRID/INIT/two-report UNRST fixture and analytical UI/alignment/comparison PASS; real Flow outputs and per-well analysis acceptance incomplete",
+      "evidence": "Native summary SDK + artificial EGRID/INIT/two-report UNRST fixture and analytical UI/alignment/comparison PASS; real Flow outputs read for Volve (FPR/FOPT/well BHP vs ECLIPSE); per-well analysis acceptance incomplete",
       "required": true,
       "scope": "product"
     },
@@ -217,7 +217,7 @@
       "id": "B-15",
       "name": "Сквозной сценарий",
       "status": "NOT RUN",
-      "evidence": "Seismic/picks/depth/property paths available; full solver integration not run",
+      "evidence": "Seismic/picks/depth/property paths available; generated-case solver integration not run",
       "required": true,
       "scope": "product"
     },
@@ -233,7 +233,7 @@
       "id": "C-01",
       "name": "Ансамбль",
       "status": "NOT RUN",
-      "evidence": "3 real property artifacts x 2 real case exporters; mocked solver 4 success/2 fail then resume only 2 PASS; 6 real Flow cases not run",
+      "evidence": "3 real property artifacts x 2 real case exporters; mocked solver 4 success/2 fail then resume only 2 PASS; 6 real Flow cases not run (Flow is available for user decks)",
       "required": true,
       "scope": "product"
     },
@@ -321,7 +321,7 @@
       "id": "C-12",
       "name": "Полная демонстрация",
       "status": "FAIL",
-      "evidence": "Full dynamic process with actual OPM not yet validated; cloud cleanup is experimental",
+      "evidence": "Full generated dynamic process with actual OPM not yet validated (user-deck Flow runs only); cloud cleanup is experimental",
       "required": true,
       "scope": "product"
     }

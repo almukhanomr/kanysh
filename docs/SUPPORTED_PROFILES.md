@@ -3,8 +3,8 @@
 | Профиль | Состояние |
 |---|---|
 | local-cpu macOS arm64 / Python 3.12 | Проверен, включая UI, API, scientific kernel и MCP SDK |
-| local-cpu Linux x86_64 | Код подготовлен; чистая Linux установка NOT RUN |
-| local-cuda Linux/WSL2 NVIDIA | Tensor paths реализованы, tests есть; NOT RUN |
+| local-cpu Linux x86_64 | CPU-набор проходит в hosted CI (Ubuntu); ручная чистая установка NOT RUN |
+| local-cuda Linux/WSL2 NVIDIA | Tensor paths проверены на нативной Windows; на Linux/WSL2 NOT RUN |
 | Windows + NVIDIA workstation | Нативный Win32 backend и MCPB; установка в Claude Desktop, CPU и CUDA на Windows проверены; WSL нужен только для OPM Flow |
 | remote-cuda | Advanced backlog; transport/worker registration is not part of Basic |
 | server | Локальный Host/Origin/token/session guard и общий HTTP MCP проверены; нужны OIDC/HTTPS и реальные внешние клиенты |

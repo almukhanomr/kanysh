@@ -7,12 +7,12 @@ actual Windows acceptance. [User installation: English](INSTALL_WINDOWS.md) /
 
 | Requirement | Implementation | Actual evidence / limit |
 |---|---|---|
-| W1: single controller | Portalocker non-blocking exclusive lock; a metadata reader never releases the owner's lock or cancels its jobs | Independent-process exclusion/reacquisition and existing owner/reader tests pass on macOS. Native Windows NOT RUN |
-| W1: process lifetime | CREATE_NEW_PROCESS_GROUP on Windows; psutil recursive descendants → terminate → wait → kill. Orphan PID must match creation time and worker argv/job folder | Real parent/child cancellation and timeout, orphan mismatch and valid cleanup pass on macOS. Same tests in Windows CI; Windows NOT RUN |
-| W1/W2: filesystem | Windows CreateFileW OPEN_REPARSE_POINT; reject all reparse points, pin every ancestor without FILE_SHARE_DELETE, retain NTFS volume/file ID. Long-path prefix is internal. Source IDs use normalized absolute paths and case-insensitive root comparison on Windows. Relative paths reject drive/ADS/trailing-dot aliases | POSIX source containment/root-replacement/revision tests pass. Native NTFS, case, Unicode/long paths, junction and ancestor-swap tests exist; Windows NOT RUN |
+| W1: single controller | Portalocker non-blocking exclusive lock; a metadata reader never releases the owner's lock or cancels its jobs | Independent-process exclusion/reacquisition and existing owner/reader tests pass on macOS. Native Windows: hosted CI PASS |
+| W1: process lifetime | CREATE_NEW_PROCESS_GROUP on Windows; psutil recursive descendants → terminate → wait → kill. Orphan PID must match creation time and worker argv/job folder | Real parent/child cancellation and timeout, orphan mismatch and valid cleanup pass on macOS. Same tests PASS in hosted Windows CI |
+| W1/W2: filesystem | Windows CreateFileW OPEN_REPARSE_POINT; reject all reparse points, pin every ancestor without FILE_SHARE_DELETE, retain NTFS volume/file ID. Long-path prefix is internal. Source IDs use normalized absolute paths and case-insensitive root comparison on Windows. Relative paths reject drive/ADS/trailing-dot aliases | POSIX source containment/root-replacement/revision tests pass. Native NTFS, case, Unicode/long paths, junction and ancestor-swap tests PASS in hosted Windows CI |
 | W2: folder selection | Native Windows PowerShell folder picker with UTF-8 output; CLI drive paths and installer model-folder configuration share the source boundary | Installer-selected folder automatically registers and is assessed through real MCP SDK on macOS. Actual Windows picker/Claude dialog NOT RUN |
-| W3: dependencies | CPU uv group is default. Exclusive gpu extra selects CUDA 12.6 with `--no-group cpu --extra gpu`. Explicit PyTorch indexes. resdata solver extra is Linux-only; native simulation execution returns SOLVER_PLATFORM_UNSUPPORTED | Exact MCPB resolves 168 packages for Windows x64 CPython 3.12 with torch 2.14.1+cpu; no CUDA/resdata. Native packages require wheels, with only pure-Python asciitree allowed from source. Resolution is not installation; NVIDIA NOT RUN |
-| W4: extension | win32/darwin/linux platforms; Windows default `%LOCALAPPDATA%\kanysh-basic`; optional owner-selected model folder; first-run browser; startup.log/startup-status.json and viewer.log | Archive bytes checked against current source/notices. MCP stdio SDK, startup status, shared viewer/controller and isolated one-cell DATA import pass on macOS. Claude Desktop Windows UV install NOT RUN |
+| W3: dependencies | CPU uv group is default. Exclusive gpu extra selects CUDA 12.6 with `--no-group cpu --extra gpu`. Explicit PyTorch indexes. resdata solver extra is Linux-only; native simulation execution returns SOLVER_PLATFORM_UNSUPPORTED | Exact MCPB resolves 168 packages for Windows x64 CPython 3.12 with torch 2.14.1+cpu; no CUDA/resdata. Native packages require wheels, with only pure-Python asciitree allowed from source. Resolution is not installation; GPU edition later verified on an RTX 3080 Ti Laptop |
+| W4: extension | win32/darwin/linux platforms; Windows default `%LOCALAPPDATA%\kanysh-basic`; optional owner-selected model folder; first-run browser; startup.log/startup-status.json and viewer.log | Archive bytes checked against current source/notices. MCP stdio SDK, startup status, shared viewer/controller and isolated one-cell DATA import pass on macOS. Claude Desktop Windows UV install later verified (owner check) |
 | W5: CI | Windows/Ubuntu/macOS CPU matrix, ruff, publication guard, no gpu/opm/external. Explicit skips for Linux-only OPM/optional reader and symlink privilege. Native Windows junction tests do not require symlink privilege | Local macOS CPU after the fix: 177 passed, 5 skipped, 2 deselected; 0 failures/errors, 444.85 s. Desktop cases: 15 passed, including two mocked COM cases. Latest hosted run on commit 3ac2e68: Windows 172 passed, 4 skipped, 2 failed, 2 deselected (583.41 s); Linux/macOS green. [Run 39111905173](https://github.com/almukhanomr/kanysh/actions/runs/39111905173). Fixes below are awaiting a new Windows run |
 | W6/W7: installation | Three-step English/Russian guide with labelled illustrations, GPU and optional OPM/WSL sections; README makes native Windows the primary installation route | Guides/links checked. Pictures are illustrations, not Windows acceptance screenshots |
 
@@ -39,10 +39,10 @@ and ports. Actual resolved homes are visible, including MSIX virtualization.
 
 Local macOS process/SDK tests cover concurrent migrations, STARTING/FAILED transport,
 shared-viewer lifetime and CPU fallback without CUDA. Official CPU/GPU MCPB validation
-passes. These are **not** Windows Desktop or NVIDIA acceptance. Windows Claude UV
-installation, enable/disable/re-enable with no orphan processes, GPU detection and
-actual CUDA computations remain **NOT RUN**. New hosted CI for these uncommitted changes
-has not been run. See [Desktop startup evidence](DESKTOP_STARTUP.md).
+passes. These are **not** Windows Desktop or NVIDIA acceptance by themselves. Later checks
+(2026-10-18…19, RTX 3080 Ti Laptop) verified Windows Claude UV installation, GPU detection,
+CUDA computations and hosted CI; enable/disable/re-enable with no orphan processes
+remains **NOT RUN**. See [Desktop startup evidence](DESKTOP_STARTUP.md).
 
 ## Windows CI lifetime fix (after 3ac2e68)
 
@@ -65,7 +65,6 @@ cannot be established from the supplied CI output. Client stderr, startup status
 viewer logs will now be uploaded on any subsequent CI failure. Atomic status replacement
 also retries bounded Windows sharing violations without truncating the previous record.
 
-Local targeted tests pass; native WMI/Job Object execution and fixed Windows CI are
-**NOT RUN** until a new hosted run. See [Microsoft Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects),
+Local targeted tests pass; the fixed Windows CI later passed in a hosted run (commit `aabb128`). See [Microsoft Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects),
 [WMI Create](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/create-method-in-class-win32-process)
 and [startup environment](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-processstartup).

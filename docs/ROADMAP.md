@@ -26,14 +26,27 @@ candidates; the historical ledger does not establish their readiness.
 Runpod remains an isolated Advanced experiment in `experimental/runpod`, excluded
 from the Basic package and production MCP profiles.
 
-## Basic verification still outstanding
+## Basic verification status
 
-These are verification/deployment tasks for **Kanysh Basic**, not Advanced features:
+Verified (2026-10-18…19, Windows 11 x64, 16 cores, 64 GB, RTX 3080 Ti Laptop):
 
-- Native Windows x64 / Claude Desktop UV installation and optional NVIDIA workstation checks. The native backend is implemented; WSL is optional for OPM Flow.
-- Actual Claude Desktop extension installation and real external MCP-client checks.
-- GitHub-hosted Ubuntu/macOS CI execution and user-supplied Petrel/RMS reconciliation
-  datasets with confirmed assumptions. The workflow is configured; hosted CI is NOT RUN.
+- GitHub-hosted CI: Ubuntu, macOS and Windows CPU suites pass on `main` (commit `aabb128`).
+- Native Windows: the `.mcpb` installs in Claude Desktop and the tools run on a real exported
+  model ([Volve test](VOLVE_REAL_DATA_TEST.md)). This is an owner check without a
+  machine-readable record.
+- CUDA: `gpu`-marker tests pass ([raw result](test-results-scaling-gpu.xml): 10 passed,
+  1 skipped); Norne regional volumes on CUDA match the mandatory CPU comparison
+  ([benchmark](benchmark-scaling-norne-cuda.json)). CUDA is slower than CPU on that profile;
+  no speed-up is claimed.
+- OPM Flow 2026.04 in WSL2 runs a user deck (Volve, 339 report steps) and is compared with
+  the supplied ECLIPSE results.
+
+Still outstanding for **Kanysh Basic** (verification, not Advanced features):
+
+- ChatGPT and remote OAuth MCP connectors; Desktop disable/re-enable with no orphan processes.
+- User-supplied Petrel/RMS reconciliation datasets with confirmed assumptions.
+- GPU runs on 10–200 million cells and large binary field EGRID/INIT.
+- Gaps found on Volve: `ADDZCORN`, initial SWAT import, scattered-point surfaces, RESCUE.
 
 External resources do not establish correctness by themselves. Basic and Advanced
 both retain independent numerical checks, immutable provenance, explicit scientific

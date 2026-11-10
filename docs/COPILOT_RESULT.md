@@ -1,5 +1,9 @@
 # Copilot implementation evidence · 2026-10-17
 
+> Later checks (2026-10-18…19) verified Claude Desktop installation on Windows, CUDA, hosted CI
+> and a Volve deck in OPM Flow; current statuses are in [ROADMAP](ROADMAP.md#basic-verification-status).
+> Statements below were updated where those checks superseded them.
+
 Product: an AI copilot alongside Petrel/RMS, operating through MCP with a local
 viewer. The A–D/O scope is accepted; this publication pass adds no product features. External acceptance is stated separately.
 
@@ -17,7 +21,7 @@ viewer. The A–D/O scope is accepted; this publication pass adds no product fea
 | D1–D2 | results_export: XLSX Scenarios/Regions/Checks/Assumptions/Definitions and other tables; PDF tables/plots/assumptions/provenance and optional seismic slices | Every workbook cell reopened/compared; independent PDF text/page checks. Export PASS is serialization only. PDF presentation row limit explicit; source NOT RUN/FAIL retained. Fixture rendered and visually reviewed with Poppler and artifact_tool. |
 | O1–O2 | folder_assess and five scenario prompts | Bounded headers, role candidates/missing inputs/workflows, file/line proposals requiring user confirmation before plan/calculation. Scientific assessment NOT RUN until import/checks. |
 | O3 | Owner-only Add folder button, native picker, CLI retained | Dialog registration/cancellation tested with a controlled picker. Actual OS interaction on Windows/WSL NOT RUN. No folder registration MCP tool. |
-| O4 | setup environment/home/client JSON backup/idempotency, viewer launch/reuse; source UV-runtime .mcpb builder | Isolated config and archive tests. Real Claude client connection/extension installation NOT RUN. Native Windows backend and Windows/macOS/Linux MCPB are prepared; Windows/Desktop UV installation remains NOT RUN. WSL is optional for OPM Flow. [Windows evidence](WINDOWS_NATIVE.md). |
+| O4 | setup environment/home/client JSON backup/idempotency, viewer launch/reuse; source UV-runtime .mcpb builder | Isolated config and archive tests. Claude Desktop MCPB installation on native Windows was later verified by the owner on a real model ([Volve test](VOLVE_REAL_DATA_TEST.md)); macOS/Linux Desktop installation NOT RUN. WSL is optional for OPM Flow. [Windows evidence](WINDOWS_NATIVE.md). |
 | O5–O6 | Bilingual global export guide, bundled MCP resource, first-connection start/begin | Format-first guidance; version-specific vendor GUI menus NOT RUN. Saved Norne demo is explicitly distinguished from fresh calculation. |
 
 All new scientific operations are in the `agent` profile and return durable job IDs,
@@ -38,12 +42,13 @@ obtain user confirmation; a schema flag is not proof that a human actually confi
   `test_onboarding.py`; scene includes wells, surfaces, markers, polygons, grid and seismic.
 
 The Norne DATA test does not substitute SWATINIT for SWAT: equilibrium Sw, fresh reserves,
-Flow history and geological fitness remain NOT RUN. The independent XTGeo corner comparison
+Norne Flow history and geological fitness remain NOT RUN. The independent XTGeo corner comparison
 uses a precision bound derived from its internal float32 ZCORN ULP and pillar slope:
 0.0044459m bound, 0.00070552m maximum observed difference; source float64 is retained.
 
-No new acceptance is claimed for Windows/NVIDIA/WSL2 hardware, native Win32 execution,
-real ChatGPT/Claude accounts, OPM Flow, full Volve, 1TB models or 15GB field SEG-Y.
+At the date of this pass no acceptance was claimed for Windows/NVIDIA hardware, Claude Desktop
+or OPM Flow; those were verified later (see the note above). Still not claimed: ChatGPT and
+remote OAuth connectors, complete-field Volve, 1TB models or 15GB field SEG-Y.
 Menu differences and unsupported keywords remain visible rather than silently filled in.
 
 ## Final validation
@@ -59,7 +64,7 @@ Menu differences and unsupported keywords remain visible rather than silently fi
 - Updated wheel in an existing UI-free core environment: [PASS](copilot-core-check.json).
   All 114 installed package requirements also pass `uv pip check`. A fresh full offline solve was unavailable because the registry cache is incomplete.
 - Source MCPB with SDK stdio/shared viewer/isolated import: [PASS](mcpb-check.json),
-  [archive identity](mcpb-build.json). Real Desktop installation is NOT RUN.
+  [archive identity](mcpb-build.json). Real Desktop installation on Windows was verified later.
 - Owner setup exercised only with isolated configuration files: [evidence](setup-check.json).
   Original/backup/idempotency/conflict behaviour has integration tests; real user config was not edited.
 - Actual Norne XLSX imported/rendered through artifact_tool; PDF rendered by Poppler and all 7 pages

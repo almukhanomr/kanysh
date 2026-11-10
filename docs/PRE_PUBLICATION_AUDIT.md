@@ -61,4 +61,5 @@ credential/Advanced/build paths were also checked against Git's actual ignore en
 Final CPU regression after cleanup: **150 passed, 2 deselected**, zero failures/errors,
 420.60 s. See [portable JUnit](test-results.xml). Ruff lint/format, frozen lock, real
 MCPB SDK execution and the updated UI-free core wheel checks pass. External hardware
-and actual Desktop installation remain NOT RUN.
+and actual Desktop installation were not run in this audit; they were verified later
+([status](ROADMAP.md#basic-verification-status)).

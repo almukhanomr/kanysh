@@ -53,8 +53,9 @@ opening the newly bundled Norne scene.
   normalizes checkout paths and removes hostnames automatically.
 
 CI is configured for Ubuntu/macOS CPU tests, excluding gpu/opm/external markers.
-GitHub-hosted CI, actual Claude Desktop extension installation, Windows/WSL2/NVIDIA
-hardware and OPM Flow remain **NOT RUN**. No package upload or public release was
+At the time of this packaging pass GitHub-hosted CI, Claude Desktop installation,
+Windows/NVIDIA hardware and OPM Flow were not run; all four were verified later
+([status](ROADMAP.md#basic-verification-status)). No package upload or public release was
 performed by this packaging pass.
 
 ## Product naming

@@ -2,7 +2,7 @@
 
 Основной Windows-профиль — **нативное расширение Claude Desktop без WSL**.
 [Установка за три шага](INSTALL_WINDOWS.ru.md). CPU-сценариям не нужны отдельный сервер
-или NVIDIA. Приёмка нативной Windows/Claude Desktop/NVIDIA остаётся NOT RUN.
+или NVIDIA. Нативная Windows, установка в Claude Desktop и NVIDIA проверены на одной станции (RTX 3080 Ti Laptop).
 WSL используется опционально только для Linux-гидродинамики OPM Flow.
 Ниже сохранён справочник дополнительного Linux/WSL-профиля для ИТ-службы.
 
@@ -119,7 +119,7 @@ dataset import; завершение после disconnect; Gradio не импо
 `tests/integration/test_local_sources.py`: реальные CSV imports, provenance, pagination,
 file-change/revocation/escape/symlink/root-replacement и bounded snapshot import.
 Эти проверки выполнены на macOS CPU. Большая Cartesian raw-модель18.119GB /402.7M cells прошла
-проверку: [результат](LARGE_MODEL_RESULT.md). Windows/WSL CUDA ещё NOT RUN.
+проверку: [результат](LARGE_MODEL_RESULT.md). CUDA на Windows проверена на Norne: [результат](benchmark-scaling-norne-cuda.json).
 Меньший блочный контроль: [benchmark-large-small.json](benchmark-large-small.json).
 
 ## Контроль после установки

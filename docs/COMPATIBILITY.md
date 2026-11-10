@@ -7,7 +7,7 @@
 |---|---|---|
 | GemPy / engine | 2026.0.3 / 2026.0.3.post1 | PASS, реальные PyTorch CPU horizontal/dipping/single-fault fixtures |
 | NumPy / SciPy | 2.5.4 / 1.18.1 | PASS, analytical volumes, RMS, envelope |
-| PyTorch | 2.14.1 | CPU доступен; CUDA NOT RUN, NVIDIA отсутствует |
+| PyTorch | 2.14.1 | CPU PASS; CUDA 12.6 PASS на Windows / RTX 3080 Ti Laptop (отдельный стенд) |
 | GSTools | 1.7.0 | PASS, exact conditioning/logit/seed/holdout/independent anisotropic covariance; API cond_err='nugget' |
 | lasio | 0.32 | PASS, LAS 2.0, null sample, явный MD mapping |
 | segyio | 1.9.14 | PASS, IEEE float32, big/little endian, scalar −100 |
@@ -17,8 +17,8 @@
 | Matplotlib | 3.11.2 | Agg PNG + self-contained HTML/Markdown/JSON/CSV static report; no display server |
 | Agent static workflow | static_volumetrics_v1 | PASS на CPU: GemPy CSV → pinned plan → 3 OWC → seeded scalar uncertainty → independent numerical checks → report; SDK disconnect/reconnect, partial failure/resume, corrupt/wrong results |
 | MCP Python SDK | 1.30.0 | PASS, stdio и общий ASGI Streamable HTTP ClientSession list/call, token guard/shared REST artifacts |
-| Local headless / filesystem sources | текущий source | PASS на macOS CPU: CLI HTTP daemon без Gradio, source scan/snapshot/import, disconnect, path/revision/revocation checks; Windows launcher ещё NOT RUN |
-| OPM Flow | solver не установлен | NOT RUN, native forecast/conservation/INIT/restart pipeline требует Linux стенда |
+| Local headless / filesystem sources | текущий source | PASS на macOS CPU: CLI HTTP daemon без Gradio, source scan/snapshot/import, disconnect, path/revision/revocation checks; Windows: нативный MCPB проверен, PowerShell launcher NOT RUN |
+| OPM Flow | 2026.04 в WSL2 (отдельный стенд) | PASS для пользовательского deck Volve против ECLIPSE; сгенерированные forecast/conservation/INIT/restart NOT RUN |
 | resdata | 6.3.5, установлен solver extra | PASS, Summary.writer→binary SMSPEC/UNSMRY→reader; EGRID/INIT/two-report UNRST format fixture с независимым resfo writer, ACTNUM/inactive/IJK и snapshots; real Flow outputs NOT RUN |
 | Docker | CLI установлен | daemon не запущен; images/build NOT RUN |
 
@@ -38,8 +38,7 @@
 выбрать build в Linux, pin digest, выполнить no-flow/waterflood/upstream CPU и CUDA tests.
 Основной профиль графстанции — нативная Windows x64, CPU; NVIDIA подключается отдельно.
 WSL нужен только для Linux-гидродинамики OPM Flow. Windows NTFS/reparse-point/process-tree
-тесты и CI подготовлены, но их реальное выполнение на Windows и Desktop UV installation
-остаются NOT RUN. [Инструкция и приёмка](INSTALL_WINDOWS.md).
+тесты проходят в hosted CI на Windows; установка через Desktop UV проверена на одной станции. [Инструкция и приёмка](INSTALL_WINDOWS.md).
 
 Текущая CPU-регрессия: [raw XML](test-results.xml); Windows-переносимость и статус
 внешней приёмки отражены в [Windows evidence](WINDOWS_NATIVE.md). GitHub-hosted
@@ -82,7 +81,7 @@ Full DATA Norne import and bounded 20M-cell ASCII corner-point path have separat
 acceptance evidence. XLSX/PDF: OpenPyXL3.1.5, ReportLab4.5.1, pypdf6.21.0;
 serialization/independent reader and rendered fixture checks passed. Source-only
 MCPB launched through SDK stdio plus shared viewer/controller and isolated import:
-[raw check](mcpb-check.json). Actual Claude Desktop installation and Windows/WSL2 remain NOT RUN.
+[raw check](mcpb-check.json). Actual Claude Desktop installation on Windows was verified later.
 The updated wheel passed the existing UI-free core environment check;
 a new full offline dependency solve could not run because the registry cache is incomplete:
 [copilot-core-check.json](copilot-core-check.json).

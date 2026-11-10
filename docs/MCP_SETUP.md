@@ -23,8 +23,8 @@ Restart the client, choose the `begin` prompt, then add an owner-authorized fold
 
 The `.mcpb` uses the v0.4 UV runtime. Build it with `python scripts/build_mcpb.py`
 and open the resulting archive in a compatible Desktop host. Archive/SDK execution
-is tested separately from actual Claude Desktop installation, which remains NOT RUN.
-Windows uses the [native MCPB installation](INSTALL_WINDOWS.md); WSL is optional for Linux-only OPM Flow. Native Windows/Desktop acceptance remains NOT RUN.
+is tested separately from actual Claude Desktop installation, which is verified on Windows.
+Windows uses the [native MCPB installation](INSTALL_WINDOWS.md); WSL is optional for Linux-only OPM Flow. Native Windows/Desktop was verified on one workstation.
 
 ## Manual stdio configuration
 
@@ -89,4 +89,5 @@ Five prompts: `check_model`, `regional_volumes`, `reconcile_petrel`, `tornado_an
 explicit benchmark assumptions and expected numbers.
 
 SDK stdio/HTTP tests and a working loopback service do not establish acceptance of
-real ChatGPT/Claude accounts, OAuth, GPU or Windows hardware. Those checks remain NOT RUN.
+real ChatGPT/Claude accounts, OAuth, GPU or Windows hardware. Claude Desktop, GPU and Windows
+were verified separately ([status](ROADMAP.md#basic-verification-status)); ChatGPT and OAuth remain NOT RUN.
