@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 import portalocker
 
+from opensubsurface import __version__
 from opensubsurface.adapters.imports import check_coordinates
 from opensubsurface.errors import DomainError, require
 from opensubsurface.execution.provenance import fingerprint
@@ -538,10 +539,19 @@ class Service:
             return sources.upload(SourceUpload.model_validate(arguments).model_dump())
         if operation == "project_inspect":
             p = ProjectRequest.model_validate(arguments)
+            objects = self.store.list_objects(p.project_id)
+            jobs = self.store.list_jobs(p.project_id)
+            object_count = self.store.count_objects(p.project_id)
+            job_count = self.store.count_jobs(p.project_id)
+            # At most 200 of each are returned; the counts make a partial listing visible.
             return dict(
                 project=self.store.project(p.project_id),
-                objects=self.store.list_objects(p.project_id),
-                jobs=self.store.list_jobs(p.project_id),
+                objects=objects,
+                jobs=jobs,
+                object_count=object_count,
+                job_count=job_count,
+                objects_truncated=object_count > len(objects),
+                jobs_truncated=job_count > len(jobs),
             )
         if operation in (
             "artifact_inspect",
@@ -786,7 +796,7 @@ class Service:
                 "Import CRS/datum must match the project; implicit conversion is not allowed",
             )
             context = []
-            for obj in self.store.list_objects(p["project_id"]):
+            for obj in self.store.list_objects(p["project_id"], limit=None):
                 if obj["kind"] == "dataset" and "data.parquet" in obj["files"]:
                     context.append(
                         dict(
@@ -812,6 +822,7 @@ class Service:
                 scene_context=scene_context,
                 home=str(self.store.root),
             )
+            self.threads = [t for t in self.threads if t.is_alive()]
             thread = threading.Thread(target=self.execute, args=(job, request, warnings), daemon=True)
             self.threads.append(thread)
             thread.start()
@@ -947,7 +958,7 @@ class Service:
                 if error.get("code") == "INVALID_GEOMETRY" and properties:
                     reports = [
                         ref(o)
-                        for o in self.store.list_objects(job["project_id"])
+                        for o in self.store.list_objects(job["project_id"], limit=None)
                         if o["kind"] == "analysis_report"
                         and o["summary"].get("operation") == "model_qc"
                         and o["parameters"].get("properties") == ref(properties)
@@ -1200,6 +1211,7 @@ class Service:
         if created:
             if plan is not None:
                 job = self.store.update_job(job["id"], resolved_plan=plan)
+            self.threads = [t for t in self.threads if t.is_alive()]
             thread = threading.Thread(target=self.orchestrate, args=(job,), daemon=True)
             self.threads.append(thread)
             thread.start()
@@ -1280,7 +1292,7 @@ class Service:
                                 operation=node["operation"],
                                 args=typed,
                                 inputs={k: v["content_hash"] for k, v in resolved.items()},
-                                app="0.2.0.dev6",
+                                app=__version__,
                                 runtime=runtime,
                             )
                         )

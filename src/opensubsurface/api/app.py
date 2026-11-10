@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from opensubsurface import __version__
 from opensubsurface.contracts import CONTRACTS, READ_ONLY
 from opensubsurface.errors import DomainError
 from opensubsurface.schemas import ProjectCreate
@@ -81,7 +82,7 @@ def create_app(root=None, service=None, with_ui=False, with_mcp=True, mcp_profil
                 unregister(service, viewer_record)
             service.close()
 
-    app = FastAPI(title="Kanysh Basic", version="0.2.0.dev2", lifespan=lifespan)
+    app = FastAPI(title="Kanysh Basic", version=__version__, lifespan=lifespan)
     app.state.service = service
     if mcp_app:
         app.mount("/mcp", mcp_app)
@@ -117,7 +118,7 @@ def create_app(root=None, service=None, with_ui=False, with_mcp=True, mcp_profil
         return {
             "status": "ok",
             "profile": "local",
-            "version": "0.2.0.dev6",
+            "version": __version__,
             "service": "kanysh-basic",
             "home": str(service.store.root.resolve()),
         }

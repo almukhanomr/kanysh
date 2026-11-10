@@ -14,7 +14,17 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 import portalocker
-from sqlalchemy import Column, Integer, MetaData, String, Table, UniqueConstraint, create_engine, select
+from sqlalchemy import (
+    Column,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    UniqueConstraint,
+    create_engine,
+    func,
+    select,
+)
 
 from opensubsurface.errors import require
 
@@ -85,6 +95,9 @@ class Store:
             f"sqlite:///{self.root / 'metadata.db'}", connect_args={"check_same_thread": False, "timeout": 30}
         )
         self.lock = threading.RLock()
+        # Blobs already hashed by this process: hash -> (size, mtime_ns). A blob whose size or
+        # modification time changed is hashed again; a new process always starts with an empty cache.
+        self.verified = {}
         # Serialize WAL setup, Alembic's version-table creation and schema marker.
         # This lock is distinct from the executor ownership lock.
         try:
@@ -132,18 +145,29 @@ class Store:
             return [json.loads(row) for row in c.execute(select(projects.c.data)).scalars()]
 
     def list_objects(self, project_id, limit=200, offset=0):
+        """One page of at most 200 manifests; limit=None returns every manifest (internal callers)."""
         self.project(project_id)
+        query = (
+            select(objects.c.data)
+            .where(objects.c.project_id == project_id)
+            .order_by(objects.c.id, objects.c.revision)
+        )
+        if limit is not None:
+            query = query.limit(min(limit, 200)).offset(offset)
         with self.engine.connect() as c:
-            return [
-                json.loads(r)
-                for r in c.execute(
-                    select(objects.c.data)
-                    .where(objects.c.project_id == project_id)
-                    .order_by(objects.c.id, objects.c.revision)
-                    .limit(min(limit, 200))
-                    .offset(offset)
-                ).scalars()
-            ]
+            return [json.loads(r) for r in c.execute(query).scalars()]
+
+    def count_objects(self, project_id):
+        with self.engine.connect() as c:
+            return c.execute(
+                select(func.count()).select_from(objects).where(objects.c.project_id == project_id)
+            ).scalar_one()
+
+    def count_jobs(self, project_id):
+        with self.engine.connect() as c:
+            return c.execute(
+                select(func.count()).select_from(jobs).where(jobs.c.project_id == project_id)
+            ).scalar_one()
 
     def object(self, project_id, ref, verify=True):
         if hasattr(ref, "model_dump"):
@@ -167,11 +191,27 @@ class Store:
             self.verify(obj)
         return obj
 
+    def blob_intact(self, h):
+        """True when the blob matches its hash; unchanged blobs are hashed once per process."""
+        path = self.root / "blobs" / h
+        try:
+            stat = path.stat()
+        except OSError:
+            self.verified.pop(h, None)
+            return False
+        identity = (stat.st_size, stat.st_mtime_ns)
+        if self.verified.get(h) == identity:
+            return True
+        if not path.is_file() or file_hash(path) != h:
+            self.verified.pop(h, None)
+            return False
+        self.verified[h] = identity
+        return True
+
     def verify(self, obj):
         for name, h in obj.get("files", {}).items():
-            path = self.root / "blobs" / h
             require(
-                path.is_file() and file_hash(path) == h,
+                self.blob_intact(h),
                 "INTEGRITY_ERROR",
                 "Artifact integrity check failed",
                 name,
@@ -187,7 +227,7 @@ class Store:
             require(PurePosixPath(name).name == name, "INVALID_PATH", "Invalid file name")
             h = file_hash(source)
             dest = self.root / "blobs" / h
-            if not dest.exists() or file_hash(dest) != h:
+            if not self.blob_intact(h):
                 tmp = dest.with_suffix("." + uuid.uuid4().hex)
                 shutil.copyfile(source, tmp)
                 os.replace(tmp, dest)

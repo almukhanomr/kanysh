@@ -77,7 +77,7 @@ READ_ONLY = {
 }
 DESCRIPTIONS = {
     "project_list": "List projects in this results home: id, name, CRS, vertical datum, length unit, creation time. Read-only.",
-    "project_inspect": "One project: its record, every immutable artifact (id, revision, kind) and its jobs. Read-only; use artifact_inspect for one artifact's content.",
+    "project_inspect": "One project: its record, up to 200 immutable artifacts (id, revision, kind) and its 200 latest jobs, with object_count/job_count and objects_truncated/jobs_truncated when the listing is partial. Read-only; use artifact_inspect for one artifact's content.",
     "artifact_inspect": "Read one immutable artifact {id, revision}: metadata, summary, file list and checks. Read-only; ids/revisions come from project_inspect or earlier tool results.",
     "compute_targets_list": "Configured compute targets (local CPU, CUDA state) and device_matrix: which operations support prefer_gpu/require_gpu. Read-only.",
     "job_cancel": "Request cancellation of a queued or running job (job_id). Stops the worker and any child simulator; already published artifacts are kept. Check job_status afterwards.",
