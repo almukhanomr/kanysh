@@ -149,6 +149,12 @@ if __name__ == "__main__":
     parser.add_argument("--variant", choices=["cpu", "gpu"], default="cpu")
     args = parser.parse_args()
     suffix = "-gpu" if args.variant == "gpu" else ""
-    result = asyncio.run(check(Path(f"dist/kanysh-basic{suffix}-0.2.0-dev6.mcpb").resolve(), args.variant))
+    import tomllib
+
+    version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    bundle = Path(f"dist/kanysh-basic{suffix}-{version.replace('.dev', '-dev')}.mcpb").resolve()
+    result = asyncio.run(check(bundle, args.variant))
+    # Published evidence names the archive relative to the checkout, never a personal path.
+    result["source_archive"] = bundle.relative_to(Path.cwd().resolve()).as_posix()
     Path(f"docs/mcpb{suffix}-check.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))

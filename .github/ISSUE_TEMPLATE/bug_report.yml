@@ -1,30 +1,70 @@
 name: Bug report
-description: Report a reproducible problem in an existing supported workflow.
+description: Something fails, crashes or behaves differently from the documentation.
 title: "[Bug] "
 labels: [bug]
 body:
-  - type: textarea
-    id: reproduce
+  - type: markdown
     attributes:
-      label: Steps to reproduce
-      description: Include the operation and a minimal, public or synthetic example. Remove credentials and private file paths.
+      value: |
+        Thank you for reporting. Please do **not** attach confidential reservoir data.
+        The quickest way to give us what we need: ask your chat to run the `support_report`
+        tool (or run `kanysh-basic support-report`), open the ZIP it creates, check it, and
+        drag it into the field below. It contains versions, error codes and redacted logs only.
+  - type: input
+    id: version
+    attributes:
+      label: Kanysh version
+      description: Shown by the `diagnostics` tool (versions.kanysh-basic), e.g. 0.2.0.dev7.
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation
+      options:
+        - Claude Desktop extension, CPU (.mcpb)
+        - Claude Desktop extension, GPU (.mcpb)
+        - From source (uv)
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Windows + WSL2 (OPM Flow)
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: MCP client
+      options:
+        - Claude Desktop
+        - Claude Code
+        - ChatGPT
+        - Other
     validations:
       required: true
   - type: textarea
-    id: expected
+    id: what
     attributes:
-      label: Expected and actual behaviour
+      label: What happened
+      description: The tool or step, the error code and message, and what you expected instead.
+      placeholder: "regional_volumes failed with WORKER_CRASH after import of a 3M-cell EGRID…"
     validations:
       required: true
   - type: textarea
-    id: environment
+    id: data
     attributes:
-      label: Environment
-      description: OS/architecture, Python/package version, installation method, MCP client, CPU/GPU.
-    validations:
-      required: true
+      label: Data involved (no confidential details)
+      description: Format and size, e.g. "ECLIPSE EGRID+INIT exported from Petrel 2023, 3.1M cells". Public or synthetic example welcome.
   - type: textarea
-    id: evidence
+    id: report
     attributes:
-      label: Sanitized evidence
-      description: Error code, job status, report validation and unsupported keywords. Never attach confidential reservoir data without permission.
+      label: Support report
+      description: Drag the kanysh-support-*.zip here after reviewing it. Leave empty if you prefer not to share it.

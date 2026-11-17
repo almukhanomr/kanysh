@@ -42,6 +42,10 @@ def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profi
                         from opensubsurface.diagnostics import diagnostics
 
                         return {"result": diagnostics(service, args)}
+                    if operation == "support_report":
+                        from opensubsurface.support import build
+
+                        return {"result": build(service, args)}
                     active = ready_service(operation)
                     from opensubsurface.viewer_links import base_url
 

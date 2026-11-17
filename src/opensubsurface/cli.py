@@ -36,6 +36,9 @@ def main():
     remove_source.add_argument("source_id")
     sub.add_parser("demo", help="Reference CPU project")
     sub.add_parser("doctor", help="Check actual capabilities")
+    support = sub.add_parser("support-report", help="Write an anonymized support ZIP for a GitHub issue")
+    support.add_argument("--jobs", type=int, default=20)
+    support.add_argument("--log-lines", type=int, default=80)
     opm = sub.add_parser("setup-opm", help="Owner: set up, pin and self-test OPM Flow (Linux or WSL2)")
     opm.add_argument("--no-install", action="store_true", help="Only verify/pin an existing installation")
     sub.add_parser("projects")
@@ -102,6 +105,8 @@ def main():
             from opensubsurface.simulation.runtime import setup as setup_opm
 
             result = setup_opm(service.store.root, install=not args.no_install)
+        elif args.command == "support-report":
+            result = service.invoke("support_report", dict(jobs=args.jobs, log_lines=args.log_lines))
         elif args.command == "doctor":
             result = service.capabilities()
         elif args.command == "projects":

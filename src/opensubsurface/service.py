@@ -137,6 +137,16 @@ EXPECTED_KINDS = {
 TERMINAL = {"succeeded", "failed", "cancelled", "interrupted"}
 
 
+def with_support_hint(error):
+    """Internal failures are bugs until shown otherwise: point the agent at the support report."""
+    from opensubsurface.support import INTERNAL_ERRORS, SUPPORT_HINT
+
+    if not error or error.get("code") not in INTERNAL_ERRORS:
+        return error
+    remediation = error.get("remediation") or ""
+    return dict(error, remediation=(remediation + " " if remediation else "") + SUPPORT_HINT)
+
+
 def ref(obj):
     return {"id": obj["id"], "revision": obj["revision"]}
 
@@ -506,6 +516,11 @@ class Service:
             from opensubsurface.schemas import Diagnostics
 
             return diagnostics(self, Diagnostics.model_validate(arguments).model_dump())
+        if operation == "support_report":
+            from opensubsurface.schemas import SupportReport
+            from opensubsurface.support import build
+
+            return build(self, SupportReport.model_validate(arguments).model_dump())
         if operation == "folder_assess":
             from opensubsurface.adapters.folder_assess import assess
             from opensubsurface.schemas import FolderAssess
@@ -1076,7 +1091,7 @@ class Service:
             progress=progress["progress"],
             eta_s=progress["eta_s"],
             progress_message=progress["message"],
-            error=job.get("error"),
+            error=with_support_hint(job.get("error")),
             result=job.get("result"),
             payload_hash=job.get("payload_hash"),
             warnings=job.get("warnings") or [],

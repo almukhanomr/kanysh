@@ -1,9 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.2.0.dev7 — support report, feedback forms, documented tools
 
+- New `support_report` tool and `kanysh-basic support-report` command: an anonymized ZIP in the
+  results home with versions, platform, resources, recent job operations/statuses/error codes and
+  redacted log tails (paths, e-mails, secret-like values). No artifact contents, project names,
+  CRS or argument values; nothing is uploaded. Works while the extension is still starting.
+- `diagnostics` returns `issue_url`; internal failures (WORKER_CRASH, COMPUTE_FAILED,
+  EXECUTOR_FAILED, WORKFLOW_FAILED) point to the support report in their remediation.
+- GitHub issue forms: bug report asks for version, installation, OS, client and the support ZIP;
+  new feedback form (task, workflow before/after, model source, role); questions go to Discussions.
 - MCP servers started without a profile flag (`kanysh-basic mcp`, `serve`) now publish the
-  39-tool `agent` profile, as Claude Desktop already did. The 73-tool set needs
+  40-tool `agent` profile, as Claude Desktop already did. The 74-tool set needs
   `--profile full` / `--mcp-profile full`.
 - The 31 Advanced tools that published only their name as a description now describe what
   they do, their required inputs, what they return and which neighbouring tool to use instead.

@@ -19,6 +19,7 @@ from opensubsurface.schemas import (
     SourceScan,
     SourceUpload,
     Strict,
+    SupportReport,
 )
 
 CONTRACTS = dict(
@@ -51,6 +52,7 @@ CONTRACTS = dict(
     workflow_cancel=JobRequest,
     scene_inspect=ProjectRequest,
     diagnostics=Diagnostics,
+    support_report=SupportReport,
 )
 READ_ONLY = {
     "diagnostics",
@@ -117,7 +119,8 @@ DESCRIPTIONS = {
     "job_status": "Compact job state: id, status, stage, progress 0..1, eta_s, error, result ref, payload_hash. verbose=true returns the full record (payload, attempts, events). Numbers are in the result artifact (artifact_inspect).",
     "job_logs": "Tail of worker stdout/stderr, workflow node log and stage events; for calculation_run also each child job's status and worker tail. Local evidence only; no secrets.",
     "simulation_deck_run": "Run the user's own ECLIPSE-format .DATA deck (with its INCLUDE files) in OPM Flow, exactly as supplied: no deck generation or defaults. Linux natively, Windows via the 'kanysh-opm' WSL2 distribution set up by `kanysh-basic setup-opm`; SIMULATOR_UNAVAILABLE explains setup when absent. Returns job_id; results: summary (Parquet), SMSPEC/UNSMRY, PRT/DBG logs, field totals; optional comparison with a user reference SMSPEC (e.g. ECLIPSE) at an explicit tolerance. Cancellable.",
-    "diagnostics": "Read-only startup/runtime diagnostics, available even while starting: stage/substage/waiting_for, startup.log tail, versions, CUDA state (if probed), viewer URL/port and log tail. No secrets or environment values.",
+    "diagnostics": "Read-only startup/runtime diagnostics, available even while starting: stage/substage/waiting_for, startup.log tail, versions, CUDA state (if probed), viewer URL/port and log tail, and issue_url for bug reports. No secrets or environment values.",
+    "support_report": "Write an anonymized support ZIP into the results home for a GitHub issue: versions, platform, resources, startup/simulator state, recent job operations/statuses/error codes and redacted log tails. Excludes artifact contents, project names, CRS, argument values and tokens; paths/e-mails are redacted. Works even while starting. Nothing is uploaded: returns the local path and issue_url; the user reviews the ZIP and attaches it.",
 }
 
 # Tools published only in the "full" MCP profile (Advanced building blocks). Descriptions follow

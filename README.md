@@ -58,8 +58,8 @@ Acceptance with chat clients other than Claude Desktop remains **NOT RUN**.
 
 | Extension | Default results home on Windows | Runtime |
 |---|---|---|
-| `kanysh-basic-0.2.0-dev6.mcpb` | `%LOCALAPPDATA%\kanysh-basic` | CPU |
-| `kanysh-basic-gpu-0.2.0-dev6.mcpb` | `%LOCALAPPDATA%\kanysh-basic-gpu` | CUDA 12.6 on Windows/Linux; CPU on macOS |
+| `kanysh-basic-0.2.0-dev7.mcpb` | `%LOCALAPPDATA%\kanysh-basic` | CPU |
+| `kanysh-basic-gpu-0.2.0-dev7.mcpb` | `%LOCALAPPDATA%\kanysh-basic-gpu` | CUDA 12.6 on Windows/Linux; CPU on macOS |
 
 Both extensions can be installed alongside each other. Keep their separate default
 homes. The GPU edition's first installation downloads approximately **2.5 GB**; allow
@@ -162,6 +162,15 @@ Kanysh Basic contains the accepted workflows above. Further modelling developmen
 belongs to **Kanysh Advanced**: [roadmap](docs/ROADMAP.md). Local Advanced experiments
 are excluded from Basic GitHub publication, packages and production MCP profiles.
 
+## Report a problem or share feedback
+
+Ask your chat: *"Kanysh failed — make a support report"*. The `support_report` tool writes an
+anonymized ZIP into your results home (versions, error codes and redacted logs; no model
+data, project names or coordinates) and nothing is uploaded. Open it, check it, and attach
+it to a [bug report](https://github.com/almukhanomr/kanysh/issues/new/choose). Without a chat:
+`kanysh-basic support-report`. Ideas and missing features: use the *Feedback* form on the
+same page. A short description of your workflow helps more than a feature list.
+
 ## Technical reference and contribution
 
 [MCP/CLI/REST setup](docs/MCP_SETUP.md) · [IT setup reference](docs/ONBOARDING.md) ·
@@ -171,7 +180,7 @@ CI targets Windows/Ubuntu/macOS with ruff and CPU pytest, excluding gpu/opm/exte
 The Python namespace, data-format IDs, MCP resource URIs and `OPENSUBSURFACE_*`
 environment names retain their existing identifiers for compatibility. The package
 and public CLI are `kanysh-basic`; `opensubsurface` remains a CLI compatibility alias.
-This is a development release (`0.2.0.dev6`); [external acceptance](docs/ACCEPTANCE.md) is separate.
+This is a development release (`0.2.0.dev7`); [external acceptance](docs/ACCEPTANCE.md) is separate.
 
 Application source: Apache-2.0. Norne data: ODbL/DbCL with upstream notices retained.
 Dependencies have separate licences: [THIRD_PARTY](THIRD_PARTY.md).

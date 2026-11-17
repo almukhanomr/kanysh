@@ -2,7 +2,7 @@
 
 import os
 
-__version__ = "0.2.0.dev6"
+__version__ = "0.2.0.dev7"
 
 # Local tool for confidential field data: third-party libraries must not phone home.
 # Gradio reads these at import time (analytics, version check, Hugging Face telemetry).

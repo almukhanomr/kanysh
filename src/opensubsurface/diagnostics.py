@@ -11,6 +11,8 @@ import re
 import sys
 from pathlib import Path
 
+from opensubsurface.support import ISSUE_URL
+
 SECRET = re.compile(r"(?i)(token|password|secret|authorization|api[_-]?key)(\s*[=:]\s*|\s+)\S+")
 
 
@@ -107,4 +109,6 @@ def diagnostics(target, p):
         viewer=viewer,
         simulator=_simulator(home),
         secrets="none returned; environment variables and tokens are never included",
+        issue_url=ISSUE_URL,
+        report_problem="Run support_report, let the user review the ZIP, then attach it to a new issue at issue_url.",
     )

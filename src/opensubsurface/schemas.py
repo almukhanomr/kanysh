@@ -792,6 +792,18 @@ class Diagnostics(Strict):
     lines: int = Field(default=60, ge=1, le=500)
 
 
+class SupportReport(Strict):
+    jobs: int = Field(
+        default=20,
+        ge=1,
+        le=200,
+        description="How many most recent jobs to describe (operation, status, error code).",
+    )
+    log_lines: int = Field(
+        default=80, ge=1, le=500, description="Lines kept from the end of each log after redaction."
+    )
+
+
 class ComputeTargets(Strict):
     project_id: str | None = None
     properties: Ref | None = None

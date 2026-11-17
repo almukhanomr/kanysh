@@ -43,8 +43,8 @@ Replace these placeholders with your own installation and persistent state paths
 
 ### Tool profiles
 
-`agent` (default) publishes the 39 Basic tools: discovery, imports, QC, volumes,
-uncertainty, reports, scenes, jobs and the OPM deck run. `full` (`--profile full`, or
+`agent` (default) publishes the 40 Basic tools: discovery, imports, QC, volumes,
+uncertainty, reports, scenes, jobs, the OPM deck run and `support_report`. `full` (`--profile full`, or
 `--mcp-profile full` for `serve`) also publishes 34 Advanced building blocks: GemPy model
 building, seismic interpretation, geostatistics, generated simulation cases, ensembles and
 workflows. Every tool in both profiles has a description; use `full` only when you need

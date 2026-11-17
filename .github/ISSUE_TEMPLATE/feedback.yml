@@ -1,0 +1,53 @@
+name: Feedback or feature request
+description: Tell us how you use Kanysh, what is missing or what got in the way.
+title: "[Feedback] "
+labels: [feedback]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Short answers are fine. This helps decide what to build next.
+  - type: textarea
+    id: task
+    attributes:
+      label: What were you trying to do?
+      description: The engineering task, e.g. "check STOIIP of a Petrel model before a reserves review".
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: What did you do just before and just after using Kanysh?
+      description: Which software or step came before (export from Petrel, RMS, tNavigator…) and what you did with the result.
+  - type: textarea
+    id: missing
+    attributes:
+      label: What was missing or got in the way?
+  - type: dropdown
+    id: source
+    attributes:
+      label: Where does your model come from?
+      multiple: true
+      options:
+        - Petrel
+        - RMS
+        - tNavigator
+        - ECLIPSE / OPM deck
+        - SKUA / GOCAD
+        - Other
+  - type: dropdown
+    id: role
+    attributes:
+      label: Your role
+      options:
+        - Geologist / geomodeller
+        - Reservoir engineer
+        - Reserves / audit
+        - Student / researcher
+        - Other
+  - type: checkboxes
+    id: contact
+    attributes:
+      label: Follow-up
+      options:
+        - label: I am happy to be contacted for a short call about my use case.

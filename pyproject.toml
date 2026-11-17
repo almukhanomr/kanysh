@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kanysh-basic"
-version = "0.2.0.dev6"
+version = "0.2.0.dev7"
 description = "MCP server for subsurface modeling + local web viewer"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -43,6 +43,9 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://kanysh.com"
+Repository = "https://github.com/almukhanomr/kanysh"
+Issues = "https://github.com/almukhanomr/kanysh/issues"
+Changelog = "https://github.com/almukhanomr/kanysh/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 ui = ["gradio>=5.30,<6", "plotly>=6,<7"]

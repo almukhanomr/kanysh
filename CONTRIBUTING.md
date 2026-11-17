@@ -15,9 +15,16 @@ uv run --no-sync ruff check src tests scripts examples/generators
 uv run --no-sync pytest -q -m "not gpu and not opm and not external" --junitxml=test-results/junit.xml
 ```
 
-CI runs the same CPU selection on Ubuntu and macOS. Native Windows is not the
-supported process/filesystem profile; Windows users use WSL2. Hardware acceptance
-and real external MCP clients are separate from SDK fixtures.
+CI runs the same CPU selection on Ubuntu, macOS and Windows. Native Windows is the main
+user profile; WSL2 is needed only for OPM Flow. Hardware acceptance and real external
+MCP clients are separate from SDK fixtures.
+
+## Reporting problems
+
+Use the issue forms. A bug report should include the ZIP from `support_report`
+(`kanysh-basic support-report`): versions, error codes and redacted logs, never field data.
+If you add log lines or error messages, keep file paths and argument values out of them or
+make sure `opensubsurface.support.redact` removes them.
 
 ## Scientific changes
 

@@ -1,1 +1,5 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/almukhanomr/kanysh/discussions
+    about: Ask how to do something or share results without filing a bug.
