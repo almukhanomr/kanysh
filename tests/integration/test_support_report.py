@@ -27,6 +27,20 @@ def test_paths_under_the_user_home_are_redacted():
     assert "Acme" not in text and "FIELD_X" not in text and text.startswith("~")
 
 
+def test_windows_paths_are_redacted_on_every_os(monkeypatch):
+    """CI on Windows caught "~\\Clients\\Acme\\..." surviving; check that shape on all hosts."""
+    user = "C:\\Users\\Eng"
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: Path(user)))
+    home = user + "\\AppData\\Local\\kanysh-basic"
+    line = (
+        f"read {user}\\Clients\\Acme\\FIELD_X.DATA, log {home}\\attempts\\a\\worker.log, "
+        "share \\\\server\\geo\\Acme\\F.EGRID, D:\\Projects\\Acme\\G.DATA, text a\\nb ok"
+    )
+    text = redact(line, home)
+    assert "Acme" not in text and "FIELD_X" not in text and "Eng" not in text
+    assert "<home>\\attempts" in text and "a\\nb ok" in text
+
+
 def _failed_job(service, project_id):
     payload = dict(
         project_id=project_id,

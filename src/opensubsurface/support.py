@@ -31,6 +31,9 @@ _UNC_PATH = re.compile(r"\\\\[^\s\"'<>|\\]+\\[^\s\"'<>|]*")
 # A POSIX path: a slash-separated run that does not continue a URL ("http://host/a"), a word or
 # an already redacted "<home>" prefix (paths inside the results home are not sensitive).
 _POSIX_PATH = re.compile(r"(?<![\w:/.<>])/(?:[^\s/\"'<>|:]+/)*[^\s/\"'<>|:]+")
+# A Windows path left without its drive, e.g. "~\\Clients\\Acme\\F.DATA" after the user home was
+# replaced. Two or more segments, so escape sequences such as "\\n" in log text are kept.
+_BACKSLASH_PATH = re.compile(r"(?<![\w:<>\\])\\[^\s\\\"'<>|:]+(?:\\[^\s\\\"'<>|:]+)+")
 
 
 def redact(text, home=None):
@@ -44,6 +47,7 @@ def redact(text, home=None):
     text = _EMAIL.sub("<email>", text)
     text = _UNC_PATH.sub("<path>", text)
     text = _WINDOWS_PATH.sub("<path>", text)
+    text = _BACKSLASH_PATH.sub("<path>", text)
     return _POSIX_PATH.sub("<path>", text)
 
 
