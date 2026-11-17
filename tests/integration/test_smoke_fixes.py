@@ -109,8 +109,7 @@ def test_every_tool_schema_is_resolved_and_documented(profile):
         assert "$defs" not in json.dumps(tool.inputSchema), tool.name
         assert unresolved_refs(tool.inputSchema) == [], tool.name
         assert undocumented(tool.inputSchema) == [], (tool.name, undocumented(tool.inputSchema))
-        if profile == "agent":
-            assert tool.description != tool.name, tool.name  # every published tool has a description
+        assert tool.description != tool.name, tool.name  # every published tool has a description
 
 
 def test_eclipse_format_docs_and_diagnostics_version():
@@ -506,3 +505,13 @@ def test_gradio_analytics_and_hub_telemetry_are_off_by_default():
     code = "import opensubsurface, gradio.analytics as a; print(a.analytics_enabled())"
     out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True)
     assert out.stdout.strip() == "False"
+
+
+def test_default_mcp_profile_is_agent():
+    """Directories and clients that start the server without flags see the Basic tool set."""
+    from opensubsurface.mcp.guide import AGENT_TOOLS
+
+    default = {t.name for t in asyncio.run(create_mcp(_NoService()).list_tools())}
+    full = {t.name for t in asyncio.run(create_mcp(_NoService(), profile="full").list_tools())}
+    assert default == AGENT_TOOLS
+    assert default < full and "simulation_snapshot" in full - default

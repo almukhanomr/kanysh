@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- MCP servers started without a profile flag (`kanysh-basic mcp`, `serve`) now publish the
+  39-tool `agent` profile, as Claude Desktop already did. The 73-tool set needs
+  `--profile full` / `--mcp-profile full`.
+- The 31 Advanced tools that published only their name as a description now describe what
+  they do, their required inputs, what they return and which neighbouring tool to use instead.
+- Store hashes an unchanged blob once per process; internal listings no longer stop at 200
+  artifacts and `project_inspect` reports counts and truncation; one version source.
+
 ## 0.2.0.dev6 — no third-party analytics
 
 - The local viewer no longer contacts Gradio/Hugging Face analytics on start

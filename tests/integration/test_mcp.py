@@ -8,7 +8,8 @@ from mcp.client.stdio import stdio_client
 @pytest.mark.asyncio
 async def test_real_mcp_sdk_stdio_roundtrip(tmp_path):
     params = StdioServerParameters(
-        command=sys.executable, args=["-m", "opensubsurface.cli", "--home", str(tmp_path / "mcp"), "mcp"]
+        command=sys.executable,
+        args=["-m", "opensubsurface.cli", "--home", str(tmp_path / "mcp"), "mcp", "--profile", "full"],
     )
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:

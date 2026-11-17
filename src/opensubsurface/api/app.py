@@ -48,7 +48,7 @@ class Guard:
         return await self.app(scope, receive, send)
 
 
-def create_app(root=None, service=None, with_ui=False, with_mcp=True, mcp_profile="full"):
+def create_app(root=None, service=None, with_ui=False, with_mcp=True, mcp_profile="agent"):
     service = service or Service(root)
 
     mcp_server = None

@@ -22,7 +22,12 @@ def main():
     serve.add_argument("--port", type=int, default=8765)
     serve.add_argument("--ui", action="store_true", help="Web viewer (ui extra)")
     serve.add_argument("--no-ui", action="store_true", help="Persistent local MCP/API without Gradio")
-    serve.add_argument("--mcp-profile", choices=["full", "agent"], default="full")
+    serve.add_argument(
+        "--mcp-profile",
+        choices=["full", "agent"],
+        default="agent",
+        help="agent: Basic tools (default); full: also Advanced building blocks",
+    )
     source = sub.add_parser("source-add", help="Owner: allow reading a source data folder")
     source.add_argument("name")
     source.add_argument("directory", type=Path)
@@ -54,7 +59,12 @@ def main():
     backup.add_argument("directory", type=Path)
     mcp = sub.add_parser("mcp")
     mcp.add_argument("--transport", choices=["stdio", "streamable-http"], default="stdio")
-    mcp.add_argument("--profile", choices=["full", "agent"], default="full")
+    mcp.add_argument(
+        "--profile",
+        choices=["full", "agent"],
+        default="agent",
+        help="agent: Basic tools (default); full: also Advanced building blocks",
+    )
     sub.add_parser("benchmark")
     args = parser.parse_args()
     if args.command == "setup" and args.home == ".data" and not os.environ.get("OPENSUBSURFACE_HOME"):

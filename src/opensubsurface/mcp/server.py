@@ -13,7 +13,7 @@ from opensubsurface.mcp.schema_docs import tool_input_schema
 from opensubsurface.viewer_links import present
 
 
-def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profile="full", lifespan=None):
+def create_mcp(service, streamable_http_path="/mcp", stateless_http=False, profile="agent", lifespan=None):
     if profile not in ("full", "agent"):
         raise ValueError("Unknown MCP profile")
     server = FastMCP(

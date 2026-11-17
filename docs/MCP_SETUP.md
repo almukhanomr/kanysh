@@ -41,6 +41,15 @@ Replace these placeholders with your own installation and persistent state paths
 }
 ```
 
+### Tool profiles
+
+`agent` (default) publishes the 39 Basic tools: discovery, imports, QC, volumes,
+uncertainty, reports, scenes, jobs and the OPM deck run. `full` (`--profile full`, or
+`--mcp-profile full` for `serve`) also publishes 34 Advanced building blocks: GemPy model
+building, seismic interpretation, geostatistics, generated simulation cases, ensembles and
+workflows. Every tool in both profiles has a description; use `full` only when you need
+those blocks, because a larger tool list is harder for an agent to choose from.
+
 Do not rely on a GUI client inheriting your shell's activated virtual environment.
 When the same home has an active local viewer, stdio calls use its REST controller;
 there is only one executor. Without a viewer, the stdio process owns its local jobs.
